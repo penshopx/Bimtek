@@ -7,6 +7,7 @@ import { useTheme } from './ThemeProvider';
 import { SearchModal, SearchButton } from './Search';
 
 const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/', label: 'Beranda', icon: '🏠' },
   { href: '/knowledge-base', label: 'Knowledge Base', icon: '📚' },
   { href: '/bimtek', label: 'BIMTEK', icon: '🎓' },
