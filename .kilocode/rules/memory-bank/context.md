@@ -1,87 +1,36 @@
-# Active Context: Next.js Starter Template
+# Context: BimtekKita - Construction Training Platform
 
 ## Current State
-
-**Template Status**: ✅ Ready for development
-
-The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. It's ready for AI-assisted expansion to build any type of application.
+Complete construction training platform with AI chatbot system built and deployed.
 
 ## Recently Completed
+- [x] Navbar with all navigation routes (responsive mobile support)
+- [x] Landing page with 9 feature cards and stats
+- [x] Knowledge Base - 16+ expandable articles
+- [x] BIMTEK - 67 modules with PKB tracker, progress saved to localStorage
+- [x] BIMTEK Detail - Lesson progress, AI learning companion chatbot
+- [x] Quiz - 65+ questions across 13 categories
+- [x] Solver - 6 calculation templates (beam, column, foundation, concrete mix, earthwork, ramp)
+- [x] Tools - RAB calculator & Mix Design calculator
+- [x] Matrix - Interactive subklasifikasi & job position connections
+- [x] Sertifikasi - 36+ positions (334 in database)
+- [x] Certify - 5-step guide with requirements table
+- [x] Chat - AI Orchestrator with 8 Expert Agents & Toolboxes
+- [x] Learning Companion - Per-module AI mentor chatbot
 
-- [x] Base Next.js 16 setup with App Router
-- [x] TypeScript configuration with strict mode
-- [x] Tailwind CSS 4 integration
-- [x] ESLint configuration
-- [x] Memory bank documentation
-- [x] Recipe system for common features
+## Architecture
+- Next.js 16 with App Router
+- TypeScript + Tailwind CSS 4
+- Client-side state management with localStorage for progress tracking
+- AI Chat system: Orchestrator → Expert Agents (8) → Toolbox (per expert)
 
-## Current Structure
-
-| File/Directory | Purpose | Status |
-|----------------|---------|--------|
-| `src/app/page.tsx` | Home page | ✅ Ready |
-| `src/app/layout.tsx` | Root layout | ✅ Ready |
-| `src/app/globals.css` | Global styles | ✅ Ready |
-| `.kilocode/` | AI context & recipes | ✅ Ready |
-
-## Current Focus
-
-The template is ready. Next steps depend on user requirements:
-
-1. What type of application to build
-2. What features are needed
-3. Design/branding preferences
-
-## Quick Start Guide
-
-### To add a new page:
-
-Create a file at `src/app/[route]/page.tsx`:
-```tsx
-export default function NewPage() {
-  return <div>New page content</div>;
-}
-```
-
-### To add components:
-
-Create `src/components/` directory and add components:
-```tsx
-// src/components/ui/Button.tsx
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2 bg-blue-600 text-white rounded">{children}</button>;
-}
-```
-
-### To add a database:
-
-Follow `.kilocode/recipes/add-database.md`
-
-### To add API routes:
-
-Create `src/app/api/[route]/route.ts`:
-```tsx
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "Hello" });
-}
-```
-
-## Available Recipes
-
-| Recipe | File | Use Case |
-|--------|------|----------|
-| Add Database | `.kilocode/recipes/add-database.md` | Data persistence with Drizzle + SQLite |
-
-## Pending Improvements
-
-- [ ] Add more recipes (auth, email, etc.)
-- [ ] Add example components
-- [ ] Add testing setup recipe
+## Tech Stack
+- React 19, Next.js 16
+- TypeScript, Tailwind CSS 4
+- Bun package manager
+- ESLint for code quality
 
 ## Session History
-
 | Date | Changes |
 |------|---------|
-| Initial | Template created with base setup |
+| 2026-03-14 | Complete platform built - 13 pages, AI chatbot system, 65+ modules, 65+ quiz questions |
