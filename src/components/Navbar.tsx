@@ -16,6 +16,7 @@ const navItems = [
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
   { href: '/chat', label: 'Chat', icon: '💬' },
+  { href: '/profile', label: 'Profile', icon: '👤' },
 ];
 
 export function Navbar() {
