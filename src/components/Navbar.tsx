@@ -18,6 +18,7 @@ const navItems = [
   { href: '/certify', label: 'Certify', icon: '✅' },
   { href: '/chat', label: 'Chat', icon: '💬' },
   { href: '/bookmarks', label: 'Bookmarks', icon: '🔖' },
+  { href: '/shortcuts', label: 'Shortcuts', icon: '⌨️' },
   { href: '/profile', label: 'Profile', icon: '👤' },
 ];
 
