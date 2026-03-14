@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { BookmarkProvider } from "@/components/BookmarkProvider";
+import { ActivityProvider } from "@/components/ActivityLogger";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,9 +49,11 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <BookmarkProvider>
-            <ServiceWorkerRegistration />
-            <Navbar />
-            <main>{children}</main>
+            <ActivityProvider>
+              <ServiceWorkerRegistration />
+              <Navbar />
+              <main>{children}</main>
+            </ActivityProvider>
           </BookmarkProvider>
         </ThemeProvider>
       </body>
