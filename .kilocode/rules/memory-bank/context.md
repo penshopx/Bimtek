@@ -30,6 +30,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Dashboard - Comprehensive stats overview with personalized greeting
 - [x] Activity Log - Track all user actions with filtering
 - [x] Achievements - 14 unlockable achievements with progress tracking
+- [x] Learning Calendar - Visualize daily learning activity
 
 ## Architecture
 - Next.js 16 with App Router
