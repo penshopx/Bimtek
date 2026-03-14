@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { NotificationManager } from '@/components/NotificationManager';
+import { ProgressExporter } from '@/components/ProgressExporter';
 
 interface UserProfile {
   name: string;
@@ -207,70 +208,10 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
-          </div>
 
-          <div className="lg:col-span-3">
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
-                  <h3 className="text-xl font-semibold mb-4">Progress PKB</h3>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl font-bold">{progress.totalPKB}</span>
-                    <span className="text-amber-200">/ {targetPKB} PKB</span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-3">
-                    <div
-                      className="bg-white h-3 rounded-full transition-all"
-                      style={{ width: `${Math.min((progress.totalPKB / targetPKB) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-amber-200 mt-2">
-                    {progress.bimtekCompleted.length} modul selesai
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-                    <div className="text-3xl mb-2">🎓</div>
-                    <h4 className="font-semibold text-slate-800 dark:text-white">BIMTEK</h4>
-                    <p className="text-2xl font-bold text-amber-600">{progress.bimtekCompleted.length}</p>
-                    <p className="text-sm text-slate-500">modul selesai</p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-                    <div className="text-3xl mb-2">✍️</div>
-                    <h4 className="font-semibold text-slate-800 dark:text-white">Quiz</h4>
-                    <p className="text-2xl font-bold text-green-600">{Object.keys(progress.quizBestScores).length}</p>
-                    <p className="text-sm text-slate-500">kategori diambil</p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-                    <div className="text-3xl mb-2">⭐</div>
-                    <h4 className="font-semibold text-slate-800 dark:text-white">Favorit</h4>
-                    <p className="text-2xl font-bold text-purple-600">{progress.favoriteModules.length}</p>
-                    <p className="text-sm text-slate-500">modul favorit</p>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Aktivitas Terkini</h3>
-                  <div className="space-y-3">
-                    {progress.bimtekCompleted.length === 0 ? (
-                      <p className="text-slate-500">Belum ada aktivitas. Mulai belajar sekarang!</p>
-                    ) : (
-                      progress.bimtekCompleted.slice(-5).reverse().map((id, i) => {
-                        const mod = bimtekModules.find(m => m.id === id);
-                        return (
-                          <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                            <span className="text-xl">✓</span>
-                            <div>
-                              <p className="font-medium text-slate-800 dark:text-white">{mod?.title}</p>
-                              <p className="text-sm text-slate-500">+{mod?.pkb} PKB</p>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+                <ProgressExporter />
               </div>
             )}
 

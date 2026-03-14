@@ -22,6 +22,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Global Search - Cmd+K shortcut, 25+ items indexed
 - [x] PWA Support - Manifest, service worker, offline-ready
 - [x] Push Notifications - Browser notifications, daily reminders
+- [x] PDF Export - Print progress report to PDF
 
 ## Architecture
 - Next.js 16 with App Router
