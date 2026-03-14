@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { NotificationManager } from '@/components/NotificationManager';
 
 interface UserProfile {
   name: string;
@@ -183,6 +184,26 @@ export default function ProfilePage() {
                   }`}
                 >
                   ⭐ Favorit
+                </button>
+                <button
+                  onClick={() => setActiveTab('notifications')}
+                  className={`w-full p-3 rounded-xl text-left transition-all ${
+                    activeTab === 'notifications'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  🔔 Notifikasi
+                </button>
+                <button
+                  onClick={() => setActiveTab('notifications')}
+                  className={`w-full p-3 rounded-xl text-left transition-all ${
+                    activeTab === 'notifications'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  🔔 Notifikasi
                 </button>
               </div>
             </div>
@@ -430,6 +451,10 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+            )}
+
+            {activeTab === 'notifications' && (
+              <NotificationManager />
             )}
           </div>
         </div>
