@@ -7,7 +7,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Navbar with all navigation routes (responsive mobile support)
 - [x] Landing page with 9 feature cards and stats
 - [x] Knowledge Base - 16+ expandable articles
-- [x] BIMTEK - 67 modules with PKB tracker, progress saved to localStorage
+- [x] BIMTEK - 67 modules with PKB tracker, localStorage
 - [x] BIMTEK Detail - Lesson progress, AI learning companion chatbot
 - [x] Quiz - 65+ questions across 13 categories
 - [x] Solver - 6 calculation templates (beam, column, foundation, concrete mix, earthwork, ramp)
@@ -17,6 +17,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Certify - 5-step guide with requirements table
 - [x] Chat - AI Orchestrator with 8 Expert Agents & Toolboxes
 - [x] Learning Companion - Per-module AI mentor chatbot
+- [x] Dark Mode - Toggle di navbar, persist di localStorage
 
 ## Architecture
 - Next.js 16 with App Router
