@@ -19,6 +19,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Learning Companion - Per-module AI mentor chatbot
 - [x] Dark Mode - Toggle di navbar, persist di localStorage
 - [x] Profile Dashboard - Progress tracking, achievements, favorit
+- [x] Global Search - Cmd+K shortcut, 25+ items indexed
 
 ## Architecture
 - Next.js 16 with App Router
