@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import Link from 'next/link';
 
 interface AdminStats {
@@ -31,7 +32,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'events' | 'activities'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'events' | 'activities' | 'analytics'>('dashboard');
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -121,7 +122,7 @@ export default function AdminPage() {
         </div>
 
         <div className="flex gap-4 mb-6 overflow-x-auto">
-          {(['dashboard', 'users', 'events', 'activities'] as const).map((tab) => (
+          {(['dashboard', 'analytics', 'users', 'events', 'activities'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -132,8 +133,9 @@ export default function AdminPage() {
               }`}
             >
               {tab === 'dashboard' && '📊 Dashboard'}
-              {tab === 'users' && `👥 Pengguna (${stats?.users || 0})`}
-              {tab === 'events' && `📍 Events (${stats?.events || 0})`}
+              {tab === 'analytics' && '📈 Analytics'}
+              {tab === 'users' && `👥 Pengguna`}
+              {tab === 'events' && `📍 Events`}
               {tab === 'activities' && `📝 Aktivitas`}
             </button>
           ))}
@@ -329,6 +331,10 @@ export default function AdminPage() {
                   </table>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'analytics' && (
+              <AnalyticsDashboard />
             )}
           </>
         )}
