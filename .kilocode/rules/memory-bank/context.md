@@ -49,6 +49,18 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] Provides smart suggestions
   - [x] AIMentor component - Per-module AI companion
   - [x] Category-specific responses (sipil, k3, manajemen, elektrikal)
+- [x] Authentication System
+  - [x] AuthProvider with session management
+  - [x] /login - User login page
+  - [x] /register - User registration page
+  - [x] /api/auth - Auth API (login, register, logout, verify)
+  - [x] Database tables: users, sessions, user_progress, user_quiz_scores
+  - [x] Navbar shows login/register or user profile/logout
+- [x] Admin System
+  - [x] /admin - Admin dashboard
+  - [x] User management (view, update role, delete)
+  - [x] Role: user, instructor, admin
+  - [x] System settings panel
 
 ## Architecture
 - Next.js 16 with App Router

@@ -117,3 +117,45 @@ export const settings = sqliteTable("settings", {
   key: text("key").notNull().unique(),
   value: text("value").notNull(),
 });
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").default("user"),
+  avatar: text("avatar"),
+  phone: text("phone"),
+  company: text("company"),
+  position: text("position"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const userProgress = sqliteTable("user_progress", {
+  id: text("id").primaryKey(),
+  oderId: text("user_id").notNull(),
+  moduleId: text("module_id"),
+  lessonId: text("lesson_id"),
+  completed: integer("completed", { mode: "boolean" }).default(false),
+  progress: real("progress").default(0),
+  completedAt: text("completed_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const userQuizScores = sqliteTable("user_quiz_scores", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  category: text("category").notNull(),
+  score: integer("score").notNull(),
+  totalQuestions: integer("total_questions").notNull(),
+  takenAt: text("taken_at").notNull(),
+});

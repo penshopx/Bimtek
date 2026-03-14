@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { SearchModal, SearchButton } from './Search';
+import { useAuth } from './AuthProvider';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -31,9 +32,11 @@ const navItems = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -81,6 +84,33 @@ export function Navbar() {
               >
                 {theme === 'light' ? '🌙' : '☀️'}
               </button>
+              {user ? (
+                <>
+                  {user.role === 'admin' && (
+                    <Link href="/admin" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30">
+                      ⚙️ Admin
+                    </Link>
+                  )}
+                  <Link href="/profile" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-amber-500/20 text-amber-400">
+                    👤 {user.name}
+                  </Link>
+                  <button
+                    onClick={() => { logout(); router.push('/'); }}
+                    className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                  >
+                    Keluar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600">
+                    Masuk
+                  </Link>
+                  <Link href="/register" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600">
+                    Daftar
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
