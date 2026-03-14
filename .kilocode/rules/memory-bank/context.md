@@ -23,6 +23,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] PWA Support - Manifest, service worker, offline-ready
 - [x] Push Notifications - Browser notifications, daily reminders
 - [x] PDF Export - Print progress report to PDF
+- [x] Learning Streak - Track consecutive learning days
 
 ## Architecture
 - Next.js 16 with App Router

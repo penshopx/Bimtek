@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { NotificationManager } from '@/components/NotificationManager';
 import { ProgressExporter } from '@/components/ProgressExporter';
+import { StreakTracker } from '@/components/StreakTracker';
 
 interface UserProfile {
   name: string;
@@ -211,6 +212,7 @@ export default function ProfilePage() {
 
             {activeTab === 'overview' && (
               <div className="space-y-6">
+                <StreakTracker />
                 <ProgressExporter />
               </div>
             )}
