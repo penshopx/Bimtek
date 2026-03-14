@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useAgenticAI } from '@/components/AgenticAIProvider';
 
 interface AppSettings {
   compactMode: boolean;
@@ -12,6 +13,7 @@ interface AppSettings {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const { apiKey, setApiKey } = useAgenticAI();
   const [settings, setSettings] = useState<AppSettings>({
     compactMode: false,
     showAnimations: true,
@@ -19,6 +21,8 @@ export default function SettingsPage() {
     showStreakNotifications: true,
   });
   const [mounted, setMounted] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -112,7 +116,88 @@ export default function SettingsPage() {
           </div>
 
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Data & Progress</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">🤖 AI Configuration</h2>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-xl border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">💡</span>
+                  <p className="font-medium text-slate-800 dark:text-white">OpenAI API Key</p>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Masukkan API key untuk mengaktifkan AI Chat yang lebih intelligent dengan OpenAI GPT-4.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="sk-..."
+                      className="w-full px-4 py-3 pr-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    >
+                      {showApiKey ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setApiKey(apiKeyInput);
+                        alert('API Key disimpan!');
+                      }}
+                      disabled={!apiKeyInput.trim()}
+                      className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
+                    >
+                      💾 Simpan API Key
+                    </button>
+                    {apiKey && (
+                      <button
+                        onClick={() => {
+                          setApiKey('');
+                          setApiKeyInput('');
+                          alert('API Key dihapus!');
+                        }}
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                  
+                  {apiKey ? (
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <span>✅</span> API Key aktif - Chat akan menggunakan GPT-4
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-600 text-sm">
+                      <span>⚠️</span> Menggunakan responses berbasis aturan
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="text-sm text-slate-500">
+                <p className="font-medium mb-2">Cara mendapatkan API Key:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Kunjungi <a href="https://platform.openai.com" target="_blank" rel="noopener" className="text-purple-500 hover:underline">platform.openai.com</a></li>
+                  <li>Login atau daftar akun</li>
+                  <li>Pergi ke Settings &gt; API Keys</li>
+                  <li>Buat API key baru</li>
+                  <li>Copy dan paste di atas</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Data &amp; Progress</h2>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface AppFeature {
   id: string;
@@ -38,6 +38,8 @@ export interface ChatMessage {
 interface AgenticAIContextType {
   messages: ChatMessage[];
   isProcessing: boolean;
+  apiKey: string;
+  setApiKey: (key: string) => void;
   addMessage: (content: string, role: 'user' | 'assistant' | 'system') => void;
   processMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
@@ -64,77 +66,76 @@ const appFeatures: AppFeature[] = [
   { id: 'profile', name: 'Profile', description: 'Edit profil dan statistik', path: '/profile', icon: '👤', category: 'profile' },
   { id: 'settings', name: 'Settings', description: 'Pengaturan tema dan data', path: '/settings', icon: '⚙️', category: 'profile' },
   { id: 'shortcuts', name: 'Shortcuts', description: 'Pintasan keyboard', path: '/shortcuts', icon: '⌨️', category: 'profile' },
-];
-
-const agentTools: AgentTool[] = [
-  {
-    id: 'navigate',
-    name: 'Navigasi Halaman',
-    description: 'Bawa user ke halaman tertentu',
-    execute: (path: string) => {
-      window.location.href = path;
-      return { success: true, message: `MengNavigasi ke ${path}` };
-    },
-  },
-  {
-    id: 'search',
-    name: 'Pencarian Konten',
-    description: 'Cari konten dalam aplikasi',
-    execute: async (query: string) => {
-      const results = appFeatures.filter(f => 
-        f.name.toLowerCase().includes(query.toLowerCase()) ||
-        f.description.toLowerCase().includes(query.toLowerCase())
-      );
-      return { success: true, results };
-    },
-  },
-  {
-    id: 'getFeatureInfo',
-    name: 'Info Fitur',
-    description: 'Berikan detail tentang fitur tertentu',
-    execute: (featureId: string) => {
-      const feature = appFeatures.find(f => f.id === featureId);
-      return feature || null;
-    },
-  },
-  {
-    id: 'listFeatures',
-    name: 'List Semua Fitur',
-    description: 'Berikan daftar semua fitur aplikasi',
-    execute: (category?: string) => {
-      if (category) {
-        return appFeatures.filter(f => f.category === category);
-      }
-      return appFeatures;
-    },
-  },
-  {
-    id: 'calculate',
-    name: 'Kalkulasi Teknik',
-    description: 'Lakukan kalkulasi teknik sederhana',
-    execute: (params: { type: string; params: any }) => {
-      const { type, params: p } = params;
-      switch (type) {
-        case 'concrete':
-          const volume = p.length * p.width * p.height;
-          const cement = volume * p.ratio;
-          return { volume, cement, sand: volume * 2, aggregate: volume * 4 };
-        default:
-          return { error: 'Kalkulasi tidak dikenal' };
-      }
-    },
-  },
+  { id: 'leaderboard', name: 'Leaderboard', description: 'Peringkat learner terbaik', path: '/leaderboard', icon: '🏆', category: 'profile' },
 ];
 
 const AgenticAIContext = createContext<AgenticAIContextType | undefined>(undefined);
 
-function generateResponse(userMessage: string, features: AppFeature[]): { content: string; suggestions?: AgentSuggestion[]; toolsUsed?: string[] } {
+function buildSystemPrompt(): string {
+  return `Anda adalah Agentic AI BimtekKita, asisten AI profesional untuk platform pelatihan konstruksi Indonesia.
+
+Tentang BimtekKita:
+- Platform pelatihan dan sertifikasi bidang konstruksi
+- 67+ modul BIMTEK
+- 65+ soal quiz
+- 334+ posisi sertifikasi
+- 8 Expert Agents
+- Event offline (Bimtek Offline)
+- Tools: Solver, RAB Calculator, Mix Design
+
+Fitur aplikasi:
+- /dashboard - Ringkasan progress
+- /bimtek - Modul pelatihan
+- /quiz - Latihan soal
+- /sertifikasi - Persyaratan SKK
+- /offline - Event offline
+- /chat - Expert Agents
+- /leaderboard - Peringkat
+
+Anda bisa:
+1. Menjawab pertanyaan tentang konstruksi
+2. Membantu navigasi ke fitur aplikasi
+3. Memberikan saran pembelajaran
+4. Menjelaskan materi teknis (K3, Struktur, Manajemen, dll)
+
+Selalu berikan jawaban yang helpful, accurate, dan dalam bahasa Indonesia yang baik.`;
+}
+
+async function callOpenAIAPI(apiKey: string, message: string, history: ChatMessage[]): Promise<string> {
+  const systemPrompt = buildSystemPrompt();
+  
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history.slice(-10).map(m => ({ role: m.role, content: m.content })),
+    { role: 'user', content: message }
+  ];
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages,
+      max_tokens: 1000,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content || 'Maaf, saya tidak dapat memproses permintaan Anda.';
+}
+
+function generateRuleBasedResponse(userMessage: string): { content: string; suggestions?: AgentSuggestion[] } {
   const lowerMessage = userMessage.toLowerCase();
   let response = '';
   let suggestions: AgentSuggestion[] = [];
-  const toolsUsed: string[] = [];
-  
-  toolsUsed.push('getFeatureInfo');
   
   if (lowerMessage.includes('halo') || lowerMessage.includes('hi') || lowerMessage.includes('halo')) {
     response = `Halo! Saya Agentic AI BimtekKita 🤖
@@ -149,7 +150,9 @@ Coba tanyakan sesuatu, например:
 - "Apa saja fitur di aplikasi ini?"
 - "Bagaimana cara belajar BIMTEK?"
 - "Bawa saya ke halaman Quiz"
-- "Apa saja persyaratan sertifikasi?"`;
+- "Apa saja persyaratan sertifikasi?"
+
+${localStorage.getItem('openai_api_key') ? '✅ API Key telah dikonfigurasi - Anda bisa bertanya apapun!' : '⚠️ API Key belum dikonfigurasi - Responses masih berbasis aturan. Konfigurasi di Settings untuk pengalaman lebih baik!'}`;
     
     suggestions = [
       { id: '1', type: 'information', title: 'Fitur Aplikasi', description: 'Lihat semua fitur', action: () => {} },
@@ -157,36 +160,32 @@ Coba tanyakan sesuatu, например:
     ];
   }
   else if (lowerMessage.includes('fitur') || lowerMessage.includes('ada apa') || lowerMessage.includes('menu')) {
-    toolsUsed.push('listFeatures');
     response = `📱 **Fitur-fitur BimtekKita:**
 
 **🎓 Pembelajaran:**
-• BIMTEK - 67+ modul pelatihan dengan AI companion
+• BIMTEK - 67+ modul pelatihan
 • Quiz - 65+ soal latihan
 • Knowledge Base - Artikel konstruksi
 • Chat dengan 8 Expert Agents
 
 **🔧 Tools:**
-• Solver - Kalkulator teknik (balok, kolom, fondasi)
-• Tools - RAB & Mix Design calculator
+• Solver - Kalkulator teknik
+• Tools - RAB & Mix Design
 
 **📋 Sertifikasi:**
 • Sertifikasi - 334+ posisi pekerjaan
 • Certify - Panduan 5 langkah
-• Matrix - Hubungan jabatan & subklasifikasi
-• Bimtek Offline - Event pelatihan offline
+• Matrix - Hubungan jabatan
+• Bimtek Offline - Event pelatihan
 
 **👤 Profile:**
-• Dashboard, Profile, Achievements
-• Calendar, Streak, Bookmarks
-• Activity Log, Settings
-
-Anda ingin ke halaman tertentu atau tahu lebih banyak tentang fitur tertentu?`;
+• Dashboard, Achievements, Calendar
+• Streak, Bookmarks, Leaderboard`;
     
     suggestions = [
-      { id: 'bimtek', type: 'navigation', title: 'BIMTEK', description: '67+ modul', action: () => window.location.href = '/bimtek' },
-      { id: 'quiz', type: 'navigation', title: 'Quiz', description: 'Latihan soal', action: () => window.location.href = '/quiz' },
-      { id: 'sertifikasi', type: 'navigation', title: 'Sertifikasi', description: 'Persyaratan SKK', action: () => window.location.href = '/sertifikasi' },
+      { id: 'bimtek', type: 'navigation', title: 'Ke BIMTEK', description: '67+ modul', action: () => window.location.href = '/bimtek' },
+      { id: 'quiz', type: 'navigation', title: 'Ke Quiz', description: 'Latihan soal', action: () => window.location.href = '/quiz' },
+      { id: 'sertifikasi', type: 'navigation', title: 'Ke Sertifikasi', description: 'Persyaratan SKK', action: () => window.location.href = '/sertifikasi' },
     ];
   }
   else if (lowerMessage.includes('bimtek') || lowerMessage.includes('modul') || lowerMessage.includes('belajar')) {
@@ -194,7 +193,7 @@ Anda ingin ke halaman tertentu atau tahu lebih banyak tentang fitur tertentu?`;
 
 BimtekKita menawarkan **67+ modul pelatihan** 包括:
 
-**Kategori Teknik:**
+**Kategori:**
 • Struktur Beton & Baja
 • Fondasi
 • Manajemen Proyek
@@ -202,48 +201,16 @@ BimtekKita menawarkan **67+ modul pelatihan** 包括:
 • Instalasi Listrik
 • Plumbing & HVAC
 
-**Fitur BIMTEK:**
-• ✅ AI Learning Companion - Mentor AI per modul
-• ✅ PKB Tracker - Lacak progress pelatihan
+**Fitur:**
+• ✅ AI Learning Companion
+• ✅ PKB Tracker
 • ✅ Sertifikat completion
 • ✅ Bookmark favorit
 
-**Cara Menggunakan:**
-1. Pilih modul dari /bimtek
-2. Pelajari materi per lesson
-3. Tandai lesson selesai
-4. Diskusi dengan AI Companion jika ada pertanyaan
-
-Anda ingin mulai belajar modul tertentu?`;
+Gunakan /bimtek untuk mulai belajar!`;
     
     suggestions = [
       { id: 'bimtek-list', type: 'navigation', title: 'Ke BIMTEK', description: 'Pilih modul', action: () => window.location.href = '/bimtek' },
-      { id: 'ai-companion', type: 'information', title: 'AI Companion', description: 'Tentang mentor AI', action: () => {} },
-    ];
-  }
-  else if (lowerMessage.includes('quiz') || lowerMessage.includes('soal') || lowerMessage.includes('latihan')) {
-    response = `✍️ **Quiz - Latihan SoaL**
-
-Tersedia **65+ soal** dalam **13 kategori** 包括:
-
-**Kategori Quiz:**
-• K3 Konstruksi
-• Struktur Beton
-• Manajemen Proyek
-• Kelistrikan
-• Plumbing
-• Dan lainnya...
-
-**Fitur:**
-• Best score tracking per kategori
-• Review jawaban salah
-• Timer per soal
-• Ringkasan hasil
-
-Anda ingin mencoba quiz sekarang?`;
-    
-    suggestions = [
-      { id: 'quiz-start', type: 'navigation', title: 'Mulai Quiz', description: 'Ke halaman quiz', action: () => window.location.href = '/quiz' },
     ];
   }
   else if (lowerMessage.includes('sertifikasi') || lowerMessage.includes('skk') || lowerMessage.includes('bnsp')) {
@@ -251,129 +218,67 @@ Anda ingin mencoba quiz sekarang?`;
 
 BimtekKita menyediakan **334+ posisi pekerjaan** dengan persyaratan SKK.
 
-**Jenis Sertifikasi:**
-• SKK (Sertifikat Kompetensi Kerja) - BNP
+**Jenis:**
+• SKK (SNI) - BNP
 • BNSP - Sertifikasi nasional
-• LSP - Lembaga sertifikasi profesi
+• LSP - Lembaga sertifikasi
 
-**Gunakan fitur:**
-• /sertifikasi - Cari posisi & persyaratan
-• /certify - Panduan 5 langkah
-• /matrix - Hubungan jabatan & subklasifikasi
-• /offline - Daftar Bimtek Offline
-
-**Tingkat SKK:**
+**Tingkat:**
 • Jenjang 1 (Terlatih)
 • Jenjang 2 (Mahir)
 • Jenjang 3 (Ahli)
 • Jenjang 4 (Ahli Utama)
 
-Butuh bantuan menemukan sertifikasi yang tepat?`;
+Gunakan /sertifikasi untuk cari posisi!`;
     
     suggestions = [
-      { id: 'sertifikasi', type: 'navigation', title: 'Cari Sertifikasi', description: '334+ posisi', action: () => window.location.href = '/sertifikasi' },
+      { id: 'sertifikasi', type: 'navigation', title: 'Ke Sertifikasi', description: '334+ posisi', action: () => window.location.href = '/sertifikasi' },
       { id: 'certify', type: 'navigation', title: 'Panduan Certify', description: '5 langkah', action: () => window.location.href = '/certify' },
     ];
   }
-  else if (lowerMessage.includes('k3') || lowerMessage.includes('keselamatan') || lowerMessage.includes('safety') || lowerMessage.includes('amdal')) {
-    response = `🦺 **K3 & Keselamatan Kerja**
-
-Topik K3 yang tersedia di BimtekKita:
-
-**Materi K3:**
-• K3 Konstruksi Gedung
-• K3 Pekerjaan Tinggi
-• K3 Listrik
-• Safety Induction
-• APD (Alat Pelindung Diri)
-
-**Fitur Terkait:**
-• Quiz K3 - 10+ soal
-• Knowledge Base K3
-• Chat dengan Expert K3
-• Bimtek Offline K3
-
-**Link Terkait:**
-• /bimtek (cari "K3")
-• /knowledge-base (artikel K3)
-• /chat ( Expert K3)`;
-    
-    suggestions = [
-      { id: 'bimtek-k3', type: 'navigation', title: 'BIMTEK K3', description: 'Modul K3', action: () => window.location.href = '/bimtek' },
-      { id: 'chat-k3', type: 'navigation', title: 'Expert K3', description: 'Konsultasi', action: () => window.location.href = '/chat' },
-    ];
-  }
-  else if (lowerMessage.includes('offline') || lowerMessage.includes('event') || lowerMessage.includes('pelatihan offline')) {
+  else if (lowerMessage.includes('offline') || lowerMessage.includes('event')) {
     response = `📍 **Bimtek Offline**
 
-Event pelatihan offline terdekat Anda:
-
-**Fitur:**
-• Cari event berdasarkan kota
-• Filter berdasarkan kategori
-• Daftar langsung
-• Tracking kehadiran
-• Sertifikat otomatis
-
-**Event Tersedia:**
+Event pelatihan offline terdekat:
 • Jakarta - K3 Konstruksi
 • Surabaya - Struktur Beton
 • Bandung - Manajemen Proyek
 • Denpasar - Instalasi Listrik
 
-Gunakan /offline untuk melihat event lengkap!`;
+Gunakan /offline untuk lihat event!`;
     
     suggestions = [
-      { id: 'offline', type: 'navigation', title: 'Lihat Event', description: 'Semua event', action: () => window.location.href = '/offline' },
-      { id: 'offline-create', type: 'navigation', title: 'Buat Event', description: 'Jadilah instruktur', action: () => window.location.href = '/offline/create' },
+      { id: 'offline', type: 'navigation', title: 'Ke Offline', description: 'Lihat event', action: () => window.location.href = '/offline' },
     ];
   }
-  else if (lowerMessage.includes('hitung') || lowerMessage.includes('kalkulator') || lowerMessage.includes('solver') || lowerMessage.includes('hitung')) {
-    response = `🔧 **Kalkulator & Tools**
+  else if (lowerMessage.includes('k3') || lowerMessage.includes('keselamatan')) {
+    response = `🦺 **K3 & Keselamatan Kerja**
 
-**Solver (6 Template):**
-• Balok Beton Bertulang
-• Kolom
-• Fondasi
-• Mix Design Beton
-• Cut & Fill Tanah
-• Ramp / Landasan
+Topik K3 tersedia:
+• K3 Konstruksi Gedung
+• K3 Pekerjaan Tinggi
+• K3 Listrik
+• Safety Induction
+• APD
 
-**Tools:**
-• RAB Calculator - Buat rencana anggaran
-• Mix Design - Desain mix beton
-
-Akses: /solver atau /tools`;
+Gunakan /bimtek atau /chat dengan Expert K3!`;
     
     suggestions = [
-      { id: 'solver', type: 'navigation', title: 'Ke Solver', description: 'Kalkulator teknik', action: () => window.location.href = '/solver' },
-      { id: 'tools', type: 'navigation', title: 'Ke Tools', description: 'RAB & Mix', action: () => window.location.href = '/tools' },
+      { id: 'bimtek-k3', type: 'navigation', title: 'BIMTEK K3', description: 'Modul K3', action: () => window.location.href = '/bimtek' },
     ];
   }
-  else if (lowerMessage.includes('bawa') || lowerMessage.includes('ke') || lowerMessage.includes('pergi') || lowerMessage.includes('akses')) {
+  else if (lowerMessage.includes('bawa') || lowerMessage.includes('ke') || lowerMessage.includes('pergi')) {
     const paths: Record<string, string> = {
-      'dashboard': '/dashboard',
-      'bimtek': '/bimtek',
-      'quiz': '/quiz',
-      'solver': '/solver',
-      'tools': '/tools',
-      'matrix': '/matrix',
-      'sertifikasi': '/sertifikasi',
-      'certify': '/certify',
-      'chat': '/chat',
-      'offline': '/offline',
-      'profile': '/profile',
-      'achievements': '/achievements',
-      'calendar': '/calendar',
-      'settings': '/settings',
-      'bookmarks': '/bookmarks',
-      'activity': '/activity',
-      'knowledge': '/knowledge-base',
+      'dashboard': '/dashboard', 'bimtek': '/bimtek', 'quiz': '/quiz',
+      'solver': '/solver', 'tools': '/tools', 'matrix': '/matrix',
+      'sertifikasi': '/sertifikasi', 'certify': '/certify', 'chat': '/chat',
+      'offline': '/offline', 'profile': '/profile', 'achievements': '/achievements',
+      'calendar': '/calendar', 'settings': '/settings', 'bookmarks': '/bookmarks',
+      'activity': '/activity', 'knowledge': '/knowledge-base', 'leaderboard': '/leaderboard',
     };
     
     for (const [key, path] of Object.entries(paths)) {
       if (lowerMessage.includes(key)) {
-        toolsUsed.push('navigate');
         response = `MengNavigasi ke ${path}...`;
         window.location.href = path;
         break;
@@ -382,92 +287,50 @@ Akses: /solver atau /tools`;
     
     if (!response) {
       response = `Saya bisa membawa Anda ke halaman manapun. Coba katakan:
-• "Ke BIMTEK"
-• "Ke Quiz"
-• "Ke Dashboard"
-• "Buka Profile"`;
+• "Ke BIMTEK", "Ke Quiz", "Ke Dashboard"`;
     }
-  }
-  else if (lowerMessage.includes('achievement') || lowerMessage.includes('streak') || lowerMessage.includes('progress')) {
-    response = `🏆 **Progress & Achievements**
-
-**Fitur Tracking:**
-• 📊 Dashboard - Ringkasan lengkap
-• 🔥 Streak - Hari berturut-turut belajar
-• 🏅 Achievements - 14 achievement
-• 📅 Calendar - Aktivitas harian
-• 📝 Activity Log - Riwayat lengkap
-
-**Contoh Achievement:**
-• 🎯 First Quiz - Selesaikan quiz pertama
-• 📚 Scholar - Selesaikan 10 modul BIMTEK
-• 🔥 On Fire - Streak 7 hari
-• 📖 Bookworm - Bookmark 10 konten
-
-Cek progress Anda di /dashboard!`;
-    
-    suggestions = [
-      { id: 'dashboard', type: 'navigation', title: 'Dashboard', description: 'Lihat progress', action: () => window.location.href = '/dashboard' },
-      { id: 'achievements', type: 'navigation', title: 'Achievements', description: 'Lihat achievement', action: () => window.location.href = '/achievements' },
-    ];
-  }
-  else if (lowerMessage.includes('ai') || lowerMessage.includes('chatbot') || lowerMessage.includes('expert')) {
-    response = `💬 **AI Chat System**
-
-BimtekKita memiliki **8 Expert Agents**:
-
-1. 🏗️ Ahli Teknik Sipil
-2. 🏛️ Arsitek & Interior
-3. ⚙️ Teknik Mekanikal
-4. ⚡ Teknik Elektrikal
-5. 🦺 K3 Konstruksi
-6. 📊 Manajemen Proyek
-7. 📜 Sertifikasi & Regulasi
-8. 🌿 Tata Lingkungan
-
-Setiap expert memiliki **toolbox** untuk kalkulasi spesifik.
-
-Gunakan /chat untuk konsultasi!`;
-    
-    suggestions = [
-      { id: 'chat', type: 'navigation', title: 'Ke Chat', description: 'Konsultasi expert', action: () => window.location.href = '/chat' },
-    ];
   }
   else {
     response = `🤖 **Agentic AI BimtekKita**
 
-Saya mengerti "${userMessage}". Saya bisa membantu Anda dengan:
+Saya mengerti "${userMessage}". 
 
-**Navigasi & Aksi:**
-• "Ke BIMTEK", "Buka Quiz", "Ke Profile"
-• "Cari modul struktur beton"
-• "Buat event offline"
+Saya bisa membantu Anda dengan:
+• Navigasi: "Ke BIMTEK", "Ke Quiz"
+• Informasi: "Apa itu SKK?", "Berapa banyak modul?"
+• Saran: "Apa yang harus saya belajar?"
 
-**Informasi:**
-• "Apa itu SKK?"
-• "Berapa banyak modul BIMTEK?"
-• "Bagaimana cara sertifikasi?"
-
-**Saran:**
-• "Apa yang harus saya belajar hari ini?"
-• "Modul apa yang cocok untuk saya?"
-
-Coba tanyakan lagi dengan lebih spesifik!`;
+⚠️ **Tips**: Konfigurasi API Key di Settings untuk responses yang lebih intelligent!`;
     
     suggestions = [
       { id: 'bimtek', type: 'navigation', title: 'Jelajahi BIMTEK', description: '67+ modul', action: () => window.location.href = '/bimtek' },
-      { id: 'features', type: 'information', title: 'Lihat Semua Fitur', description: 'Menu lengkap', action: () => {} },
+      { id: 'settings', type: 'navigation', title: 'Pengaturan API', description: 'Konfigurasi AI', action: () => window.location.href = '/settings' },
     ];
   }
   
-  return { content: response, suggestions, toolsUsed };
+  return { content: response, suggestions };
 }
 
 export function AgenticAIProvider({ children }: { children: ReactNode }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'welcome', role: 'assistant', content: '', timestamp: new Date() }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [apiKey, setApiKeyState] = useState('');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem('openai_api_key') || '';
+    setApiKeyState(savedKey);
+    setIsHydrated(true);
+  }, []);
+
+  const setApiKey = (key: string) => {
+    setApiKeyState(key);
+    if (key) {
+      localStorage.setItem('openai_api_key', key);
+    } else {
+      localStorage.removeItem('openai_api_key');
+    }
+  };
 
   const addMessage = (content: string, role: 'user' | 'assistant' | 'system') => {
     const newMessage: ChatMessage = {
@@ -483,31 +346,61 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
     addMessage(content, 'user');
     setIsProcessing(true);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const userMessage = content;
+    const history = messages;
 
-    const { content: response, suggestions, toolsUsed } = generateResponse(content, appFeatures);
+    try {
+      let response: string;
+      
+      if (apiKey && apiKey.trim()) {
+        try {
+          response = await callOpenAIAPI(apiKey, userMessage, history);
+        } catch (apiError) {
+          console.error('API Error:', apiError);
+          const fallback = generateRuleBasedResponse(userMessage);
+          response = fallback.content + '\n\n⚠️ API Error - Menggunakan responses aturan.';
+        }
+      } else {
+        const ruleBased = generateRuleBasedResponse(userMessage);
+        response = ruleBased.content;
+      }
+
+      const suggestions = generateRuleBasedResponse(userMessage).suggestions;
+      
+      const responseMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date(),
+        suggestions,
+        toolsUsed: apiKey ? ['OpenAI API'] : ['Rule-based'],
+      };
+      
+      setMessages(prev => [...prev, responseMessage]);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
     
-    const responseMessage: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: response,
-      timestamp: new Date(),
-      suggestions,
-      toolsUsed,
-    };
-    
-    setMessages(prev => [...prev, responseMessage]);
     setIsProcessing(false);
   };
 
   const clearMessages = () => {
-    setMessages([{ id: 'welcome', role: 'assistant', content: '', timestamp: new Date() }]);
+    setMessages([]);
   };
 
   return (
     <AgenticAIContext.Provider value={{
       messages,
       isProcessing,
+      apiKey,
+      setApiKey,
       addMessage,
       processMessage,
       clearMessages,
