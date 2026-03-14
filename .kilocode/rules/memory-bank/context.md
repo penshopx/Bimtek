@@ -87,6 +87,16 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] Status display (valid/invalid/error)
   - [x] Cost estimation display
   - [x] Navbar includes Chatbot Builder link
+- [x] Permen PU No. 7/2024 Content
+  - [x] Personil Managerial - 18 modules (PJBU, PJT, PJKB, PJSKBBU, Manajer Keuangan, Manajer Pengadaan, Manajer Rantai Pasok, Petugas K3)
+  - [x] Pengadaan & Tender - 10 modules
+  - [x] LKUT - 8 modules
+- [x] Sertifikasi - Extended Positions
+  - [x] PJBU, PJT, PJKB, PJSKBBU positions
+  - [x] Manajer Keuangan, Pengadaan, Rantai Pasok
+  - [x] Petugas K3, Ahli K3, P2K3
+  - [x] Pengadaan positions (Pejabat, Pokja, Evaluator)
+  - [x] LKUT positions (Penyusun, Validator, Auditor)
 
 ## Architecture
 - Next.js 16 with App Router
@@ -111,3 +121,5 @@ Complete construction training platform with AI chatbot system built and deploye
 | 2026-03-14 | Enhanced Chatbot Builder - 7 tabs (Identity, Welcome, Personality, AI Model, Agentic AI, Knowledge Base, Project Brain) |
 | 2026-03-14 | Integrated API Key system - Settings page with test button, validation, status display, cost estimation |
 | 2026-03-14 | Created Chatbot Detail page - Chat interface for custom chatbots with API key integration |
+| 2026-03-14 | Added Permen PU No. 7/2024 content - Personil Managerial (18 modules), Pengadaan & Tender (10 modules), LKUT (8 modules) |
+| 2026-03-14 | Added new certification positions - PJBU, PJT, PJKB, PJSKBBU, Manager, K3, Pengadaan, LKUT |

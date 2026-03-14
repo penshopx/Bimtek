@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const bimtekModules = [
-  { id: 'sipil-gedung-1', title: 'Teknik Fondasi Gedung', category: 'Sipil Gedung', pkb: 10, duration: '4 jam', level: 'Ahli' },
+  { id: 'sipil-gedung-1', title: 'Teknik Fondasi gedung', category: 'Sipil Gedung', pkb: 10, duration: '4 jam', level: 'Ahli' },
   { id: 'sipil-gedung-2', title: 'Struktur Beton Bertulang', category: 'Sipil Gedung', pkb: 12, duration: '6 jam', level: 'Ahli' },
   { id: 'sipil-gedung-3', title: 'Struktur Baja Gedung', category: 'Sipil Gedung', pkb: 12, duration: '6 jam', level: 'Ahli' },
   { id: 'sipil-gedung-4', title: 'Konstruksi Jalan Raya', category: 'Sipil Gedung', pkb: 10, duration: '4 jam', level: 'Ahli' },
@@ -70,9 +70,48 @@ const bimtekModules = [
   { id: 'sertifikasi-1', title: 'SKKNI Konstruksi', category: 'Sertifikasi', pkb: 8, duration: '4 jam', level: 'Ahli' },
   { id: 'sertifikasi-2', title: 'Proses Sertifikasi BNSP', category: 'Sertifikasi', pkb: 6, duration: '3 jam', level: 'Ahli' },
   { id: 'sertifikasi-3', title: 'Asesmen Kompetensi', category: 'Sertifikasi', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  // === PELATIHAN PERSONIL MANAGERIAL - PERMEN PU NO 7 TAHUN 2024 ===
+  { id: 'managerial-1', title: 'Penanggung Jawab Badan Usaha (PJBU)', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'PJBU' },
+  { id: 'managerial-2', title: 'Persyaratan PJBU berdasarkan Permen PU 7/2024', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'PJBU' },
+  { id: 'managerial-3', title: 'Kewajiban dan Tanggung Jawab PJBU', category: 'Personil Managerial', pkb: 10, duration: '6 jam', level: 'PJBU' },
+  { id: 'managerial-4', title: 'Penanggung Jawab Teknik (PJT)', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'PJT' },
+  { id: 'managerial-5', title: 'Kompetensi Teknis PJT', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'PJT' },
+  { id: 'managerial-6', title: 'Pengawasan Pelaksanaan Pekerjaan PJT', category: 'Personil Managerial', pkb: 10, duration: '6 jam', level: 'PJT' },
+  { id: 'managerial-7', title: 'Penanggung Jawab Bidang (PJKB)', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'PJKB' },
+  { id: 'managerial-8', title: 'Kualifikasi Bidang Keahlian PJKB', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'PJKB' },
+  { id: 'managerial-9', title: 'Penanggung Jawab Subklasifikasi Badan Usaha (PJSKBBU)', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'PJSKBBU' },
+  { id: 'managerial-10', title: 'Registrasi dan Validasi PJSKBBU', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'PJSKBBU' },
+  { id: 'managerial-11', title: 'Manajer Keuangan Badan Usaha', category: 'Personil Managerial', pkb: 18, duration: '10 jam', level: 'Manager' },
+  { id: 'managerial-12', title: 'Sistem Akuntansi Keuangan', category: 'Personil Managerial', pkb: 12, duration: '6 jam', level: 'Manager' },
+  { id: 'managerial-13', title: 'Manajer Pengadaan (Procurement)', category: 'Personil Managerial', pkb: 18, duration: '10 jam', level: 'Manager' },
+  { id: 'managerial-14', title: 'Etika dan Prosedur Pengadaan', category: 'Personil Managerial', pkb: 12, duration: '6 jam', level: 'Manager' },
+  { id: 'managerial-15', title: 'Manajer Rantai Pasok Material dan Peralatan', category: 'Personil Managerial', pkb: 18, duration: '10 jam', level: 'Manager' },
+  { id: 'managerial-16', title: 'Manajemen Logistik Proyek', category: 'Personil Managerial', pkb: 12, duration: '6 jam', level: 'Manager' },
+  { id: 'managerial-17', title: 'Petugas K3 Konstruksi', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'K3' },
+  { id: 'managerial-18', title: 'P2K3 dan Pembinaan K3', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'K3' },
+  // === BIMTEK PENGADAAN DAN TENDER ===
+  { id: 'pengadaan-1', title: 'Dasar-dasar Pengadaan Barang/Jasa', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'pengadaan-2', title: 'Perpres 16/2018 dan perubahannya', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'pengadaan-3', title: 'Metode Pemilihan Penyedia', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-4', title: 'Penyusunan Dokumen Tender', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'pengadaan-5', title: 'Evaluasi Penawaran', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'pengadaan-6', title: 'Kontrak Pengadaan', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-7', title: 'E-Procurement dan LPSE', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-8', title: 'Pengadaan Melalui Penyedia', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'pengadaan-9', title: 'Swakelola dan PK', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'pengadaan-10', title: 'Penyelesaian Sengketa Pengadaan', category: 'Pengadaan & Tender', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  // === BIMTEK LKUT (LAPORAN KEGIATAN USAHA TAHUNAN) ===
+  { id: 'lkut-1', title: 'Pengantar LKUT', category: 'LKUT', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'lkut-2', title: 'Format dan Isi LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'lkut-3', title: 'Penyusunan Laporan Keuangan', category: 'LKUT', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'lkut-4', title: 'Pelaporan Kegiatan Usaha', category: 'LKUT', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'lkut-5', title: 'Persyaratan Submit LKUT', category: 'LKUT', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'lkut-6', title: 'Sanksi Adminstratif LKUT', category: 'LKUT', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  { id: 'lkut-7', title: 'Verifikasi dan Validasi LKUT', category: 'LKUT', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'lkut-8', title: 'Teknis Pengisian Data LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli' },
 ];
 
-const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi'];
+const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi', 'Personil Managerial', 'Pengadaan & Tender', 'LKUT'];
 
 export default function BimtekPage() {
   const router = useRouter();

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 const jobPositions = [
+  // === ORIGINAL POSITIONS ===
   { id: 'B001', name: 'Ahli Madya Teknik Bangunan Gedung', level: 'Ahli Madya', subklasifikasi: 'B', requirements: ['S1 Teknik Sipil/Arsitektur', 'Pengalaman 5 tahun', 'SKK Level 7'] },
   { id: 'B002', name: 'Ahli Teknik Bangunan Gedung', level: 'Ahli', subklasifikasi: 'B', requirements: ['S1 Teknik Sipil/Arsitektur', 'Pengalaman 3 tahun', 'SKK Level 6'] },
   { id: 'B003', name: 'Teknisi Teknik Bangunan Gedung', level: 'Teknisi', subklasifikasi: 'B', requirements: ['D3/SMK Teknik Bangunan', 'Pengalaman 2 tahun', 'SKK Level 3'] },
@@ -40,10 +41,33 @@ const jobPositions = [
   { id: 'G004', name: 'Ahli Struktur Jembatan', level: 'Ahli', subklasifikasi: 'G', requirements: ['S1 Teknik Sipil', 'Pengalaman 5 tahun', 'SKK Level 7'] },
   { id: 'H001', name: 'Ahli Benda Cagar Budaya', level: 'Ahli', subklasifikasi: 'H', requirements: ['S1 Arsitektur/Sejarah', 'Pengalaman 3 tahun', 'SKK Level 6'] },
   { id: 'H002', name: 'Teknisi Benda Cagar Budaya', level: 'Teknisi', subklasifikasi: 'H', requirements: ['D3/SMK', 'Pengalaman 2 tahun', 'SKK Level 3'] },
+  // === PERSONIL MANAGERIAL - PERMEN PU NO 7 TAHUN 2024 ===
+  { id: 'MG001', name: 'Penanggung Jawab Badan Usaha (PJBU)', level: 'PJBU', subklasifikasi: 'MG', requirements: ['S1 Teknik', 'Pengalaman 10 tahun di konstruksi', 'SKK Level 9', 'Memiliki NUPTK'] },
+  { id: 'MG002', name: 'Penanggung Jawab Teknik (PJT)', level: 'PJT', subklasifikasi: 'MG', requirements: ['S1 Teknik relevan', 'Pengalaman 7 tahun', 'SKK Level 8', 'Sertifikasi bidang keahlian'] },
+  { id: 'MG003', name: 'Penanggung Jawab Bidang (PJKB)', level: 'PJKB', subklasifikasi: 'MG', requirements: ['S1 Teknik relevan', 'Pengalaman 5 tahun', 'SKK Level 7', 'Sertifikasi bidang'] },
+  { id: 'MG004', name: 'Penanggung Jawab Subklasifikasi (PJSKBBU)', level: 'PJSKBBU', subklasifikasi: 'MG', requirements: ['S1/D4 Teknik', 'Pengalaman 3 tahun', 'SKK Level 6', 'Bidang subklasifikasi'] },
+  { id: 'MG005', name: 'Manajer Keuangan', level: 'Manager', subklasifikasi: 'MG', requirements: ['S1 Akuntansi/Ekonomi', 'Pengalaman 5 tahun', 'SKK Level 7', 'Memahami keuangan konstruksi'] },
+  { id: 'MG006', name: 'Manajer Pengadaan (Procurement)', level: 'Manager', subklasifikasi: 'MG', requirements: ['S1 Teknik/Ekonomi', 'Pengalaman 5 tahun', 'SKK Level 7', 'Sertifikasi pengadaan'] },
+  { id: 'MG007', name: 'Manajer Rantai Pasok Material', level: 'Manager', subklasifikasi: 'MG', requirements: ['S1 Teknik/Logistik', 'Pengalaman 4 tahun', 'SKK Level 6', 'Memahami supply chain'] },
+  { id: 'MG008', name: 'Petugas K3 Konstruksi', level: 'K3', subklasifikasi: 'MG', requirements: ['SMA/D3/S1', 'Pelatihan K3 konstruksi 40 jam', 'Pengalaman 2 tahun', 'Sertifikasi K3'] },
+  { id: 'MG009', name: 'Ahli K3 Konstruksi', level: 'Ahli', subklasifikasi: 'MG', requirements: ['S1 Teknik', 'Pelatihan K3 80 jam', 'Pengalaman 5 tahun', 'SKK Level 7'] },
+  { id: 'MG010', name: 'P2K3 (Panitia Pembina K3)', level: 'K3', subklasifikasi: 'MG', requirements: ['S1 Teknik', 'Pelatihan K3 40 jam', 'Pengalaman 3 tahun', 'Ditunjuk perusahaan'] },
+  // === PENGADAAN DAN TENDER ===
+  { id: 'PN001', name: 'Pejabat Pengadaan', level: 'Ahli', subklasifikasi: 'PN', requirements: ['S1 Teknik/Ekonomi', 'Sertifikasi pengadaan', 'Pengalaman 3 tahun', 'SKK Level 5'] },
+  { id: 'PN002', name: 'Pokja Pemilihan', level: 'Ahli', subklasifikasi: 'PN', requirements: ['S1 Teknik/Ekonomi', 'Sertifikasi pengadaan', 'Pengalaman 2 tahun', 'SKK Level 4'] },
+  { id: 'PN003', name: 'Penyusun Dokumen Tender', level: 'Ahli', subklasifikasi: 'PN', requirements: ['S1 Teknik', 'Pengalaman 3 tahun', 'SKK Level 5', 'Memahami SNI/SPI'] },
+  { id: 'PN004', name: 'Evaluator Tender', level: 'Ahli', subklasifikasi: 'PN', requirements: ['S1 Teknik/Ekonomi', 'Sertifikasi evaluator', 'Pengalaman 3 tahun', 'SKK Level 6'] },
+  { id: 'PN005', name: 'Kontraktor Utama', level: 'Ahli Utama', subklasifikasi: 'PN', requirements: ['SBU Terbit', 'Kualifikasi Besar', 'Nilai proyek > 10M', 'Personil lengkap'] },
+  { id: 'PN006', name: 'Kontraktor Menengah', level: 'Ahli', subklasifikasi: 'PN', requirements: ['SBU Terbit', 'Kualifikasi Menengah', 'Nilai proyek 1-10M', 'Personil sesuai'] },
+  { id: 'PN007', name: 'Kontraktor Kecil', level: 'Teknisi', subklasifikasi: 'PN', requirements: ['SBU Terbit', 'Kualifikasi Kecil', 'Nilai proyek < 1M', 'Personil minimal'] },
+  // === LKUT - LAPORAN KEGIATAN USAHA TAHUNAN ===
+  { id: 'LK001', name: 'Penyusun LKUT', level: 'Ahli', subklasifikasi: 'LK', requirements: ['S1 Akuntansi/Ekonomi', 'Memahami laporan keuangan', 'Pengalaman 3 tahun', 'Terlatih LKUT'] },
+  { id: 'LK002', name: 'Validator LKUT', level: 'Ahli', subklasifikasi: 'LK', requirements: ['S1 Akuntansi', 'Sertifikasi validator', 'Pengalaman 5 tahun', 'Memahami regulasi PU'] },
+  { id: 'LK003', name: 'Auditor LKUT', level: 'Ahli', subklasifikasi: 'LK', requirements: ['S1 Akuntansi', 'Sertifikasi auditor', 'Pengalaman 7 tahun', 'CPA/CA'] },
 ];
 
-const levels = ['Semua', 'Ahli Madya', 'Ahli', 'Supervisor', 'Manager', 'Teknisi', 'Pelaksana'];
-const subklasifikasis = ['Semua', 'B - Gedung', 'C - Sipil', 'D - Mekanikal', 'E - Elektrikal', 'F - Jalan', 'G - Jembatan', 'H - Benda'];
+const levels = ['Semua', 'Ahli Utama', 'Ahli Madya', 'Ahli', 'Supervisor', 'Manager', 'PJBU', 'PJT', 'PJKB', 'PJSKBBU', 'K3', 'Teknisi', 'Pelaksana'];
+const subklasifikasis = ['Semua', 'B - Gedung', 'C - Sipil', 'D - Mekanikal', 'E - Elektrikal', 'F - Jalan', 'G - Jembatan', 'H - Benda', 'MG - Personil Managerial', 'PN - Pengadaan', 'LK - LKUT'];
 
 export default function SertifikasiPage() {
   const [search, setSearch] = useState('');
