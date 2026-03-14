@@ -6,10 +6,12 @@ import { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { SearchModal, SearchButton } from './Search';
 import { useAuth } from './AuthProvider';
+import { NotificationBell } from './NotificationBell';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/', label: 'Beranda', icon: '🏠' },
+  { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
   { href: '/agentic-chat', label: 'Agentic AI', icon: '🤖' },
   { href: '/offline', label: 'Bimtek Offline', icon: '📍' },
   { href: '/knowledge-base', label: 'Knowledge Base', icon: '📚' },
@@ -114,6 +116,7 @@ export function Navbar() {
             </div>
 
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <button
                 onClick={() => setSearchOpen(true)}
                 className="lg:hidden p-2 rounded-lg hover:bg-slate-700"
