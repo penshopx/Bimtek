@@ -125,9 +125,56 @@ const bimtekModules = [
   { id: 'regulasi-8', title: 'ISO 9001 - Sistem Mutu', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli' },
   { id: 'regulasi-9', title: 'K3 - Permenaker 5/2021', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli' },
   { id: 'regulasi-10', title: 'UU Jasa Konstruksi Terbaru', category: 'Regulasi', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  // === SISTEM MANAJEMEN ISO ===
+  // ISO 9001 - Sistem Manajemen Mutu
+  { id: 'iso9001-1', title: 'ISO 9001:2015 - Pengenalan Sistem Mutu', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso9001-2', title: 'Prinsip TQM dan PDCA', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso9001-3', title: 'Penyusunan Manual Mutu', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso9001-4', title: 'Prosedur dan Instruksi Kerja', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso9001-5', title: 'Audit Internal Mutu', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso9001-6', title: 'Teknik Audit Internal ISO 9001', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso9001-7', title: 'Document Control dan Records Management', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso9001-8', title: 'Management Review Meeting', category: 'ISO Management', pkb: 8, duration: '4 jam', level: 'Manager' },
+  { id: 'iso9001-9', title: 'Corrective Action dan Preventive Action (CAPA)', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso9001-10', title: 'Audit Eksternal ISO 9001 (Sertifikasi)', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  // ISO 37001 - Sistem Manajemen Anti Penyuapan (SMAP)
+  { id: 'iso37001-1', title: 'ISO 37001:2016 - Pengenalan SMAP', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso37001-2', title: 'Kebijakan Anti Penyuapan', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso37001-3', title: 'Due Diligence dan Risk Assessment', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso37001-4', title: 'Pengendalian Pembayaran dan Hadiah', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso37001-5', title: 'Audit Internal SMAP', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso37001-6', title: 'Pelaporan dan Investigasi Pelanggaran', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso37001-7', title: 'Whistleblowing System', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso37001-8', title: 'Audit Eksternal ISO 37001 (Sertifikasi)', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  // Panduan Cegah Korupsi (Pancek/KPK)
+  { id: 'antikorupsi-1', title: 'Panduan Pencegahan Korupsi Konstruksi', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'antikorupsi-2', title: 'Gratifikasi dan Conflict of Interest', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'antikorupsi-3', title: 'Kode Etik dan Perilaku Anti Korupsi', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'antikorupsi-4', title: 'Pengelolaan Risiko Korupsi', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'antikorupsi-5', title: 'Audit Internal Anti Korupsi', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'antikorupsi-6', title: 'Sistem Pelaporan Gratifikasi', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  // ISO 45001 - Sistem Manajemen Keselamatan Kerja (SMK3)
+  { id: 'iso45001-1', title: 'ISO 45001:2018 - Pengenalan SMK3', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso45001-2', title: 'Context of Organization dan Risk Assessment', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso45001-3', title: 'Kebijakan K3 dan Perencanaan', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso45001-4', title: 'Identifikasi Bahaya dan Penilaian Risiko', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso45001-5', title: 'Audit Internal K3', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso45001-6', title: 'Techno and Engineering Control', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso45001-7', title: 'PPE dan Perlindungan Pekerja', category: 'ISO Management', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'iso45001-8', title: 'Investigation and Incident Reporting', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso45001-9', title: 'Audit Eksternal ISO 45001 (Sertifikasi)', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  // ISO 14001 - Sistem Manajemen Lingkungan
+  { id: 'iso14001-1', title: 'ISO 14001:2015 - Pengenalan SML', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso14001-2', title: 'Aspek dan Dampak Lingkungan', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso14001-3', title: 'Kebijakan Lingkungan dan Perencanaan', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso14001-4', title: 'Pengelolaan Limbah dan Emisi', category: 'ISO Management', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'iso14001-5', title: 'Audit Internal Lingkungan', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'iso14001-6', title: 'Compliance Obligation dan Legal Register', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso14001-7', title: 'Energy Management dan Carbon Footprint', category: 'ISO Management', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'iso14001-8', title: 'Audit Eksternal ISO 14001 (Sertifikasi)', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli' },
 ];
 
-const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi', 'Personil Managerial', 'Pengadaan & Tender', 'LKUT', 'Regulasi'];
+const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi', 'Personil Managerial', 'Pengadaan & Tender', 'LKUT', 'Regulasi', 'ISO Management'];
 
 export default function BimtekPage() {
   const router = useRouter();

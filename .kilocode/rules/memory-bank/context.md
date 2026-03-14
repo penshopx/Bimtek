@@ -97,6 +97,14 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] Petugas K3, Ahli K3, P2K3
   - [x] Pengadaan positions (Pejabat, Pokja, Evaluator)
   - [x] LKUT positions (Penyusun, Validator, Auditor)
+- [x] ISO Management System
+  - [x] ISO 9001 - Sistem Mutu (10 modules: Pengenalan, TQM, Manual Mutu, Prosedur, Audit Internal, CAPA, Sertifikasi)
+  - [x] ISO 37001 - SMAP (8 modules: Pengenalan, Kebijakan, Due Diligence, Pengendalian Pembayaran, Audit, Whistleblowing)
+  - [x] Anti Korupsi - Panduan Pencegahan (6 modules: Gratifikasi, Conflict of Interest, Kode Etik, Risk Assessment)
+  - [x] ISO 45001 - SMK3 (9 modules: Pengenalan, Risk Assessment, Hazard ID, Audit Internal, JSA, Sertifikasi)
+  - [x] ISO 14001 - Lingkungan (8 modules: Pengenalan, Aspek Dampak, Limbah, Audit Internal, Legal Register, Carbon Footprint)
+- [x] ISO Document Generator (/iso-generator)
+  - [x] 18 templates: Manual Mutu, Prosedur, Checklist Audit, Kebijakan Anti Penyuapan, JSA, Form Aspek Lingkungan
 
 ## Architecture
 - Next.js 16 with App Router
@@ -124,3 +132,5 @@ Complete construction training platform with AI chatbot system built and deploye
 | 2026-03-14 | Added Permen PU No. 7/2024 content - Personil Managerial (18 modules), Pengadaan & Tender (10 modules), LKUT (8 modules) |
 | 2026-03-14 | Added new certification positions - PJBU, PJT, PJKB, PJSKBBU, Manager, K3, Pengadaan, LKUT |
 | 2026-03-14 | Fixed duplicate entries in bimtek/[id]/page.tsx - removed orphaned duplicate module definitions |
+| 2026-03-14 | Added ISO Management System - 37 modules (ISO 9001, 37001, 45001, 14001, Anti Korupsi) |
+| 2026-03-14 | Created ISO Document Generator - 18 templates (Manual, Prosedur, Checklist Audit, Forms) |

@@ -20,6 +20,7 @@ const navItems = [
   { href: '/quiz', label: 'Quiz', icon: '✍️' },
   { href: '/solver', label: 'Solver', icon: '🧮' },
   { href: '/tools', label: 'Tools', icon: '🔧' },
+  { href: '/iso-generator', label: 'ISO Generator', icon: '📄' },
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
