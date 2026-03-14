@@ -76,6 +76,17 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] Agentic AI tab - 6 advanced features (attentive listening, proactive help, etc.)
   - [x] Knowledge Base tab - RAG config (chunk size, overlap, top-K), modules, knowledge items
   - [x] Project Brain tab - Templates & current project context
+- [x] Chatbot Detail Page (/chatbot/[id])
+  - [x] Chat interface with custom chatbot
+  - [x] Conversation starters support
+  - [x] API key integration
+  - [x] Rule-based fallback when no API key
+- [x] API Key Integration
+  - [x] Settings page with API key input & test button
+  - [x] API key validation (tests on save)
+  - [x] Status display (valid/invalid/error)
+  - [x] Cost estimation display
+  - [x] Navbar includes Chatbot Builder link
 
 ## Architecture
 - Next.js 16 with App Router
@@ -98,3 +109,5 @@ Complete construction training platform with AI chatbot system built and deploye
 | 2026-03-14 | Added SQLite database with Drizzle ORM - Schema for all features, API routes, hybrid localStorage fallback |
 | 2026-03-14 | Added AI Configuration System - personas, system prompts, knowledge base (19+ docs), RAG pipeline, 8 expert agents |
 | 2026-03-14 | Enhanced Chatbot Builder - 7 tabs (Identity, Welcome, Personality, AI Model, Agentic AI, Knowledge Base, Project Brain) |
+| 2026-03-14 | Integrated API Key system - Settings page with test button, validation, status display, cost estimation |
+| 2026-03-14 | Created Chatbot Detail page - Chat interface for custom chatbots with API key integration |

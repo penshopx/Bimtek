@@ -23,6 +23,8 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -37,6 +39,41 @@ export default function SettingsPage() {
       localStorage.setItem('appSettings', JSON.stringify(settings));
     }
   }, [settings, mounted]);
+
+  useEffect(() => {
+    if (apiKey) {
+      setApiKeyInput(apiKey);
+    }
+  }, [apiKey]);
+
+  const testApiKey = async () => {
+    if (!apiKeyInput.trim()) return;
+    
+    setApiStatus('testing');
+    setApiError('');
+    
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKeyInput.trim()}`
+        }
+      });
+      
+      if (response.ok) {
+        setApiStatus('success');
+        setApiKey(apiKeyInput.trim());
+        localStorage.setItem('openai_api_key', apiKeyInput.trim());
+      } else {
+        const error = await response.json();
+        setApiStatus('error');
+        setApiError(error.error?.message || 'Invalid API key');
+      }
+    } catch (err) {
+      setApiStatus('error');
+      setApiError('Network error. Please check your connection.');
+    }
+  };
 
   const clearAllData = () => {
     if (confirm('Apakah Anda yakin ingin menghapus semua data? Ini tidak dapat dibatalkan.')) {
@@ -148,21 +185,19 @@ export default function SettingsPage() {
                   
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        setApiKey(apiKeyInput);
-                        alert('API Key disimpan!');
-                      }}
-                      disabled={!apiKeyInput.trim()}
+                      onClick={testApiKey}
+                      disabled={!apiKeyInput.trim() || apiStatus === 'testing'}
                       className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
                     >
-                      💾 Simpan API Key
+                      {apiStatus === 'testing' ? '⏳ Menguji...' : apiKey && apiKeyInput === apiKey ? '✅ Tersimpan' : '🔑 Simpan & Uji'}
                     </button>
                     {apiKey && (
                       <button
                         onClick={() => {
                           setApiKey('');
                           setApiKeyInput('');
-                          alert('API Key dihapus!');
+                          setApiStatus('idle');
+                          localStorage.removeItem('openai_api_key');
                         }}
                         className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
                       >
@@ -170,12 +205,26 @@ export default function SettingsPage() {
                       </button>
                     )}
                   </div>
-                  
-                  {apiKey ? (
+
+                  {apiStatus === 'success' && (
                     <div className="flex items-center gap-2 text-green-600 text-sm">
-                      <span>✅</span> API Key aktif - Chat akan menggunakan GPT-4
+                      <span>✅</span> API Key valid! AI Chat siap digunakan
                     </div>
-                  ) : (
+                  )}
+                  
+                  {apiStatus === 'error' && (
+                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                      <span>❌</span> {apiError || 'API Key tidak valid'}
+                    </div>
+                  )}
+                  
+                  {apiStatus === 'idle' && apiKey && (
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <span>✅</span> API Key aktif - Chat menggunakan GPT-4
+                    </div>
+                  )}
+                  
+                  {apiStatus === 'idle' && !apiKey && (
                     <div className="flex items-center gap-2 text-amber-600 text-sm">
                       <span>⚠️</span> Menggunakan responses berbasis aturan
                     </div>
@@ -192,6 +241,14 @@ export default function SettingsPage() {
                   <li>Buat API key baru</li>
                   <li>Copy dan paste di atas</li>
                 </ol>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                <h4 className="font-medium text-slate-800 dark:text-white mb-2">💰 Estimasi Biaya</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  GPT-4o Mini: ~$0.15/1M tokens input, ~$0.60/1M tokens output<br/>
+                  Rata-rata chat ~500 tokens = ~$0.0003 per percakapan
+                </p>
               </div>
             </div>
           </div>
