@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { BookmarkProvider } from "@/components/BookmarkProvider";
 import { ActivityProvider } from "@/components/ActivityLogger";
+import { OfflineEventProvider } from "@/components/OfflineEventProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,13 +49,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 dark:bg-slate-900`}
       >
         <ThemeProvider>
-          <BookmarkProvider>
-            <ActivityProvider>
-              <ServiceWorkerRegistration />
-              <Navbar />
-              <main>{children}</main>
-            </ActivityProvider>
-          </BookmarkProvider>
+          <OfflineEventProvider>
+            <BookmarkProvider>
+              <ActivityProvider>
+                <ServiceWorkerRegistration />
+                <Navbar />
+                <main>{children}</main>
+              </ActivityProvider>
+            </BookmarkProvider>
+          </OfflineEventProvider>
         </ThemeProvider>
       </body>
     </html>

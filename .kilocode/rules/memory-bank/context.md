@@ -31,6 +31,12 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Activity Log - Track all user actions with filtering
 - [x] Achievements - 14 unlockable achievements with progress tracking
 - [x] Learning Calendar - Visualize daily learning activity
+- [x] Bimtek Offline - Event system (ride-sharing style)
+  - [x] OfflineEventProvider - Context with localStorage persistence
+  - [x] /offline - Event listing with search & filters
+  - [x] /offline/create - Create new event form
+  - [x] /offline/[id] - Event detail & registration
+  - [x] /offline/[id]/manage - Instructor event management
 
 ## Architecture
 - Next.js 16 with App Router
@@ -48,3 +54,4 @@ Complete construction training platform with AI chatbot system built and deploye
 | Date | Changes |
 |------|---------|
 | 2026-03-14 | Complete platform built - 13 pages, AI chatbot system, 65+ modules, 65+ quiz questions |
+| 2026-03-14 | Added Bimtek Offline - Event system with 4 sample events, registration, attendance tracking, certificates |
