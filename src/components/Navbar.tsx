@@ -9,6 +9,7 @@ import { SearchModal, SearchButton } from './Search';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/', label: 'Beranda', icon: '🏠' },
+  { href: '/agentic-chat', label: 'Agentic AI', icon: '🤖' },
   { href: '/offline', label: 'Bimtek Offline', icon: '📍' },
   { href: '/knowledge-base', label: 'Knowledge Base', icon: '📚' },
   { href: '/bimtek', label: 'BIMTEK', icon: '🎓' },
@@ -18,7 +19,7 @@ const navItems = [
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
-  { href: '/chat', label: 'Chat', icon: '💬' },
+  { href: '/chat', label: 'Expert Chat', icon: '💬' },
   { href: '/calendar', label: 'Calendar', icon: '📅' },
   { href: '/achievements', label: 'Achievements', icon: '🏆' },
   { href: '/activity', label: 'Activity', icon: '📝' },

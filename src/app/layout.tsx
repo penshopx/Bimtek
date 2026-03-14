@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { BookmarkProvider } from "@/components/BookmarkProvider";
 import { ActivityProvider } from "@/components/ActivityLogger";
 import { OfflineEventProvider } from "@/components/OfflineEventProvider";
+import { AgenticAIProvider } from "@/components/AgenticAIProvider";
 import { DatabaseSeeder } from "@/components/DatabaseSeeder";
 
 const geistSans = Geist({
@@ -50,16 +51,18 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 dark:bg-slate-900`}
       >
         <ThemeProvider>
-          <OfflineEventProvider>
-            <BookmarkProvider>
-              <ActivityProvider>
-              <ServiceWorkerRegistration />
-              <DatabaseSeeder />
-              <Navbar />
-                <main>{children}</main>
-              </ActivityProvider>
-            </BookmarkProvider>
-          </OfflineEventProvider>
+          <AgenticAIProvider>
+            <OfflineEventProvider>
+              <BookmarkProvider>
+                <ActivityProvider>
+                  <ServiceWorkerRegistration />
+                  <DatabaseSeeder />
+                  <Navbar />
+                  <main>{children}</main>
+                </ActivityProvider>
+              </BookmarkProvider>
+            </OfflineEventProvider>
+          </AgenticAIProvider>
         </ThemeProvider>
       </body>
     </html>
