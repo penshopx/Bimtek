@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { BookmarkProvider } from "@/components/BookmarkProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,9 +47,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 dark:bg-slate-900`}
       >
         <ThemeProvider>
-          <ServiceWorkerRegistration />
-          <Navbar />
-          <main>{children}</main>
+          <BookmarkProvider>
+            <ServiceWorkerRegistration />
+            <Navbar />
+            <main>{children}</main>
+          </BookmarkProvider>
         </ThemeProvider>
       </body>
     </html>

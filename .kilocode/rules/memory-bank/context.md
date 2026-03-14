@@ -24,6 +24,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Push Notifications - Browser notifications, daily reminders
 - [x] PDF Export - Print progress report to PDF
 - [x] Learning Streak - Track consecutive learning days
+- [x] Bookmarks - Save and organize favorite content
 
 ## Architecture
 - Next.js 16 with App Router

@@ -17,6 +17,7 @@ const navItems = [
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
   { href: '/chat', label: 'Chat', icon: '💬' },
+  { href: '/bookmarks', label: 'Bookmarks', icon: '🔖' },
   { href: '/profile', label: 'Profile', icon: '👤' },
 ];
 
