@@ -20,6 +20,7 @@ Complete construction training platform with AI chatbot system built and deploye
 - [x] Dark Mode - Toggle di navbar, persist di localStorage
 - [x] Profile Dashboard - Progress tracking, achievements, favorit
 - [x] Global Search - Cmd+K shortcut, 25+ items indexed
+- [x] PWA Support - Manifest, service worker, offline-ready
 
 ## Architecture
 - Next.js 16 with App Router
