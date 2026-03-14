@@ -89,17 +89,22 @@ const bimtekModules = [
   { id: 'managerial-16', title: 'Manajemen Logistik Proyek', category: 'Personil Managerial', pkb: 12, duration: '6 jam', level: 'Manager' },
   { id: 'managerial-17', title: 'Petugas K3 Konstruksi', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'K3' },
   { id: 'managerial-18', title: 'P2K3 dan Pembinaan K3', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'K3' },
-  // === BIMTEK PENGADAAN DAN TENDER ===
+  // === BIMTEK PENGADAAN DAN TENDER - PERPRES 46/2025 ===
   { id: 'pengadaan-1', title: 'Dasar-dasar Pengadaan Barang/Jasa', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
-  { id: 'pengadaan-2', title: 'Perpres 16/2018 dan perubahannya', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
-  { id: 'pengadaan-3', title: 'Metode Pemilihan Penyedia', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
-  { id: 'pengadaan-4', title: 'Penyusunan Dokumen Tender', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
-  { id: 'pengadaan-5', title: 'Evaluasi Penawaran', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
-  { id: 'pengadaan-6', title: 'Kontrak Pengadaan', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
-  { id: 'pengadaan-7', title: 'E-Procurement dan LPSE', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
-  { id: 'pengadaan-8', title: 'Pengadaan Melalui Penyedia', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
-  { id: 'pengadaan-9', title: 'Swakelola dan PK', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
-  { id: 'pengadaan-10', title: 'Penyelesaian Sengketa Pengadaan', category: 'Pengadaan & Tender', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  { id: 'pengadaan-2', title: 'Perpres 46/2025 - Pengadaan Baru', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'pengadaan-3', title: 'Perbedaan Perpres 16/2018 vs 46/2025', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'pengadaan-4', title: 'Metode Pemilihan Penyedia', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-5', title: 'Penyusunan Dokumen Tender/Elektronik', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'pengadaan-6', title: 'Evaluasi Penawaran', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'pengadaan-7', title: 'Kontrak Pengadaan', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-8', title: 'E-Kontrak dan Katalog Elektronik', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-9', title: 'Sistem Pengadaan Secara Elektronik (SPSE)', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'pengadaan-10', title: 'Pengadaan Melalui Penyedia', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'pengadaan-11', title: 'Swakelola dan Pengadaan Langsung', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'pengadaan-12', title: 'Penyelesaian Sengketa Pengadaan', category: 'Pengadaan & Tender', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  { id: 'pengadaan-13', title: 'Sanksi dan BloKING', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
+  { id: 'pengadaan-14', title: 'LKPP dan Sertifikasi', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'pengadaan-15', title: 'Tata Kelola Pengadaan', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli' },
   // === BIMTEK LKUT (LAPORAN KEGIATAN USAHA TAHUNAN) ===
   { id: 'lkut-1', title: 'Pengantar LKUT', category: 'LKUT', pkb: 8, duration: '4 jam', level: 'Ahli' },
   { id: 'lkut-2', title: 'Format dan Isi LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli' },
@@ -109,9 +114,20 @@ const bimtekModules = [
   { id: 'lkut-6', title: 'Sanksi Adminstratif LKUT', category: 'LKUT', pkb: 6, duration: '3 jam', level: 'Ahli' },
   { id: 'lkut-7', title: 'Verifikasi dan Validasi LKUT', category: 'LKUT', pkb: 10, duration: '5 jam', level: 'Ahli' },
   { id: 'lkut-8', title: 'Teknis Pengisian Data LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  // === REGULASI TERBARU ===
+  { id: 'regulasi-1', title: 'Permen PU 7/2024 - Perubahan Kualifikasi', category: 'Regulasi', pkb: 15, duration: '8 jam', level: 'Ahli' },
+  { id: 'regulasi-2', title: 'SBU Konstruksi - SIUJK', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'regulasi-3', title: 'NIB dan OSS-RBA', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'regulasi-4', title: 'Tanda Daftar Perusahaan (TDP)', category: 'Regulasi', pkb: 6, duration: '3 jam', level: 'Ahli' },
+  { id: 'regulasi-5', title: 'Sertifikat Badan Usaha (SBU)', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'regulasi-6', title: 'Sertifikat Kompetensi Kerja (SKK)', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'regulasi-7', title: 'ISO 37001 - SMAP', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'regulasi-8', title: 'ISO 9001 - Sistem Mutu', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli' },
+  { id: 'regulasi-9', title: 'K3 - Permenaker 5/2021', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli' },
+  { id: 'regulasi-10', title: 'UU Jasa Konstruksi Terbaru', category: 'Regulasi', pkb: 15, duration: '8 jam', level: 'Ahli' },
 ];
 
-const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi', 'Personil Managerial', 'Pengadaan & Tender', 'LKUT'];
+const categories = ['Semua', 'Sipil Gedung', 'K3', 'Jalan', 'Elektrikal', 'Mekanikal', 'Manajemen', 'RAB', 'Quality', 'Lingkungan', 'Safety', 'Digital', 'Sertifikasi', 'Personil Managerial', 'Pengadaan & Tender', 'LKUT', 'Regulasi'];
 
 export default function BimtekPage() {
   const router = useRouter();

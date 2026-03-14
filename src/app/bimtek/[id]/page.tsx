@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const bimtekModules: Record<string, { title: string; category: string; pkb: number; duration: string; level: string; content: string; mentor: string }> = {
+  // === ORIGINAL MODULES ===
   'sipil-gedung-1': { title: 'Teknik Fondasi Gedung', category: 'Sipil Gedung', pkb: 10, duration: '4 jam', level: 'Ahli', content: 'Pelajari teknik fondasi gedung mulai dari shallow foundation hingga deep foundation. Mencakup pile cap design, bearing capacity, dan settlement analysis.', mentor: 'Ahli Teknik Bangunan Gedung' },
   'sipil-gedung-2': { title: 'Struktur Beton Bertulang', category: 'Sipil Gedung', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Desain dan analisis struktur beton bertulang sesuai SNI 2847:2019. Mencakup flexural design, shear design, dan detailing.', mentor: 'Ahli Teknik Bangunan Gedung' },
   'sipil-gedung-3': { title: 'Struktur Baja Gedung', category: 'Sipil Gedung', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Perencanaan struktur baja gedung sesuai SNI 1729:2020. Mencakup connection design, column design, dan beam design.', mentor: 'Ahli Teknik Bangunan Gedung' },
@@ -36,17 +37,22 @@ const bimtekModules: Record<string, { title: string; category: string; pkb: numb
   'managerial-16': { title: 'Manajemen Logistik Proyek', category: 'Personil Managerial', pkb: 12, duration: '6 jam', level: 'Manager', content: 'Manajemen logistik di lokasi proyek konstruksi.', mentor: 'Ahli Supply Chain' },
   'managerial-17': { title: 'Petugas K3 Konstruksi', category: 'Personil Managerial', pkb: 20, duration: '12 jam', level: 'K3', content: 'Pelatihan petugas K3 konstruksi sesuai regulasi.', mentor: 'Ahli K3 Konstruksi' },
   'managerial-18': { title: 'P2K3 dan Pembinaan K3', category: 'Personil Managerial', pkb: 15, duration: '8 jam', level: 'K3', content: 'Pembentukan dan tugas P2K3 di proyek konstruksi.', mentor: 'Ahli K3 Konstruksi' },
-  // === BIMTEK PENGADAAN DAN TENDER ===
+  // === BIMTEK PENGADAAN DAN TENDER - PERPRES 46/2025 ===
   'pengadaan-1': { title: 'Dasar-dasar Pengadaan Barang/Jasa', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Pengenalan dasar pengadaan barang/jasa di sektor konstruksi.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-2': { title: 'Perpres 16/2018 dan perubahannya', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Pemahaman Perpres 16/2018 tentang Pengadaan Barang/Jasa Pemerintah.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-3': { title: 'Metode Pemilihan Penyedia', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Metode pemilihan penyedia jasa konstruksi.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-4': { title: 'Penyusunan Dokumen Tender', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Teknik penyusunan dokumen tender konstruksi.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-5': { title: 'Evaluasi Penawaran', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Metode dan kriteria evaluasi penawaran.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-6': { title: 'Kontrak Pengadaan', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Penyusunan dan pengelolaan kontrak pengadaan.', mentor: 'Ahli Kontrak' },
-  'pengadaan-7': { title: 'E-Procurement dan LPSE', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Sistem e-procurement dan LPSE.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-8': { title: 'Pengadaan Melalui Penyedia', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Prosedur pengadaan melalui penyedia jasa.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-9': { title: 'Swakelola dan PK', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Pengadaan secara swakelola dan pengadaan langsung.', mentor: 'Ahli Pengadaan' },
-  'pengadaan-10': { title: 'Penyelesaian Sengketa Pengadaan', category: 'Pengadaan & Tender', pkb: 6, duration: '3 jam', level: 'Ahli', content: 'Mekanisme penyelesaian sengketa pengadaan.', mentor: 'Ahli Kontrak' },
+  'pengadaan-2': { title: 'Perpres 46/2025 - Pengadaan Baru', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Pemahaman Perpres 46/2025 tentang Pengadaan Barang/Jasa Pemerintah.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-3': { title: 'Perbedaan Perpres 16/2018 vs 46/2025', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Perubahan signifikan antara Perpres 16/2018 dan Perpres 46/2025.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-4': { title: 'Metode Pemilihan Penyedia', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Metode pemilihan penyedia jasa konstruksi.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-5': { title: 'Penyusunan Dokumen Tender/Elektronik', category: 'Pengadaan & Tender', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Teknik penyusunan dokumen tender elektronik.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-6': { title: 'Evaluasi Penawaran', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Metode dan kriteria evaluasi penawaran.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-7': { title: 'Kontrak Pengadaan', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Penyusunan dan pengelolaan kontrak pengadaan.', mentor: 'Ahli Kontrak' },
+  'pengadaan-8': { title: 'E-Kontrak dan Katalog Elektronik', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Sistem e-kontrak dan katalog elektronik dalam pengadaan.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-9': { title: 'Sistem Pengadaan Secara Elektronik (SPSE)', category: 'Pengadaan & Tender', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Penggunaan SPSE dalam pengadaan barang/jasa.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-10': { title: 'Pengadaan Melalui Penyedia', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Prosedur pengadaan melalui penyedia jasa.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-11': { title: 'Swakelola dan Pengadaan Langsung', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Pengadaan secara swakelola dan pengadaan langsung.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-12': { title: 'Penyelesaian Sengketa Pengadaan', category: 'Pengadaan & Tender', pkb: 6, duration: '3 jam', level: 'Ahli', content: 'Mekanisme penyelesaian sengketa pengadaan.', mentor: 'Ahli Kontrak' },
+  'pengadaan-13': { title: 'Sanksi dan BloKING', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Sanksi administratif dan sistem BloKING.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-14': { title: 'LKPP dan Sertifikasi', category: 'Pengadaan & Tender', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Lembaga Kebijakan Pengadaan Barang/Jasa dan sertifikasi.', mentor: 'Ahli Pengadaan' },
+  'pengadaan-15': { title: 'Tata Kelola Pengadaan', category: 'Pengadaan & Tender', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Tata kelola pengadaan yang baik.', mentor: 'Ahli Pengadaan' },
   // === BIMTEK LKUT (LAPORAN KEGIATAN USAHA TAHUNAN) ===
   'lkut-1': { title: 'Pengantar LKUT', category: 'LKUT', pkb: 8, duration: '4 jam', level: 'Ahli', content: 'Pengenalan LKUT untuk badan usaha konstruksi.', mentor: 'Ahli Keuangan Konstruksi' },
   'lkut-2': { title: 'Format dan Isi LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Format dan isi laporan kegiatan usaha tahunan.', mentor: 'Ahli Keuangan Konstruksi' },
@@ -56,6 +62,17 @@ const bimtekModules: Record<string, { title: string; category: string; pkb: numb
   'lkut-6': { title: 'Sanksi Adminstratif LKUT', category: 'LKUT', pkb: 6, duration: '3 jam', level: 'Ahli', content: 'Sanksi administratif jika tidak submit LKUT.', mentor: 'Ahli Keuangan Konstruksi' },
   'lkut-7': { title: 'Verifikasi dan Validasi LKUT', category: 'LKUT', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Proses verifikasi dan validasi LKUT.', mentor: 'Ahli Keuangan Konstruksi' },
   'lkut-8': { title: 'Teknis Pengisian Data LKUT', category: 'LKUT', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Teknis pengisian data LKUT secara online.', mentor: 'Ahli Keuangan Konstruksi' },
+  // === REGULASI ===
+  'regulasi-1': { title: 'Permen PU 7/2024 - Perubahan Kualifikasi', category: 'Regulasi', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Permen PU 7/2024 tentang Perubahan Kualifikasi.', mentor: 'Ahli Regulasi' },
+  'regulasi-2': { title: 'SBU Konstruksi - SIUJK', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Sertifikat Badan Usaha dan Surat Izin Usaha.', mentor: 'Ahli Regulasi' },
+  'regulasi-3': { title: 'NIB dan OSS-RBA', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Nomor Induk Berusaha dan OSS berbasis risiko.', mentor: 'Ahli Regulasi' },
+  'regulasi-4': { title: 'Tanda Daftar Perusahaan (TDP)', category: 'Regulasi', pkb: 6, duration: '3 jam', level: 'Ahli', content: 'Tanda Daftar Perusahaan konstruksi.', mentor: 'Ahli Regulasi' },
+  'regulasi-5': { title: 'Sertifikat Badan Usaha (SBU)', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Sertifikat Badan Usaha jasa konstruksi.', mentor: 'Ahli Regulasi' },
+  'regulasi-6': { title: 'Sertifikat Kompetensi Kerja (SKK)', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Sertifikat Kompetensi Kerja konstruksi.', mentor: 'Ahli Regulasi' },
+  'regulasi-7': { title: 'ISO 37001 - SMAP', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Sistem manajemen anti penyuapan ISO 37001.', mentor: 'Ahli Regulasi' },
+  'regulasi-8': { title: 'ISO 9001 - Sistem Mutu', category: 'Regulasi', pkb: 10, duration: '5 jam', level: 'Ahli', content: 'Sistem manajemen mutu ISO 9001.', mentor: 'Ahli Regulasi' },
+  'regulasi-9': { title: 'K3 - Permenaker 5/2021', category: 'Regulasi', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Keselamatan kerja sesuai Permenaker 5/2021.', mentor: 'Ahli K3' },
+  'regulasi-10': { title: 'UU Jasa Konstruksi Terbaru', category: 'Regulasi', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Undang-Undang Jasa Konstruksi terbaru.', mentor: 'Ahli Regulasi' },
 };
 
 const defaultModule = { title: 'Modul BIMTEK', category: 'Umum', pkb: 10, duration: '4 jam', level: 'Ahli', content: 'Pelajari materi konstruksi lengkap dengan bimbingan AI mentor kami.', mentor: 'Ahli Teknik Bangunan Gedung' };

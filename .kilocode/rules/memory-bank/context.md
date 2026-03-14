@@ -123,3 +123,4 @@ Complete construction training platform with AI chatbot system built and deploye
 | 2026-03-14 | Created Chatbot Detail page - Chat interface for custom chatbots with API key integration |
 | 2026-03-14 | Added Permen PU No. 7/2024 content - Personil Managerial (18 modules), Pengadaan & Tender (10 modules), LKUT (8 modules) |
 | 2026-03-14 | Added new certification positions - PJBU, PJT, PJKB, PJSKBBU, Manager, K3, Pengadaan, LKUT |
+| 2026-03-14 | Fixed duplicate entries in bimtek/[id]/page.tsx - removed orphaned duplicate module definitions |
