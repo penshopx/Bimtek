@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { BookmarkProvider } from "@/components/BookmarkProvider";
 import { ActivityProvider } from "@/components/ActivityLogger";
 import { OfflineEventProvider } from "@/components/OfflineEventProvider";
+import { DatabaseSeeder } from "@/components/DatabaseSeeder";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,8 +53,9 @@ export default function RootLayout({
           <OfflineEventProvider>
             <BookmarkProvider>
               <ActivityProvider>
-                <ServiceWorkerRegistration />
-                <Navbar />
+              <ServiceWorkerRegistration />
+              <DatabaseSeeder />
+              <Navbar />
                 <main>{children}</main>
               </ActivityProvider>
             </BookmarkProvider>

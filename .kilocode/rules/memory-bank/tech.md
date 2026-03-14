@@ -9,6 +9,8 @@
 | TypeScript   | 5.9.x   | Type-safe JavaScript            |
 | Tailwind CSS | 4.x     | Utility-first CSS               |
 | Bun          | Latest  | Package manager & runtime       |
+| SQLite       | -       | Database (file-based)           |
+| Drizzle ORM  | 0.45.x  | Database ORM                    |
 
 ## Development Environment
 
@@ -141,3 +143,29 @@ bun typecheck      # Run TypeScript type checking
 - None required for base template
 - Add as needed for features
 - Use `.env.local` for local development
+- Database: `DB_URL` and `DB_TOKEN` (auto-provided in sandbox)
+
+## Database Schema
+
+### Tables (13 total)
+
+| Table | Purpose |
+|-------|---------|
+| bimtek_progress | Module completion tracking |
+| bimtek_lessons | Per-module lesson progress |
+| quiz_scores | Quiz best scores |
+| bookmarks | Saved content |
+| activities | Activity log |
+| achievements | Unlocked achievements |
+| streak | Learning streak data |
+| profile | User profile |
+| favorites | Favorite modules |
+| offline_events | Offline training events |
+| event_participants | Event registrations |
+| certificates | Issued certificates |
+| settings | App settings |
+
+### API Routes
+
+- `POST /api/events` - Event CRUD operations
+- `GET /api/events` - List all events

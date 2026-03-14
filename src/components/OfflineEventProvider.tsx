@@ -50,12 +50,12 @@ interface OfflineEventContextType {
   events: OfflineEvent[];
   certificates: Certificate[];
   createEvent: (event: Omit<OfflineEvent, 'id' | 'createdAt' | 'registered' | 'participants' | 'status'>) => void;
-  registerForEvent: (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>) => boolean;
-  cancelRegistration: (eventId: string, participantId: string) => void;
-  markAttendance: (eventId: string, participantId: string) => void;
-  completeEvent: (eventId: string) => void;
+  registerForEvent: (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>) => Promise<boolean>;
+  cancelRegistration: (eventId: string, participantId: string) => Promise<void>;
+  markAttendance: (eventId: string, participantId: string) => Promise<void>;
+  completeEvent: (eventId: string) => Promise<void>;
   updateEvent: (eventId: string, updates: Partial<OfflineEvent>) => void;
-  deleteEvent: (eventId: string) => void;
+  deleteEvent: (eventId: string) => Promise<void>;
   getMyEvents: (participantId?: string) => OfflineEvent[];
   getMyCertificates: (participantId?: string) => Certificate[];
 }
@@ -152,36 +152,58 @@ const sampleEvents: OfflineEvent[] = [
 export function OfflineEventProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<OfflineEvent[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const savedEvents = localStorage.getItem('offlineEvents');
-    const savedCerts = localStorage.getItem('offlineCertificates');
-    
-    if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
-    } else {
-      setEvents(sampleEvents);
-      localStorage.setItem('offlineEvents', JSON.stringify(sampleEvents));
+    async function fetchFromDb() {
+      try {
+        const res = await fetch('/api/events');
+        if (res.ok) {
+          const dbEvents = await res.json();
+          if (dbEvents.length > 0) {
+            setEvents(dbEvents.map((e: any) => ({ ...e, participants: [] })));
+            const savedCerts = localStorage.getItem('offlineCertificates');
+            if (savedCerts) setCertificates(JSON.parse(savedCerts));
+            setIsHydrated(true);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('DB not available, using localStorage');
+      }
+      
+      const savedEvents = localStorage.getItem('offlineEvents');
+      const savedCerts = localStorage.getItem('offlineCertificates');
+      
+      if (savedEvents) {
+        setEvents(JSON.parse(savedEvents));
+      } else {
+        setEvents(sampleEvents);
+        localStorage.setItem('offlineEvents', JSON.stringify(sampleEvents));
+      }
+      
+      if (savedCerts) {
+        setCertificates(JSON.parse(savedCerts));
+      }
+      setIsHydrated(true);
     }
     
-    if (savedCerts) {
-      setCertificates(JSON.parse(savedCerts));
-    }
+    fetchFromDb();
   }, []);
 
   useEffect(() => {
-    if (events.length > 0) {
+    if (isHydrated && events.length > 0) {
       localStorage.setItem('offlineEvents', JSON.stringify(events));
     }
-  }, [events]);
+  }, [events, isHydrated]);
 
   useEffect(() => {
-    if (certificates.length > 0) {
+    if (isHydrated && certificates.length > 0) {
       localStorage.setItem('offlineCertificates', JSON.stringify(certificates));
     }
-  }, [certificates]);
+  }, [certificates, isHydrated]);
 
-  const createEvent = (eventData: Omit<OfflineEvent, 'id' | 'createdAt' | 'registered' | 'participants' | 'status'>) => {
+  const createEvent = async (eventData: Omit<OfflineEvent, 'id' | 'createdAt' | 'registered' | 'participants' | 'status'>) => {
     const newEvent: OfflineEvent = {
       ...eventData,
       id: `evt-${Date.now()}`,
@@ -190,10 +212,21 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
       participants: [],
       status: 'open',
     };
+    
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', event: newEvent }),
+      });
+    } catch (e) {
+      console.log('DB not available, using localStorage');
+    }
+    
     setEvents([newEvent, ...events]);
   };
 
-  const registerForEvent = (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>): boolean => {
+  const registerForEvent = async (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>): Promise<boolean> => {
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex === -1) return false;
     
@@ -208,6 +241,16 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
       status: 'registered',
     };
 
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', eventId, participant: newParticipant }),
+      });
+    } catch (e) {
+      console.log('DB not available, using localStorage');
+    }
+
     const updatedEvent = {
       ...event,
       participants: [...event.participants, newParticipant],
@@ -221,12 +264,22 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const cancelRegistration = (eventId: string, participantId: string) => {
+  const cancelRegistration = async (eventId: string, participantId: string) => {
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex === -1) return;
 
     const event = events[eventIndex];
     const updatedParticipants = event.participants.filter(p => p.id !== participantId);
+
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancelRegistration', eventId, participantId }),
+      });
+    } catch (e) {
+      console.log('DB not available');
+    }
 
     const updatedEvent = {
       ...event,
@@ -240,7 +293,7 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     setEvents(newEvents);
   };
 
-  const markAttendance = (eventId: string, participantId: string) => {
+  const markAttendance = async (eventId: string, participantId: string) => {
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex === -1) return;
 
@@ -249,13 +302,23 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
       p.id === participantId ? { ...p, status: 'attended' as const } : p
     );
 
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markAttendance', participantId }),
+      });
+    } catch (e) {
+      console.log('DB not available');
+    }
+
     const updatedEvent = { ...event, participants: updatedParticipants };
     const newEvents = [...events];
     newEvents[eventIndex] = updatedEvent;
     setEvents(newEvents);
   };
 
-  const completeEvent = (eventId: string) => {
+  const completeEvent = async (eventId: string) => {
     const eventIndex = events.findIndex(e => e.id === eventId);
     if (eventIndex === -1) return;
 
@@ -274,6 +337,16 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
         location: event.location,
         issuedAt: new Date().toISOString(),
       }));
+
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete', eventId }),
+      });
+    } catch (e) {
+      console.log('DB not available');
+    }
 
     const updatedParticipants = event.participants.map(p => ({
       ...p,
@@ -302,7 +375,16 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     setEvents(newEvents);
   };
 
-  const deleteEvent = (eventId: string) => {
+  const deleteEvent = async (eventId: string) => {
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', eventId }),
+      });
+    } catch (e) {
+      console.log('DB not available');
+    }
     setEvents(events.filter(e => e.id !== eventId));
   };
 

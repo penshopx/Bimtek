@@ -37,6 +37,10 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] /offline/create - Create new event form
   - [x] /offline/[id] - Event detail & registration
   - [x] /offline/[id]/manage - Instructor event management
+- [x] Backend Database - SQLite with Drizzle ORM
+  - [x] Database schema (13 tables) for all features
+  - [x] API route for offline events CRUD
+  - [x] Hybrid localStorage + database approach (works offline)
 
 ## Architecture
 - Next.js 16 with App Router
@@ -49,9 +53,11 @@ Complete construction training platform with AI chatbot system built and deploye
 - TypeScript, Tailwind CSS 4
 - Bun package manager
 - ESLint for code quality
+- SQLite + Drizzle ORM for database
 
 ## Session History
 | Date | Changes |
 |------|---------|
 | 2026-03-14 | Complete platform built - 13 pages, AI chatbot system, 65+ modules, 65+ quiz questions |
 | 2026-03-14 | Added Bimtek Offline - Event system with 4 sample events, registration, attendance tracking, certificates |
+| 2026-03-14 | Added SQLite database with Drizzle ORM - Schema for all features, API routes, hybrid localStorage fallback |

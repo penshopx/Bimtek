@@ -43,9 +43,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = registerForEvent(event.id, form);
+    const success = await registerForEvent(event.id, form);
     if (success) {
       setRegistered(true);
     }
