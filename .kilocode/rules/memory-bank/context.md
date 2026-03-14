@@ -61,6 +61,21 @@ Complete construction training platform with AI chatbot system built and deploye
   - [x] User management (view, update role, delete)
   - [x] Role: user, instructor, admin
   - [x] System settings panel
+- [x] AI Configuration System (/src/lib/ai/)
+  - [x] personas.ts - 12+ persona definitions (main, expert, marketing)
+  - [x] system-prompts.ts - System prompt configs with rules & examples
+  - [x] knowledge-base.ts - 19+ knowledge documents (SNI references, K3, etc.)
+  - [x] rag.ts - RAG pipeline with query analysis & context augmentation
+  - [x] agents.ts - 8 Expert Agents with tools & topics
+  - [x] index.ts - Main export with AI config
+- [x] Chatbot Builder (/chatbot-builder)
+  - [x] Identity tab - Avatar, name, tagline, description
+  - [x] Welcome tab - Greeting message, conversation starters
+  - [x] Personality tab - Communication style, system prompt, tone, off-topic handling
+  - [x] AI Model tab - Model selection, temperature, max tokens
+  - [x] Agentic AI tab - 6 advanced features (attentive listening, proactive help, etc.)
+  - [x] Knowledge Base tab - RAG config (chunk size, overlap, top-K), modules, knowledge items
+  - [x] Project Brain tab - Templates & current project context
 
 ## Architecture
 - Next.js 16 with App Router
@@ -81,3 +96,5 @@ Complete construction training platform with AI chatbot system built and deploye
 | 2026-03-14 | Complete platform built - 13 pages, AI chatbot system, 65+ modules, 65+ quiz questions |
 | 2026-03-14 | Added Bimtek Offline - Event system with 4 sample events, registration, attendance tracking, certificates |
 | 2026-03-14 | Added SQLite database with Drizzle ORM - Schema for all features, API routes, hybrid localStorage fallback |
+| 2026-03-14 | Added AI Configuration System - personas, system prompts, knowledge base (19+ docs), RAG pipeline, 8 expert agents |
+| 2026-03-14 | Enhanced Chatbot Builder - 7 tabs (Identity, Welcome, Personality, AI Model, Agentic AI, Knowledge Base, Project Brain) |
