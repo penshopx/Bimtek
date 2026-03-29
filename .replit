@@ -32,3 +32,8 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-c", "bun run db:migrate && bun run start"]
+build = ["bash", "-c", "bun run build"]
