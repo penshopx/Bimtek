@@ -35,5 +35,5 @@ externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "bun run db:migrate && bun run start"]
-build = ["bash", "-c", "bun run build"]
+run = ["bash", "start.sh"]
+build = ["bun", "run", "build"]
