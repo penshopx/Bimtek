@@ -65,7 +65,6 @@ export default function ChatbotDetailPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,9 +84,6 @@ export default function ChatbotDetailPage() {
         }
       }
     }
-    
-    const savedKey = localStorage.getItem('openai_api_key') || '';
-    setApiKey(savedKey);
   }, [chatbotId]);
 
   useEffect(() => {
@@ -99,23 +95,15 @@ export default function ChatbotDetailPage() {
     
     const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
     
-    // If no API key, use rule-based response
-    if (!apiKey) {
-      return generateRuleBasedResponse(userMessage, chatbot);
-    }
-    
     try {
       const history = messages.slice(-(chatbot.agentic?.contextRetention || 12)).map(m => ({
         role: m.role,
         content: m.content
       }));
       
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: chatbot.aiConfig?.model || 'gpt-4o-mini',
           messages: [
@@ -273,11 +261,6 @@ Apa yang ingin Anda konsultasikan?`;
                   📚 RAG
                 </span>
               )}
-              {!apiKey && (
-                <span className="px-2 py-1 bg-amber-500/20 text-amber-500 text-xs rounded-full">
-                  ⚠️ Mode Offline
-                </span>
-              )}
             </div>
           </div>
 
@@ -356,12 +339,6 @@ Apa yang ingin Anda konsultasikan?`;
                 Kirim
               </button>
             </div>
-            {!apiKey && (
-              <p className="text-xs text-amber-500 mt-2 text-center">
-                ⚠️ API Key belum dikonfigurasi. Responses terbatas. 
-                <Link href="/settings" className="underline ml-1">Konfigurasi di Settings</Link>
-              </p>
-            )}
           </form>
         </div>
       </div>

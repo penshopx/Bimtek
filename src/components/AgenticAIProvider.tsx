@@ -122,7 +122,7 @@ ANDA MEMILIKI AKSES KE KNOWLEDGE BASE yang berisi:
 Gunakan pengetahuan ini untuk memberikan jawaban yang akurat dan terverifikasi.`;
 }
 
-async function callOpenAIAPI(apiKey: string, message: string, history: ChatMessage[]): Promise<string> {
+async function callAIAPI(message: string, history: ChatMessage[]): Promise<string> {
   const systemPrompt = buildSystemPrompt();
   
   const messages = [
@@ -131,22 +131,15 @@ async function callOpenAIAPI(apiKey: string, message: string, history: ChatMessa
     { role: 'user', content: message }
   ];
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('/api/ai/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      max_tokens: 1000,
-      temperature: 0.7
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-4o-mini', messages, max_tokens: 1000, temperature: 0.7 }),
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || `API Error: ${response.status}`);
   }
 
   const data = await response.json();
@@ -158,22 +151,20 @@ function generateRuleBasedResponse(userMessage: string): { content: string; sugg
   let response = '';
   let suggestions: AgentSuggestion[] = [];
   
-  if (lowerMessage.includes('halo') || lowerMessage.includes('hi') || lowerMessage.includes('halo')) {
+  if (lowerMessage.includes('halo') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
     response = `Halo! Saya Agentic AI BimtekKita 🤖
 
 Saya adalah asisten AI yang dapat membantu Anda dengan:
 • **Navigasi** - Menunjukkan fitur-fitur aplikasi
 • **Informasi** - Menjelaskan tentang BIMTEK, Quiz, Sertifikasi
 • **Saran** - Memberikan rekomendasi pembelajaran
-• **Tugas** - Membantu выполнения tugas (membuka halaman, dll)
+• **Konsultasi** - Menjawab pertanyaan teknis konstruksi
 
-Coba tanyakan sesuatu, например:
+Coba tanyakan sesuatu:
 - "Apa saja fitur di aplikasi ini?"
 - "Bagaimana cara belajar BIMTEK?"
 - "Bawa saya ke halaman Quiz"
-- "Apa saja persyaratan sertifikasi?"
-
-${localStorage.getItem('openai_api_key') ? '✅ API Key telah dikonfigurasi - Anda bisa bertanya apapun!' : '⚠️ API Key belum dikonfigurasi - Responses masih berbasis aturan. Konfigurasi di Settings untuk pengalaman lebih baik!'}`;
+- "Apa saja persyaratan sertifikasi?"`;
     
     suggestions = [
       { id: '1', type: 'information', title: 'Fitur Aplikasi', description: 'Lihat semua fitur', action: () => {} },
@@ -320,12 +311,11 @@ Saya bisa membantu Anda dengan:
 • Navigasi: "Ke BIMTEK", "Ke Quiz"
 • Informasi: "Apa itu SKK?", "Berapa banyak modul?"
 • Saran: "Apa yang harus saya belajar?"
-
-⚠️ **Tips**: Konfigurasi API Key di Settings untuk responses yang lebih intelligent!`;
+• Pertanyaan teknis konstruksi`;
     
     suggestions = [
       { id: 'bimtek', type: 'navigation', title: 'Jelajahi BIMTEK', description: '67+ modul', action: () => window.location.href = '/bimtek' },
-      { id: 'settings', type: 'navigation', title: 'Pengaturan API', description: 'Konfigurasi AI', action: () => window.location.href = '/settings' },
+      { id: 'chat', type: 'navigation', title: 'Expert Chat', description: '8 expert agents', action: () => window.location.href = '/chat' },
     ];
   }
   
@@ -335,23 +325,6 @@ Saya bisa membantu Anda dengan:
 export function AgenticAIProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [apiKey, setApiKeyState] = useState('');
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('openai_api_key') || '';
-    setApiKeyState(savedKey);
-    setIsHydrated(true);
-  }, []);
-
-  const setApiKey = (key: string) => {
-    setApiKeyState(key);
-    if (key) {
-      localStorage.setItem('openai_api_key', key);
-    } else {
-      localStorage.removeItem('openai_api_key');
-    }
-  };
 
   const addMessage = (content: string, role: 'user' | 'assistant' | 'system') => {
     const newMessage: ChatMessage = {
@@ -372,18 +345,14 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
 
     try {
       let response: string;
-      
-      if (apiKey && apiKey.trim()) {
-        try {
-          response = await callOpenAIAPI(apiKey, userMessage, history);
-        } catch (apiError) {
-          console.error('API Error:', apiError);
-          const fallback = generateRuleBasedResponse(userMessage);
-          response = fallback.content + '\n\n⚠️ API Error - Menggunakan responses aturan.';
-        }
-      } else {
-        const ruleBased = generateRuleBasedResponse(userMessage);
-        response = ruleBased.content;
+
+      try {
+        response = await callAIAPI(userMessage, history);
+      } catch (apiError) {
+        console.error('AI API Error:', apiError);
+        // Fall back to rule-based if AI unavailable
+        const fallback = generateRuleBasedResponse(userMessage);
+        response = fallback.content;
       }
 
       const suggestions = generateRuleBasedResponse(userMessage).suggestions;
@@ -394,7 +363,7 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
         content: response,
         timestamp: new Date(),
         suggestions,
-        toolsUsed: apiKey ? ['OpenAI API'] : ['Rule-based'],
+        toolsUsed: ['OpenAI API'],
       };
       
       setMessages(prev => [...prev, responseMessage]);
@@ -420,8 +389,8 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
     <AgenticAIContext.Provider value={{
       messages,
       isProcessing,
-      apiKey,
-      setApiKey,
+      apiKey: '',
+      setApiKey: () => {},
       addMessage,
       processMessage,
       clearMessages,
