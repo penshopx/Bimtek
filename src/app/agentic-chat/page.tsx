@@ -13,7 +13,7 @@ const quickActions = [
 ];
 
 export default function AgenticChatPage() {
-  const { messages, isProcessing, processMessage, appFeatures, clearMessages } = useAgenticAI();
+  const { messages, isProcessing, processMessage, retryLastMessage, appFeatures, clearMessages } = useAgenticAI();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -104,9 +104,27 @@ export default function AgenticChatPage() {
                   <div className={`rounded-2xl p-4 ${
                     msg.role === 'user' 
                       ? 'bg-amber-500 text-white' 
-                      : 'bg-slate-700/50 text-slate-100 border border-slate-600'
+                      : msg.isAIError
+                        ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
+                        : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
+                    {msg.isAIError && (
+                      <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
+                        <span>⚠️</span>
+                        <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
+                      </div>
+                    )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {msg.isAIError && (
+                      <button
+                        onClick={() => retryLastMessage()}
+                        disabled={isProcessing}
+                        className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 disabled:opacity-50 text-amber-400 text-xs rounded-lg transition-colors"
+                      >
+                        <span>🔄</span>
+                        <span>Coba lagi dengan AI</span>
+                      </button>
+                    )}
                   </div>
                   
                   {msg.suggestions && msg.suggestions.length > 0 && (

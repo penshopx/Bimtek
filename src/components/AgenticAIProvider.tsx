@@ -33,6 +33,8 @@ export interface ChatMessage {
   timestamp: Date;
   suggestions?: AgentSuggestion[];
   toolsUsed?: string[];
+  isAIError?: boolean;
+  retryMessage?: string;
 }
 
 interface AgenticAIContextType {
@@ -42,6 +44,7 @@ interface AgenticAIContextType {
   setApiKey: (key: string) => void;
   addMessage: (content: string, role: 'user' | 'assistant' | 'system') => void;
   processMessage: (content: string) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
   clearMessages: () => void;
   appFeatures: AppFeature[];
 }
@@ -325,6 +328,7 @@ Saya bisa membantu Anda dengan:
 export function AgenticAIProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
 
   const addMessage = (content: string, role: 'user' | 'assistant' | 'system') => {
     const newMessage: ChatMessage = {
@@ -338,6 +342,7 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
 
   const processMessage = async (content: string) => {
     addMessage(content, 'user');
+    setLastUserMessage(content);
     setIsProcessing(true);
 
     const userMessage = content;
@@ -345,11 +350,13 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
 
     try {
       let response: string;
+      let aiError = false;
 
       try {
         response = await callAIAPI(userMessage, history);
       } catch (apiError) {
         console.error('AI API Error:', apiError);
+        aiError = true;
         // Fall back to rule-based if AI unavailable
         const fallback = generateRuleBasedResponse(userMessage);
         response = fallback.content;
@@ -363,7 +370,9 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
         content: response,
         timestamp: new Date(),
         suggestions,
-        toolsUsed: ['OpenAI API'],
+        toolsUsed: aiError ? [] : ['OpenAI API'],
+        isAIError: aiError,
+        retryMessage: aiError ? userMessage : undefined,
       };
       
       setMessages(prev => [...prev, responseMessage]);
@@ -374,6 +383,8 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
         role: 'assistant',
         content: 'Maaf, terjadi kesalahan. Silakan coba lagi.',
         timestamp: new Date(),
+        isAIError: true,
+        retryMessage: userMessage,
       };
       setMessages(prev => [...prev, errorMessage]);
     }
@@ -381,8 +392,27 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
     setIsProcessing(false);
   };
 
+  const retryLastMessage = async () => {
+    if (!lastUserMessage || isProcessing) return;
+    // Remove the last assistant message (the error one) before retrying
+    setMessages(prev => {
+      const last = [...prev].reverse().find(m => m.role === 'assistant' && m.isAIError);
+      if (!last) return prev;
+      return prev.filter(m => m.id !== last.id);
+    });
+    // Also remove the last user message so processMessage can re-add it
+    setMessages(prev => {
+      const reversed = [...prev].reverse();
+      const lastUser = reversed.find(m => m.role === 'user');
+      if (!lastUser) return prev;
+      return prev.filter(m => m.id !== lastUser.id);
+    });
+    await processMessage(lastUserMessage);
+  };
+
   const clearMessages = () => {
     setMessages([]);
+    setLastUserMessage(null);
   };
 
   return (
@@ -393,6 +423,7 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
       setApiKey: () => {},
       addMessage,
       processMessage,
+      retryLastMessage,
       clearMessages,
       appFeatures,
     }}>

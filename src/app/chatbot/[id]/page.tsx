@@ -55,6 +55,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isAIError?: boolean;
 }
 
 export default function ChatbotDetailPage() {
@@ -65,6 +66,7 @@ export default function ChatbotDetailPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,8 +92,8 @@ export default function ChatbotDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const generateResponse = async (userMessage: string): Promise<string> => {
-    if (!chatbot) return 'Chatbot not found';
+  const generateResponse = async (userMessage: string): Promise<{ content: string; isAIError: boolean }> => {
+    if (!chatbot) return { content: 'Chatbot not found', isAIError: false };
     
     const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
     
@@ -121,10 +123,16 @@ export default function ChatbotDetailPage() {
       }
       
       const data = await response.json();
-      return data.choices[0]?.message?.content || 'Maaf, saya tidak dapat memproses permintaan Anda.';
+      return {
+        content: data.choices[0]?.message?.content || 'Maaf, saya tidak dapat memproses permintaan Anda.',
+        isAIError: false,
+      };
     } catch (error) {
       console.error('API Error:', error);
-      return generateRuleBasedResponse(userMessage, chatbot);
+      return {
+        content: generateRuleBasedResponse(userMessage, chatbot),
+        isAIError: true,
+      };
     }
   };
 
@@ -179,40 +187,52 @@ Apa yang ingin Anda konsultasikan?`;
     return `Halo! Saya ${cb.name}. ${cb.description || 'Saya siap membantu Anda.'}`;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isProcessing || !chatbot) return;
-    
-    const userMessage = input;
-    setInput('');
-    
+  const sendMessage = async (userMessage: string) => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'user',
       content: userMessage,
       timestamp: new Date(),
     }]);
-    
+    setLastUserMessage(userMessage);
     setIsProcessing(true);
     
-    const response = await generateResponse(userMessage);
+    const { content, isAIError } = await generateResponse(userMessage);
     
     setMessages(prev => [...prev, {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: response,
+      content,
       timestamp: new Date(),
+      isAIError,
     }]);
     
     setIsProcessing(false);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isProcessing || !chatbot) return;
+    const userMessage = input;
+    setInput('');
+    await sendMessage(userMessage);
+  };
+
+  const handleRetry = async () => {
+    if (!lastUserMessage || isProcessing) return;
+    // Remove last error assistant message and last user message, then resend
+    setMessages(prev => {
+      const reversed = [...prev].reverse();
+      const lastAssistant = reversed.find(m => m.role === 'assistant' && m.isAIError);
+      const lastUser = reversed.find(m => m.role === 'user');
+      return prev.filter(m => m.id !== lastAssistant?.id && m.id !== lastUser?.id);
+    });
+    await sendMessage(lastUserMessage);
+  };
+
   const handleQuickReply = async (text: string) => {
-    setInput(text);
-    setTimeout(() => {
-      const form = document.getElementById('chat-form');
-      if (form) form.dispatchEvent(new Event('submit', { bubbles: true }));
-    }, 100);
+    if (isProcessing) return;
+    await sendMessage(text);
   };
 
   if (!chatbot) {
@@ -293,9 +313,27 @@ Apa yang ingin Anda konsultasikan?`;
                   <div className={`rounded-2xl p-4 ${
                     msg.role === 'user' 
                       ? 'bg-amber-500 text-white' 
-                      : 'bg-slate-700/50 text-slate-100 border border-slate-600'
+                      : msg.isAIError
+                        ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
+                        : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
+                    {msg.isAIError && (
+                      <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
+                        <span>⚠️</span>
+                        <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
+                      </div>
+                    )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {msg.isAIError && (
+                      <button
+                        onClick={handleRetry}
+                        disabled={isProcessing}
+                        className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 disabled:opacity-50 text-amber-400 text-xs rounded-lg transition-colors"
+                      >
+                        <span>🔄</span>
+                        <span>Coba lagi dengan AI</span>
+                      </button>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
                     {msg.timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
