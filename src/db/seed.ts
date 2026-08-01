@@ -706,6 +706,90 @@ async function seedUserProgress(users: { id: string }[]) {
 }
 
 // ---------------------------------------------------------------------------
+// Quiz Questions
+// ---------------------------------------------------------------------------
+
+async function seedQuizQuestions() {
+  const existing = await db.select().from(schema.quizQuestions);
+  if (existing.length > 0) {
+    console.log(`  ↳ quiz_questions: ${existing.length} rows already exist, skipping.`);
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const questions: (typeof schema.quizQuestions.$inferInsert)[] = [
+    { question: 'Apa fungsi utama pondasi pada struktur bangunan?', category: 'Sipil', options: JSON.stringify(['Menahan beban struktural', 'Dekorasi', 'Insulasi', 'Ventilasi']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'SNI yang mengatur perencanaan struktur beton adalah?', category: 'Standar', options: JSON.stringify(['SNI 1726', 'SNI 2847', 'SNI 6371', 'SNI 1729']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'APD yang wajib digunakan di ketinggian adalah?', category: 'K3', options: JSON.stringify(['Helm dan sepatu', 'Harness dan safety belt', 'Kacamata dan sarung tangan', 'Topi dan rompi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Apa kepanjangan AMDAL?', category: 'Lingkungan', options: JSON.stringify(['Analisis Manajemen Dampak', 'Analisis Mengenai Dampak Lingkungan', 'Assessment Muka Dasar Laut', 'Auditing Material Dienstbilitas']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Steel reinforcement pada beton berfungsi untuk?', category: 'Sipil', options: JSON.stringify(['Mengurangi berat', 'Menambah kekuatan tarik', 'Memperindah tampilan', 'Menambah kedap air']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Berapa kuat tekan minimum beton struktural (MPa)?', category: 'Material', options: JSON.stringify(['15 MPa', '20 MPa', '25 MPa', '30 MPa']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Alat pelindung diri (APD) untuk pekerjaan tinggi wajib menggunakan?', category: 'K3', options: JSON.stringify(['Helm', 'Safety harness', 'Sepatu safety', 'Kacamata']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Floor Area Ratio (FAR) adalah?', category: 'Perencanaan', options: JSON.stringify(['Rasio biaya lantai', 'Rasio luas lantai terhadap luas tanah', 'Rasio finishing', 'Rasio fondasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Konstruksi metode precast adalah?', category: 'Metode', options: JSON.stringify(['Cor di tempat', 'Pabrikasi di luar lokasi', 'Pasang batu bata', 'Catatan arsitektur']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Apa fungsi utama Scaffolding?', category: 'K3', options: JSON.stringify(['Dekorasi', 'Penyangga sementara', 'Jalur kabel', 'Drainase']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Peraturan Pemerintah yang mengatur JLAP adalah?', category: 'Regulasi', options: JSON.stringify(['PP 14/2021', 'PP 34/2021', 'PP 24/2021', 'PP 44/2021']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Slump test digunakan untuk mengukur?', category: 'Material', options: JSON.stringify(['Kekuatan beton', 'Workability beton', 'Durabilitas', 'Berat jenis']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Jenis pondasi yang cocok untuk tanah lunak adalah?', category: 'Sipil', options: JSON.stringify(['Raft foundation', 'Pile foundation', 'Ring foundation', 'Strip foundation']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Fire rating minimum untuk struktur baja adalah?', category: 'K3', options: JSON.stringify(['30 menit', '60 menit', '90 menit', '120 menit']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Kontrak yang berdasarkan lumpsum adalah?', category: 'Kontrak', options: JSON.stringify(['Bayar sesuai volume', 'Bayar sesuai waktu', 'Harga tetap total', 'Cost plus fee']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Critical Path Method (CPM) adalah?', category: 'Manajemen', options: JSON.stringify(['Metode biaya', 'Metode penjadwalan', 'Metode pengawasan', 'Metode quality']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Yang bukan merupakan jenis crane adalah?', category: 'Alat', options: JSON.stringify(['Tower crane', 'Mobile crane', 'Forklift crane', 'Crawler crane']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Besi tulangan polos (plain bar) memiliki simbol?', category: 'Material', options: JSON.stringify(['D', 'U', 'P', 'R']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Fungsi expansion joint adalah?', category: 'Sipil', options: JSON.stringify(['Mengikat struktur', 'Mungkinkan gerakan termal', 'Memperkuat kolom', 'Dekorasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'PUIL adalah singkatan dari?', category: 'Elektrikal', options: JSON.stringify(['Pedoman Umum Instalasi Listrik', 'Petunjuk Utama Instalasi Listrik', 'Peraturan Umum Instalasi Listrik', 'Peraturan Útama Instalasi Listrik']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Kapasitas genset diukur dalam?', category: 'Elektrikal', options: JSON.stringify(['Volt', 'Ampere', 'kVA', 'Watt']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'AC Split kapasitas besar disebut?', category: 'Mekanikal', options: JSON.stringify(['Window type', 'Split wall', 'VRV/VRF', 'Portable']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Sistem sprinkler menggunakan standar?', category: 'Mekanikal', options: JSON.stringify(['ISO 9001', 'NFPA 13', 'ASTM A36', 'BS 1139']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Pipa PVC ukuran 4 inch sama dengan?', category: 'Mekanikal', options: JSON.stringify(['100 mm', '110 mm', '125 mm', '150 mm']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Debit air diukur dalam?', category: 'Hydraulic', options: JSON.stringify(['m/s', 'm³/s', 'kg/m', 'Pa']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Boiler berfungsi untuk?', category: 'Mekanikal', options: JSON.stringify(['Pendinginan', 'Pemanas air', 'Kompresi', 'Generasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'HVAC adalah singkatan dari?', category: 'Mekanikal', options: JSON.stringify(['Heat, Ventilation, Air Conditioning', 'High Voltage Alternating Current', 'Heat Valve Air Compressor', 'Horizontal Ventilation AC']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'Tegangan listrik gedung menggunakan?', category: 'Elektrikal', options: JSON.stringify(['220V 1 phase', '380V 3 phase', '110V DC', '1000V AC']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'MCB berfungsi untuk?', category: 'Elektrikal', options: JSON.stringify(['Mengubah voltage', 'Proteksi overload', 'Mengubah frekuensi', 'Menyimpan energi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Grounding electrode resistance idealnya?', category: 'Elektrikal', options: JSON.stringify(['< 1 Ohm', '< 5 Ohm', '< 10 Ohm', '< 50 Ohm']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Material yang tidak cocok untuk struktur tahan api adalah?', category: 'Material', options: JSON.stringify(['Beton', 'Batu bata', 'Baja', 'Kayu']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Uji beban (load test) pada jembatan menggunakan?', category: 'Pengujian', options: JSON.stringify(['Beban hidup', 'Beban mati', 'Beban desain', 'Semua benar']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Beton bertulang dalam bahasa sehari-hari disebut?', category: 'Sipil', options: JSON.stringify(['Reinforced concrete', 'Prestressed concrete', 'Plain concrete', 'Mass concrete']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'Ductility material menunjukkan?', category: 'Material', options: JSON.stringify(['Kekuatan', 'Kekerasan', 'Kemampuan deformasi', 'Kekakuan']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Freeboard minimum pada bendungan adalah?', category: 'Hydraulic', options: JSON.stringify(['0.5 m', '1.0 m', '1.5 m', '2.0 m']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Peak Expiratory Flow digunakan untuk?', category: 'K3', options: JSON.stringify(['Kebugaran jantung', 'Fungsi paru', 'Kekuatan tangan', 'Pendengaran']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Noise level aman di tempat kerja adalah?', category: 'K3', options: JSON.stringify(['< 85 dB', '< 90 dB', '< 100 dB', '< 120 dB']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'MSDS adalah?', category: 'K3', options: JSON.stringify(['Manual Safety Data Sheet', 'Material Safety Data Sheet', 'Mechanical Safety Design', 'Management Safety Documentation']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'LOTO dalam K3 berarti?', category: 'K3', options: JSON.stringify(['List of Tools', 'Lock Out Tag Out', 'Low Oil Temperature', 'Life Of Tools']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'JSA adalah?', category: 'K3', options: JSON.stringify(['Job Safety Analysis', 'Japanese Safety Association', 'Joint Safety Audit', 'Junior Safety Agent']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'Tiang lampu jalan menggunakan pondasi?', category: 'Sipil', options: JSON.stringify(['Raft', 'Pile', 'Spread footing', 'Caisson']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Asphalt mixing plant menghasilkan?', category: 'Jalan', options: JSON.stringify(['Beton jadi', 'Campuran aspal', 'Agregat', 'Subbase']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Marshall test untuk?', category: 'Jalan', options: JSON.stringify(['Tanah', 'Aspal', 'Baja', 'Beton']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'CBR test mengukur?', category: 'Jalan', options: JSON.stringify(['Kekuatan jalan', 'Daya dukung tanah', 'Ketebalan perkerasan', 'Kekasaran']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Lapisan aus (wearing course) menggunakan?', category: 'Jalan', options: JSON.stringify(['Limestone', 'Hot mix asphalt', 'Batu pecah', 'Pasir']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'PMI (Physical Metal Identification) meliputi?', category: 'Material', options: JSON.stringify(['Komposisi kimia', 'Warna', 'Berat', 'Ukuran']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'NDT adalah?', category: 'Pengujian', options: JSON.stringify(['New Design Technology', 'Non Destructive Testing', 'National Design Test', 'Nuclear Data Test']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Ultrasonic test mendeteksi?', category: 'Pengujian', options: JSON.stringify(['Retak internal', 'Warna', 'Berat', 'Ukuran']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'Weldability baja dipengaruhi oleh?', category: 'Material', options: JSON.stringify(['Kadar karbon', 'Kadar manganese', 'Kadar chromium', 'Semua benar']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Galvanisasi melindungi baja dari?', category: 'Material', options: JSON.stringify(['Api', 'Korosi', 'Suhu tinggi', 'Tekanan']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Kontraktor all risk insurance melindungi?', category: 'Asuransi', options: JSON.stringify(['Pekerja', 'Material dan peralatan', 'Properti sekitar', 'Semua benar']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Retensioning pada post-tension dilakukan?', category: 'Metode', options: JSON.stringify(['Sebelum beton keras', 'Sesudah beton keras', 'Saat pengecoran', 'Setiap saat']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Grout digunakan untuk?', category: 'Material', options: JSON.stringify(['Finishing', 'Mengisi void', 'Dekorasi', 'Insulasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Waterstop pada beton berfungsi?', category: 'Sipil', options: JSON.stringify(['Menghilangkan air', 'Menghentikan rembesan', 'Menambah kekuatan', 'Dekorasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Shotcrete adalah?', category: 'Metode', options: JSON.stringify(['Cat beton', 'Semprotan beton', 'Beton polos', 'Beton pracetak']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Tegangan geser izin baja struktural sekitar?', category: 'Material', options: JSON.stringify(['0.4 fy', '0.5 fy', '0.6 fy', '0.7 fy']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Rafter pada atap berfungsi?', category: 'Sipil', options: JSON.stringify(['Mendukung beban atap', 'Drainase', 'Dekorasi', 'Ventilasi']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'Batang tekan (column) menerima?', category: 'Sipil', options: JSON.stringify(['Tarik', 'Tekan', 'Geser', 'Torsi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Saggy floor menunjukkan?', category: 'Struktur', options: JSON.stringify(['Beban berlebih', 'Fondasi masalah', 'Keduanya benar', 'Tidak ada']), correct: 2, createdAt: now, updatedAt: now },
+    { question: 'Persiapan sebelum welding meliputi?', category: 'Manufaktur', options: JSON.stringify(['Cleaning', 'Preheating', 'Welding', 'A dan B benar']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Welder qualification test menggunakan?', category: 'Manufaktur', options: JSON.stringify(['Visual test', 'Destructive test', 'NDT', 'Semua benar']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'PQR dalam welding adalah?', category: 'Manufaktur', options: JSON.stringify(['Procedure Qualification Record', 'Process Quality Report', 'Professional Qualification', 'Production Quality Review']), correct: 0, createdAt: now, updatedAt: now },
+    { question: 'SMA (Stone Matrix Asphalt) menggunakan?', category: 'Jalan', options: JSON.stringify(['Agregat halus', 'Agregat kasar', 'Filler mineral', 'B and C']), correct: 3, createdAt: now, updatedAt: now },
+    { question: 'Joint sealant berfungsi?', category: 'Jalan', options: JSON.stringify(['Mengisi celah', 'Mencegah air masuk', 'Memperkuat', 'Dekorasi']), correct: 1, createdAt: now, updatedAt: now },
+    { question: 'Micro surfacing adalah?', category: 'Jalan', options: JSON.stringify(['Lapisan tipis', 'Lapisan tebal', 'Fondasi', 'Subbase']), correct: 0, createdAt: now, updatedAt: now },
+  ];
+
+  await db.insert(schema.quizQuestions).values(questions);
+  console.log(`  ↳ quiz_questions: inserted ${questions.length} questions.`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -726,6 +810,7 @@ async function main() {
   await seedFavorites();
   await seedSettings();
   await seedUserProgress(users);
+  await seedQuizQuestions();
 
   console.log('\n✅ Seed complete!');
   console.log('\nDemo accounts:');

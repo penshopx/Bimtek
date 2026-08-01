@@ -159,3 +159,13 @@ export const userQuizScores = sqliteTable("user_quiz_scores", {
   totalQuestions: integer("total_questions").notNull(),
   takenAt: text("taken_at").notNull(),
 });
+
+export const quizQuestions = sqliteTable("quiz_questions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  question: text("question").notNull(),
+  category: text("category").notNull(),
+  options: text("options").notNull(), // JSON array of strings
+  correct: integer("correct").notNull(), // index of correct option
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

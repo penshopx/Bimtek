@@ -1,0 +1,323 @@
+'use client';
+
+import { useState, useEffect, useTransition } from 'react';
+import { useAuth } from '@/components/AuthProvider';
+import Link from 'next/link';
+import {
+  getQuizQuestions,
+  getQuizCategories,
+  createQuizQuestion,
+  updateQuizQuestion,
+  deleteQuizQuestion,
+} from '@/app/actions/quiz';
+import type { QuizQuestion } from '@/app/actions/quiz';
+
+export default function AdminQuizPage() {
+  const { user } = useAuth();
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterCategory, setFilterCategory] = useState('Semua');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState({ question: '', category: '', options: ['', '', '', ''], correct: 0 });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (user?.role === 'admin') loadData();
+  }, [user]);
+
+  const loadData = () => {
+    setLoading(true);
+    startTransition(async () => {
+      try {
+        const [qs, cats] = await Promise.all([getQuizQuestions(), getQuizCategories()]);
+        setQuestions(qs);
+        setCategories(cats);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    });
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm({ question: '', category: '', options: ['', '', '', ''], correct: 0 });
+    setShowForm(true);
+    setMessage('');
+  };
+
+  const openEdit = (q: QuizQuestion) => {
+    setEditingId(q.id);
+    setForm({ question: q.question, category: q.category, options: [...q.options], correct: q.correct });
+    setShowForm(true);
+    setMessage('');
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+  };
+
+  const handleSave = async () => {
+    if (!form.question.trim() || !form.category.trim() || form.options.some((o) => !o.trim())) {
+      setMessage('Harap isi semua field.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      const result = editingId !== null
+        ? await updateQuizQuestion(editingId, form, sessionId)
+        : await createQuizQuestion(form, sessionId);
+
+      if (result.success) {
+        setMessage(editingId !== null ? 'Soal berhasil diperbarui.' : 'Soal berhasil ditambahkan.');
+        loadData();
+        closeForm();
+      } else {
+        setMessage(result.message || 'Gagal menyimpan soal.');
+      }
+    } catch {
+      setMessage('Terjadi kesalahan.');
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Yakin hapus soal ini?')) return;
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      await deleteQuizQuestion(id, sessionId);
+      loadData();
+    } catch {
+      // ignore
+    }
+  };
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Akses Ditolak</h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">Halaman ini hanya untuk admin</p>
+          <Link href="/dashboard" className="text-amber-500 hover:underline">Kembali ke Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const filtered = filterCategory === 'Semua' ? questions : questions.filter((q) => q.category === filterCategory);
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">✍️ Manajemen Soal Quiz</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">{questions.length} soal tersedia</p>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/admin" className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
+              ← Admin
+            </Link>
+            <button
+              onClick={openCreate}
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 text-sm font-medium"
+            >
+              + Tambah Soal
+            </button>
+          </div>
+        </div>
+
+        {/* Category filter */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filterCategory === cat
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Form modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+                {editingId !== null ? 'Edit Soal' : 'Tambah Soal Baru'}
+              </h2>
+
+              {message && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                  {message}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pertanyaan</label>
+                  <textarea
+                    value={form.question}
+                    onChange={(e) => setForm({ ...form, question: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    placeholder="Tulis pertanyaan di sini..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
+                  <input
+                    type="text"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    list="cat-list"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    placeholder="Contoh: Sipil, K3, Material..."
+                  />
+                  <datalist id="cat-list">
+                    {categories.filter((c) => c !== 'Semua').map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Pilihan Jawaban</label>
+                  <div className="space-y-2">
+                    {form.options.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="correct"
+                          checked={form.correct === idx}
+                          onChange={() => setForm({ ...form, correct: idx })}
+                          className="accent-amber-500"
+                        />
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 w-5">
+                          {String.fromCharCode(65 + idx)}.
+                        </span>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...form.options];
+                            newOpts[idx] = e.target.value;
+                            setForm({ ...form, options: newOpts });
+                          }}
+                          className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                          placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Pilih radio button di kiri untuk menandai jawaban benar.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6 justify-end">
+                <button
+                  onClick={closeForm}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm hover:bg-slate-300 dark:hover:bg-slate-600"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-60"
+                >
+                  {saving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Questions table */}
+        {loading ? (
+          <div className="text-center py-12 text-slate-500">Memuat soal...</div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-100 dark:bg-slate-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-8">#</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Pertanyaan</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-28">Kategori</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-20">Benar</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                        Belum ada soal di kategori ini.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((q, i) => (
+                      <tr key={q.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        <td className="px-4 py-3 text-slate-400 text-sm">{i + 1}</td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">{q.question}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {q.options.map((o, idx) => (
+                              <span key={idx} className={idx === q.correct ? 'text-green-600 font-medium' : ''}>
+                                {String.fromCharCode(65 + idx)}. {o}{idx < q.options.length - 1 ? ' · ' : ''}
+                              </span>
+                            ))}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-xs">
+                            {q.category}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-green-600 font-medium">
+                          {String.fromCharCode(65 + q.correct)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEdit(q)}
+                              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(q.id)}
+                              className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

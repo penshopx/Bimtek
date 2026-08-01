@@ -139,6 +139,12 @@ export default function AdminPage() {
               {tab === 'activities' && `📝 Aktivitas`}
             </button>
           ))}
+          <Link
+            href="/admin/quiz"
+            className="px-6 py-3 rounded-lg font-medium whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+          >
+            ✍️ Soal Quiz
+          </Link>
         </div>
 
         {loading ? (
