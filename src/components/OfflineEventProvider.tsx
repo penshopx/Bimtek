@@ -153,6 +153,7 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<OfflineEvent[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [dbAvailable, setDbAvailable] = useState(false);
 
   useEffect(() => {
     async function fetchFromDb() {
@@ -160,18 +161,22 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
         const res = await fetch('/api/events');
         if (res.ok) {
           const dbEvents = await res.json();
-          if (dbEvents.length > 0) {
-            setEvents(dbEvents.map((e: any) => ({ ...e, participants: [] })));
-            const savedCerts = localStorage.getItem('offlineCertificates');
-            if (savedCerts) setCertificates(JSON.parse(savedCerts));
-            setIsHydrated(true);
-            return;
-          }
+          // DB is the source of truth when reachable — use it even if it returns 0 rows,
+          // so stale localStorage sample data never overrides the real database.
+          setEvents(dbEvents.map((e: any) => ({ ...e, participants: e.participants ?? [] })));
+          const savedCerts = localStorage.getItem('offlineCertificates');
+          if (savedCerts) setCertificates(JSON.parse(savedCerts));
+          // Clear any stale localStorage events so they don't interfere on future visits
+          localStorage.removeItem('offlineEvents');
+          setDbAvailable(true);
+          setIsHydrated(true);
+          return;
         }
       } catch (e) {
         console.log('DB not available, using localStorage');
       }
       
+      // DB unreachable — fall back to localStorage or built-in sample data
       const savedEvents = localStorage.getItem('offlineEvents');
       const savedCerts = localStorage.getItem('offlineCertificates');
       
@@ -192,10 +197,12 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (isHydrated && events.length > 0) {
+    // Only persist events to localStorage when running in offline (no-DB) mode.
+    // When the DB is available it is the source of truth and localStorage is not used.
+    if (isHydrated && !dbAvailable && events.length > 0) {
       localStorage.setItem('offlineEvents', JSON.stringify(events));
     }
-  }, [events, isHydrated]);
+  }, [events, isHydrated, dbAvailable]);
 
   useEffect(() => {
     if (isHydrated && certificates.length > 0) {
