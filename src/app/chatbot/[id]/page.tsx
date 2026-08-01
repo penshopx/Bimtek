@@ -98,7 +98,17 @@ export default function ChatbotDetailPage() {
     const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
     
     try {
-      const history = messages.slice(-(chatbot.agentic?.contextRetention || 12)).map(m => ({
+      // Trim history by estimated token budget rather than a fixed message count.
+      // Budget: 8000 context tokens − system prompt − reserved response tokens − 300 for the new user message.
+      const { trimHistoryByTokenBudget } = await import('@/lib/ai/token-utils');
+      const reserveForResponse = chatbot.aiConfig?.maxTokens || 1024;
+      const trimmedHistory = trimHistoryByTokenBudget(
+        messages.filter(m => m.role === 'user' || m.role === 'assistant'),
+        systemPrompt,
+        8000,
+        reserveForResponse,
+      );
+      const history = trimmedHistory.map(m => ({
         role: m.role,
         content: m.content
       }));

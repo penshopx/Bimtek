@@ -127,10 +127,20 @@ Gunakan pengetahuan ini untuk memberikan jawaban yang akurat dan terverifikasi.`
 
 async function callAIAPI(message: string, history: ChatMessage[]): Promise<string> {
   const systemPrompt = buildSystemPrompt();
-  
+
+  // Trim history by estimated token budget rather than a fixed message count.
+  // Budget: 8000 context tokens − system prompt − 1000 reserved for the response − 300 for the new user message.
+  const { trimHistoryByTokenBudget } = await import('@/lib/ai/token-utils');
+  const trimmedHistory = trimHistoryByTokenBudget(
+    history.filter(m => m.role === 'user' || m.role === 'assistant'),
+    systemPrompt,
+    8000,
+    1000,
+  );
+
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history.slice(-10).map(m => ({ role: m.role, content: m.content })),
+    ...trimmedHistory.map(m => ({ role: m.role, content: m.content })),
     { role: 'user', content: message }
   ];
 
