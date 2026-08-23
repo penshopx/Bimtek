@@ -21,6 +21,7 @@ const navItems = [
   { href: '/skk', label: 'SKK Hub', icon: '🏗️' },
   { href: '/pantau-skk', label: 'Pantau SKK', icon: '🗓️' },
   { href: '/biaya-skk', label: 'Biaya SKK', icon: '💰' },
+  { href: '/hari-h', label: 'Hari-H Asesmen', icon: '📅' },
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },

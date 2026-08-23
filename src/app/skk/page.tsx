@@ -17,6 +17,7 @@ const tools: Record<string, { icon: string; name: string; desc: string; href: st
     { icon: '📋', name: 'Cari Jabatan SKK', desc: '67+ jabatan dengan persyaratan lengkap', href: '/sertifikasi' },
     { icon: '📄', name: 'Checklist Dokumen', desc: 'FR.APL.01, FR.APL.02, dan dokumen pendukung per jabatan', href: '/skk-coach/chat?agent=dokumen' },
     { icon: '💰', name: 'Kalkulator Biaya SKK', desc: 'Estimasi biaya pelatihan, asesmen, dan dokumen per jabatan & wilayah', href: '/biaya-skk' },
+    { icon: '📅', name: 'Panduan Hari-H Asesmen', desc: 'Checklist interaktif + timeline ujian untuk Hardcopy, Paperless & AJJ', href: '/hari-h' },
     { icon: '🎯', name: 'Mock Asesmen SKK', desc: 'Simulasi 5 soal AI berbasis SKKNI per domain', href: '/mock-asesmen' },
     { icon: '🏥', name: 'Klinik Uji Kompetensi', desc: 'Jalur lengkap: Dialog → Blueprint → Chatbot → Ujian', href: '/klinik-uji-kompetensi' },
     { icon: '💬', name: 'SKK Coach AI', desc: '5 agen spesialis: kelayakan, dokumen, jabatan, perpanjangan, SBU', href: '/skk-coach' },
