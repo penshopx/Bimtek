@@ -49,6 +49,7 @@ export interface Certificate {
 interface OfflineEventContextType {
   events: OfflineEvent[];
   certificates: Certificate[];
+  isHydrated: boolean;
   createEvent: (event: Omit<OfflineEvent, 'id' | 'createdAt' | 'registered' | 'participants' | 'status'>) => void;
   registerForEvent: (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>) => Promise<boolean>;
   cancelRegistration: (eventId: string, participantId: string) => Promise<void>;
@@ -56,6 +57,7 @@ interface OfflineEventContextType {
   completeEvent: (eventId: string) => Promise<void>;
   updateEvent: (eventId: string, updates: Partial<OfflineEvent>) => void;
   deleteEvent: (eventId: string) => Promise<void>;
+  fetchParticipants: (eventId: string) => Promise<void>;
   getMyEvents: (participantId?: string) => OfflineEvent[];
   getMyCertificates: (participantId?: string) => Certificate[];
 }
@@ -382,6 +384,25 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     setEvents(newEvents);
   };
 
+  const fetchParticipants = async (eventId: string) => {
+    try {
+      // Send the stored session so the protected endpoint can verify the caller is an admin.
+      const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
+      if (!sessionId) return;
+
+      const res = await fetch(`/api/events/${eventId}/participants`, {
+        headers: { 'x-session-id': sessionId },
+      });
+      if (!res.ok) return;
+      const participants: EventParticipant[] = await res.json();
+      setEvents(prev =>
+        prev.map(e => e.id === eventId ? { ...e, participants } : e)
+      );
+    } catch (e) {
+      console.log('Could not fetch participants for event', eventId);
+    }
+  };
+
   const deleteEvent = async (eventId: string) => {
     try {
       await fetch('/api/events', {
@@ -411,6 +432,7 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     <OfflineEventContext.Provider value={{
       events,
       certificates,
+      isHydrated,
       createEvent,
       registerForEvent,
       cancelRegistration,
@@ -418,6 +440,7 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
       completeEvent,
       updateEvent,
       deleteEvent,
+      fetchParticipants,
       getMyEvents,
       getMyCertificates,
     }}>

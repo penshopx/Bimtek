@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useOfflineEvents } from '@/components/OfflineEventProvider';
@@ -8,7 +8,16 @@ import { useOfflineEvents } from '@/components/OfflineEventProvider';
 export default function ManageEventPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { events, updateEvent, deleteEvent, markAttendance, completeEvent, cancelRegistration } = useOfflineEvents();
+  const { events, isHydrated, updateEvent, deleteEvent, markAttendance, completeEvent, cancelRegistration, fetchParticipants } = useOfflineEvents();
+
+  // Fetch participants only after the provider has finished loading events from the DB,
+  // so we don't race the initial hydration that would overwrite participants with [].
+  // The session ID is sent so the protected endpoint can verify the caller is an admin.
+  useEffect(() => {
+    if (isHydrated) {
+      fetchParticipants(resolvedParams.id);
+    }
+  }, [isHydrated, resolvedParams.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [activeTab, setActiveTab] = useState<'details' | 'participants'>('details');
 
   const event = events.find(e => e.id === resolvedParams.id);
