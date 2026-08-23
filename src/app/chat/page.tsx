@@ -131,9 +131,14 @@ export default function ChatPage() {
         };
       }
 
-      const history = currentMessages
+      const rawHistory = currentMessages
         .filter(m => !m.isAIError)
         .map(m => ({ role: m.role, content: m.content }));
+
+      const { trimHistoryByTokenBudget, estimateTokens } = await import('@/lib/ai/token-utils');
+      // Reserve exactly as many tokens as the current user message needs (content + framing overhead).
+      const userMessageTokens = estimateTokens(userInput) + 10;
+      const history = trimHistoryByTokenBudget(rawHistory, systemPrompt, 8000, 1000, userMessageTokens);
 
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
