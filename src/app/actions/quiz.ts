@@ -313,6 +313,28 @@ export async function getQuizAttemptStats(
 }
 
 /**
+ * Delete all attempt history for a specific question.
+ * Admin-only. Useful after significantly editing a question so stale stats
+ * no longer skew the success-rate display.
+ */
+export async function resetQuizAttempts(
+  questionId: number,
+  sessionId: string | null | undefined
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    await requireAdmin(sessionId);
+    if (!Number.isInteger(questionId) || questionId <= 0) {
+      throw new Error('Invalid question id');
+    }
+    await db.delete(quizAttempts).where(eq(quizAttempts.questionId, questionId));
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, message: msg };
+  }
+}
+
+/**
  * Reorder quiz questions by saving a new sort_order for each id in the given order.
  * `orderedIds` is the full list of question IDs in the desired display order.
  */

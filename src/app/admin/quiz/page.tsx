@@ -11,6 +11,7 @@ import {
   deleteQuizQuestion,
   reorderQuizQuestions,
   getQuizAttemptStats,
+  resetQuizAttempts,
 } from '@/app/actions/quiz';
 import type { QuizQuestion, QuizAttemptStat } from '@/app/actions/quiz';
 
@@ -27,6 +28,8 @@ export default function AdminQuizPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [reordering, setReordering] = useState(false);
+  const [resetConfirmId, setResetConfirmId] = useState<number | null>(null);
+  const [resetting, setResetting] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -106,6 +109,21 @@ export default function AdminQuizPage() {
       loadData();
     } catch {
       // ignore
+    }
+  };
+
+  const handleResetStats = async () => {
+    if (resetConfirmId === null) return;
+    setResetting(true);
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      await resetQuizAttempts(resetConfirmId, sessionId);
+      setResetConfirmId(null);
+      loadData();
+    } catch {
+      // ignore
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -209,6 +227,34 @@ export default function AdminQuizPage() {
             ↕ Gunakan tombol panah untuk mengubah urutan tampilan soal.
             {reordering && <span className="ml-2 text-amber-500">Menyimpan urutan...</span>}
           </p>
+        )}
+
+        {/* Reset stats confirmation dialog */}
+        {resetConfirmId !== null && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Reset Statistik Soal?</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                Semua data percobaan untuk soal ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setResetConfirmId(null)}
+                  disabled={resetting}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-60"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleResetStats}
+                  disabled={resetting}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-60"
+                >
+                  {resetting ? 'Mereset...' : 'Ya, Reset'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Form modal */}
@@ -452,6 +498,12 @@ export default function AdminQuizPage() {
                                     })}
                                   </div>
                                 )}
+                                <button
+                                  onClick={() => setResetConfirmId(q.id)}
+                                  className="mt-1.5 text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors underline underline-offset-2"
+                                >
+                                  Reset stats
+                                </button>
                               </div>
                             ) : (
                               <span className="text-xs text-slate-400 italic">Belum ada data</span>
