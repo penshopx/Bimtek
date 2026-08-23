@@ -25,7 +25,7 @@ export function NotificationManager() {
       setPermission(result);
       if (result === 'granted') {
         setSettings(prev => ({ ...prev, enabled: true }));
-        new Notification('BimtekKita', {
+        new Notification('SiapSKK', {
           body: 'Notifikasi berhasil diaktifkan! Kami akan mengingatkan Anda untuk terus belajar.',
           icon: '/icon-192.svg',
         });
@@ -35,7 +35,7 @@ export function NotificationManager() {
 
   const sendTestNotification = () => {
     if (permission === 'granted') {
-      new Notification('BimtekKita - Reminder', {
+      new Notification('SiapSKK - Reminder', {
         body: 'Waktunya belajar! Lanjutkan progress PKB Anda.',
         icon: '/icon-192.svg',
       });

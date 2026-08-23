@@ -61,7 +61,7 @@ export function Navbar() {
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🏗️</span>
               <span className="font-bold text-xl bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                BimtekKita
+                SiapSKK
               </span>
             </Link>
             

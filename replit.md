@@ -1,4 +1,4 @@
-# BimtekKita
+# SiapSKK
 
 Platform Pelatihan & Sertifikasi Tenaga Konstruksi Indonesia — a Next.js 16 web application.
 

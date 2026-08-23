@@ -84,9 +84,9 @@ const appFeatures: AppFeature[] = [
 const AgenticAIContext = createContext<AgenticAIContextType | undefined>(undefined);
 
 function buildSystemPrompt(): string {
-  return `Anda adalah Agentic AI BimtekKita, asisten AI profesional untuk platform persiapan uji kompetensi SKK (Sertifikat Kompetensi Kerja) bidang konstruksi Indonesia.
+  return `Anda adalah Agentic AI SiapSKK, asisten AI profesional untuk platform persiapan uji kompetensi SKK (Sertifikat Kompetensi Kerja) bidang konstruksi Indonesia.
 
-TENTANG BIMTEKKITA:
+TENTANG SIAPSKK:
 - Platform persiapan uji kompetensi SKK bidang Sipil & Manajemen Pelaksanaan
 - 67+ modul BIMTEK pelatihan (Struktur, K3, Manajemen, Elektrikal, Plumbing)
 - 65+ soal latihan berdasarkan unit kompetensi SKKNI
@@ -207,7 +207,7 @@ function generateRuleBasedResponse(userMessage: string): { content: string; sugg
   let suggestions: AgentSuggestion[] = [];
   
   if (lowerMessage.includes('halo') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
-    response = `Halo! Saya Agentic AI BimtekKita 🤖
+    response = `Halo! Saya Agentic AI SiapSKK 🤖
 
 Saya adalah asisten AI yang dapat membantu Anda dengan:
 • **Navigasi** - Menunjukkan fitur-fitur aplikasi
@@ -227,7 +227,7 @@ Coba tanyakan sesuatu:
     ];
   }
   else if (lowerMessage.includes('fitur') || lowerMessage.includes('ada apa') || lowerMessage.includes('menu')) {
-    response = `📱 **Fitur-fitur BimtekKita:**
+    response = `📱 **Fitur-fitur SiapSKK:**
 
 **🎓 Pembelajaran:**
 • BIMTEK - 67+ modul pelatihan
@@ -258,7 +258,7 @@ Coba tanyakan sesuatu:
   else if (lowerMessage.includes('bimtek') || lowerMessage.includes('modul') || lowerMessage.includes('belajar')) {
     response = `🎓 **BIMTEK - Pelatihan Konstruksi**
 
-BimtekKita menawarkan **67+ modul pelatihan** 包括:
+SiapSKK menawarkan **67+ modul pelatihan** 包括:
 
 **Kategori:**
 • Struktur Beton & Baja
@@ -283,7 +283,7 @@ Gunakan /bimtek untuk mulai belajar!`;
   else if (lowerMessage.includes('sertifikasi') || lowerMessage.includes('skk') || lowerMessage.includes('bnsp')) {
     response = `📋 **Sertifikasi & Regulasi**
 
-BimtekKita menyediakan **334+ posisi pekerjaan** dengan persyaratan SKK.
+SiapSKK menyediakan **334+ posisi pekerjaan** dengan persyaratan SKK.
 
 **Jenis:**
 • SKK (SNI) - BNP
@@ -358,7 +358,7 @@ Gunakan /bimtek atau /chat dengan Expert K3!`;
     }
   }
   else {
-    response = `🤖 **Agentic AI BimtekKita**
+    response = `🤖 **Agentic AI SiapSKK**
 
 Saya mengerti "${userMessage}". 
 

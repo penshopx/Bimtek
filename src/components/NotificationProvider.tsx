@@ -29,7 +29,7 @@ const defaultNotifications: Notification[] = [
     id: '1',
     type: 'info',
     title: 'Selamat Datang!',
-    message: 'Selamat datang di BimtekKita. Mulai perjalanan belajarmu sekarang!',
+    message: 'Selamat datang di SiapSKK. Mulai perjalanan belajarmu sekarang!',
     read: false,
     timestamp: new Date().toISOString(),
     link: '/bimtek',

@@ -61,7 +61,7 @@ export default function SettingsPage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">⚙️ Settings</h1>
           <p className="text-slate-600 dark:text-slate-300">
-            Konfigurasi aplikasi BimtekKita
+            Konfigurasi aplikasi SiapSKK
           </p>
         </div>
 

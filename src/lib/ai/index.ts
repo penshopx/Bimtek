@@ -1,4 +1,4 @@
-// BimtekKita AI Configuration
+// SiapSKK AI Configuration
 // Comprehensive AI system for construction training platform
 
 // ============================================

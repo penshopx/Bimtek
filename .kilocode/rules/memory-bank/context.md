@@ -1,4 +1,4 @@
-# Context: BimtekKita - Construction Training Platform
+# Context: SiapSKK - Construction Training Platform
 
 ## Current State
 Complete construction training platform with AI chatbot system built and deployed.

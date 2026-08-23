@@ -1,5 +1,5 @@
 /**
- * Database seed script — populates demo data for BimtekKita.
+ * Database seed script — populates demo data for SiapSKK.
  * Safe to run multiple times (idempotent via per-table existence checks).
  *
  * Usage: bun run db:seed
@@ -42,13 +42,13 @@ async function seedUsers() {
   const demoUsers = [
     {
       id: 'user-demo-admin',
-      name: 'Admin BimtekKita',
-      email: 'admin@bimtekkita.id',
+      name: 'Admin SiapSKK',
+      email: 'admin@siapskk.id',
       passwordHash: simpleHash('admin123'),
       role: 'admin',
       avatar: null,
       phone: '081234567890',
-      company: 'BimtekKita',
+      company: 'SiapSKK',
       position: 'Administrator',
       createdAt: now,
       updatedAt: now,
@@ -814,7 +814,7 @@ async function main() {
 
   console.log('\n✅ Seed complete!');
   console.log('\nDemo accounts:');
-  console.log('  Admin  → admin@bimtekkita.id  / admin123');
+  console.log('  Admin  → admin@siapskk.id  / admin123');
   console.log('  Admin  → admin@kilokode.com   / admin123');
   console.log('  User   → ahmad@demo.com       / demo123');
   console.log('  User   → budi@demo.com        / demo123');

@@ -23,13 +23,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BimtekKita - Pelatihan Konstruksi Indonesia",
+  title: "SiapSKK - Pelatihan Konstruksi Indonesia",
   description: "Platform pelatihan dan sertifikasi bidang konstruksi Indonesia",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BimtekKita",
+    title: "SiapSKK",
   },
 };
 

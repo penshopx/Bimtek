@@ -83,7 +83,7 @@ export function CertificateGenerator({ certificate, onClose }: { certificate: Ce
             <div className="header">
               <div className="logo">🏗️</div>
               <div className="title">SERTIFIKAT</div>
-              <div className="subtitle">BimtekKita - Platform Pelatihan Konstruksi Indonesia</div>
+              <div className="subtitle">SiapSKK - Platform Pelatihan Konstruksi Indonesia</div>
             </div>
             
             <div className="recipient">
@@ -115,14 +115,14 @@ export function CertificateGenerator({ certificate, onClose }: { certificate: Ce
               <div className="seal">
                 <div>
                   <div>VERIFIED</div>
-                  <div>BimtekKita</div>
+                  <div>SiapSKK</div>
                 </div>
               </div>
               
               <div className="signature">
                 <div className="signature-line"></div>
                 <p>Director</p>
-                <p>BimtekKita</p>
+                <p>SiapSKK</p>
               </div>
             </div>
           </div>

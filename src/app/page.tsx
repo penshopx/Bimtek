@@ -138,7 +138,7 @@ export default function Home() {
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                BimtekKita
+                SiapSKK
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-4 max-w-3xl mx-auto">
@@ -184,7 +184,7 @@ export default function Home() {
               3 Tantangan Utama Asesi SKK
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              Masalah yang paling sering dihadapi peserta uji kompetensi bidang Sipil dan Manajemen Pelaksanaan — dan cara BimtekKita membantu mengatasinya.
+              Masalah yang paling sering dihadapi peserta uji kompetensi bidang Sipil dan Manajemen Pelaksanaan — dan cara SiapSKK membantu mengatasinya.
             </p>
           </div>
 
@@ -252,7 +252,7 @@ export default function Home() {
             Semua yang Anda Butuhkan untuk Lulus SKK
           </h2>
           <p className="text-center text-slate-600 mb-12 max-w-2xl mx-auto">
-            Dari persiapan dokumen hingga simulasi asesmen — BimtekKita memandu Asesi bidang Sipil &amp; Manajemen Pelaksanaan.
+            Dari persiapan dokumen hingga simulasi asesmen — SiapSKK memandu Asesi bidang Sipil &amp; Manajemen Pelaksanaan.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -305,7 +305,7 @@ export default function Home() {
 
       <footer className="bg-slate-900 text-slate-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="mb-2">© 2026 BimtekKita — Platform Persiapan Uji Kompetensi SKK</p>
+          <p className="mb-2">© 2026 SiapSKK — Platform Persiapan Uji Kompetensi SKK</p>
           <p className="text-xs text-slate-500">
             Referensi: Permen PU No. 6/2025 · KM PUPR No. 713/KPTS/M/2022 · SK DJBK No. 114/KPTS/DK/2024 · Permen PU No. 12/2021
           </p>

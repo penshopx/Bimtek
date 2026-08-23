@@ -48,11 +48,11 @@ export default function RegisterPage() {
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-4xl">🏗️</span>
             <span className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-              BimtekKita
+              SiapSKK
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-white mt-6">Buat Akun Baru</h1>
-          <p className="text-slate-400 mt-2">Bergabung dengan BimtekKita</p>
+          <p className="text-slate-400 mt-2">Bergabung dengan SiapSKK</p>
         </div>
 
         <div className="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl border border-slate-700 p-8">

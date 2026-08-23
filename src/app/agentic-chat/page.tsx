@@ -54,7 +54,7 @@ export default function AgenticChatPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">
-            🤖 Agentic AI BimtekKita
+            🤖 Agentic AI SiapSKK
           </h1>
           <p className="text-slate-400">
             Asisten AI Pintar - Tahu segalanya tentang aplikasi ini
@@ -78,7 +78,7 @@ export default function AgenticChatPage() {
             {messages.length === 0 && (
               <div className="text-center text-slate-400 py-8">
                 <div className="text-6xl mb-4">🤖</div>
-                <p className="text-lg">Halo! Saya Agentic AI BimtekKita</p>
+                <p className="text-lg">Halo! Saya Agentic AI SiapSKK</p>
                 <p className="text-sm mt-2">Tanyakan apa saja tentang aplikasi ini!</p>
                 <div className="mt-6 grid grid-cols-2 gap-2 text-left max-w-md mx-auto">
                   <button onClick={() => handleQuickAction('bimtek')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">

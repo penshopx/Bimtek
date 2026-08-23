@@ -69,21 +69,21 @@ interface CustomChatbot {
 const defaultChatbots: CustomChatbot[] = [
   {
     id: 'demo-bimtek',
-    name: 'BimtekKita Assistant',
+    name: 'SiapSKK Assistant',
     tagline: 'Asisten pembelajaran konstruksi',
     description: 'Chatbot AI untuk membantu belajar BIMTEK dan konsultasi konstruksi',
     avatar: '🤖',
     type: 'mentoring',
     language: 'Bahasa Indonesia',
     welcome: {
-      greeting: 'Halo! Saya BimtekKita Assistant - asisten AI untuk pembelajaran konstruksi. Saya bisa membantu Anda dengan:\n\n📚 Pembelajaran modul BIMTEK\n❓ Jawaban pertanyaan teknis\n🏗️ Konsultasi proyek\n\nAda yang bisa saya bantu?',
+      greeting: 'Halo! Saya SiapSKK Assistant - asisten AI untuk pembelajaran konstruksi. Saya bisa membantu Anda dengan:\n\n📚 Pembelajaran modul BIMTEK\n❓ Jawaban pertanyaan teknis\n🏗️ Konsultasi proyek\n\nAda yang bisa saya bantu?',
       starters: ['Apa itu BIMTEK?', 'Cara belajar struktur beton', 'Jadwal pelatihan terdekat'],
     },
     personality: {
       communicationStyle: 'Membantu, sabar, dan educational. Selalu berikan contoh nyata dari industri konstruksi Indonesia.',
-      systemPrompt: `Anda adalah BimtekKita Assistant - asisten AI untuk platform pelatihan konstruksi.
+      systemPrompt: `Anda adalah SiapSKK Assistant - asisten AI untuk platform pelatihan konstruksi.
 
-TENTANG BIMTEKKITA:
+TENTANG SIAPSKK:
 - Platform pelatihan konstruksi No.1 di Indonesia
 - 67+ modul BIMTEK (Struktur, K3, Manajemen, Elektrikal)
 - 334+ posisi sertifikasi
@@ -103,7 +103,7 @@ PERATURAN:
     },
     offTopic: {
       strategy: 'polite_redirect',
-      customResponse: 'Maaf, saya fokus membantu pertanyaan tentang konstruksi dan pembelajaran di BimtekKita. Apakah ada yang bisa saya bantu tentang BIMTEK, Quiz, atau Sertifikasi?',
+      customResponse: 'Maaf, saya fokus membantu pertanyaan tentang konstruksi dan pembelajaran di SiapSKK. Apakah ada yang bisa saya bantu tentang BIMTEK, Quiz, atau Sertifikasi?',
     },
     aiConfig: {
       model: 'gpt-4o-mini',

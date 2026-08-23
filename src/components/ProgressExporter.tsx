@@ -110,7 +110,7 @@ export function ProgressExporter() {
 
         <div className="p-6 space-y-4 print:block">
           <div className="text-center border-b border-slate-200 dark:border-slate-700 pb-4">
-            <h1 className="text-2xl font-bold text-amber-600">BimtekKita</h1>
+            <h1 className="text-2xl font-bold text-amber-600">SiapSKK</h1>
             <p className="text-slate-500">Laporan Progress Pelatihan</p>
           </div>
 

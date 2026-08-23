@@ -22,7 +22,7 @@ export const personas: Record<string, Persona> = {
   
   general: {
     id: 'general',
-    name: 'BimtekKita Assistant',
+    name: 'SiapSKK Assistant',
     title: 'Asisten AI Utama',
     description: 'Asisten umum yang dapat membantu berbagai kebutuhan pengguna',
     avatar: '🤖',
@@ -293,7 +293,7 @@ export const personas: Record<string, Persona> = {
 
   marketing: {
     id: 'marketing',
-    name: 'BimtekKita Helper',
+    name: 'SiapSKK Helper',
     title: 'Asisten Marketing',
     description: 'Chatbot untuk pengunjung website yang memberikan informasi umum',
     avatar: '💬',
