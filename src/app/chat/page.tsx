@@ -69,6 +69,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   isAIError?: boolean;
+  isMessageTooLarge?: boolean;
 }
 
 function generateRuleBasedResponse(userInput: string, selectedExpert: string | null): string {
@@ -104,13 +105,24 @@ export default function ChatPage() {
     userInput: string,
     currentExpert: string | null,
     currentMessages: Message[]
-  ): Promise<{ content: string; isAIError: boolean }> => {
+  ): Promise<{ content: string; isAIError: boolean; isMessageTooLarge?: boolean }> => {
     try {
       const expertContext = currentExpert ? experts.find(e => e.id === currentExpert) : null;
 
       const systemPrompt = expertContext
         ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description}. Jawab dalam Bahasa Indonesia.`
         : 'Anda adalah AI Assistant BimtekKita, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
+
+      // Guard: warn the user if their message alone exceeds the context window.
+      const { isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
+      if (isMessageTooLargeForBudget(userInput, systemPrompt, 8000, 1000)) {
+        return {
+          content:
+            'Pesan Anda terlalu panjang untuk diproses AI dalam satu konteks. Coba pisahkan pesan menjadi bagian-bagian yang lebih pendek atau kurangi panjangnya.',
+          isAIError: false,
+          isMessageTooLarge: true,
+        };
+      }
 
       const history = currentMessages
         .filter(m => !m.isAIError)
@@ -152,13 +164,14 @@ export default function ChatPage() {
     setLastUserMessage(text);
     setIsProcessing(true);
 
-    const { content, isAIError } = await generateResponse(text, selectedExpert, historySnapshot);
+    const { content, isAIError, isMessageTooLarge } = await generateResponse(text, selectedExpert, historySnapshot);
 
     const assistantMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content,
       isAIError,
+      isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
     setIsProcessing(false);
@@ -180,12 +193,13 @@ export default function ChatPage() {
     setMessages([...cleanedMessages, userMsg]);
 
     setIsProcessing(true);
-    const { content, isAIError } = await generateResponse(lastUserMessage, selectedExpert, cleanedMessages);
+    const { content, isAIError, isMessageTooLarge } = await generateResponse(lastUserMessage, selectedExpert, cleanedMessages);
     const assistantMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content,
       isAIError,
+      isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
     setIsProcessing(false);
@@ -244,12 +258,20 @@ export default function ChatPage() {
                       className={`max-w-[80%] p-3 rounded-2xl ${
                         msg.role === 'user'
                           ? 'bg-amber-500 text-white'
+                          : msg.isMessageTooLarge
+                          ? 'bg-slate-100 text-slate-800 border border-red-400/60'
                           : msg.isAIError
                           ? 'bg-slate-100 text-slate-800 border border-amber-500/50'
                           : 'bg-slate-100 text-slate-800'
                       }`}
                     >
-                      {msg.isAIError && (
+                      {msg.isMessageTooLarge && (
+                        <div className="flex items-center gap-2 text-red-500 text-xs mb-2 font-medium">
+                          <span>✂️</span>
+                          <span>Pesan terlalu panjang untuk konteks AI</span>
+                        </div>
+                      )}
+                      {msg.isAIError && !msg.isMessageTooLarge && (
                         <div className="flex items-center gap-2 text-amber-600 text-xs mb-2">
                           <span>⚠️</span>
                           <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
@@ -259,7 +281,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 ))}
-                {messages[messages.length - 1]?.isAIError && (
+                {messages[messages.length - 1]?.isAIError && !messages[messages.length - 1]?.isMessageTooLarge && (
                   <div className="flex justify-start">
                     <button
                       onClick={handleRetry}

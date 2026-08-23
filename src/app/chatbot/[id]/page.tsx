@@ -56,6 +56,7 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   isAIError?: boolean;
+  isMessageTooLarge?: boolean;
 }
 
 export default function ChatbotDetailPage() {
@@ -92,7 +93,7 @@ export default function ChatbotDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const generateResponse = async (userMessage: string): Promise<{ content: string; isAIError: boolean }> => {
+  const generateResponse = async (userMessage: string): Promise<{ content: string; isAIError: boolean; isMessageTooLarge?: boolean }> => {
     if (!chatbot) return { content: 'Chatbot not found', isAIError: false };
     
     const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
@@ -100,8 +101,19 @@ export default function ChatbotDetailPage() {
     try {
       // Trim history by estimated token budget rather than a fixed message count.
       // Budget: 8000 context tokens − system prompt − reserved response tokens − 300 for the new user message.
-      const { trimHistoryByTokenBudget } = await import('@/lib/ai/token-utils');
+      const { trimHistoryByTokenBudget, isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
       const reserveForResponse = chatbot.aiConfig?.maxTokens || 1024;
+
+      // Guard: warn the user if their message alone exceeds the context window.
+      if (isMessageTooLargeForBudget(userMessage, systemPrompt, 8000, reserveForResponse)) {
+        return {
+          content:
+            'Pesan Anda terlalu panjang untuk diproses AI dalam satu konteks. Coba pisahkan pesan menjadi bagian-bagian yang lebih pendek atau kurangi panjangnya.',
+          isAIError: false,
+          isMessageTooLarge: true,
+        };
+      }
+
       const trimmedHistory = trimHistoryByTokenBudget(
         messages.filter(m => m.role === 'user' || m.role === 'assistant'),
         systemPrompt,
@@ -207,7 +219,7 @@ Apa yang ingin Anda konsultasikan?`;
     setLastUserMessage(userMessage);
     setIsProcessing(true);
     
-    const { content, isAIError } = await generateResponse(userMessage);
+    const { content, isAIError, isMessageTooLarge } = await generateResponse(userMessage);
     
     setMessages(prev => [...prev, {
       id: (Date.now() + 1).toString(),
@@ -215,6 +227,7 @@ Apa yang ingin Anda konsultasikan?`;
       content,
       timestamp: new Date(),
       isAIError,
+      isMessageTooLarge,
     }]);
     
     setIsProcessing(false);
@@ -323,18 +336,26 @@ Apa yang ingin Anda konsultasikan?`;
                   <div className={`rounded-2xl p-4 ${
                     msg.role === 'user' 
                       ? 'bg-amber-500 text-white' 
-                      : msg.isAIError
-                        ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
-                        : 'bg-slate-700/50 text-slate-100 border border-slate-600'
+                      : msg.isMessageTooLarge
+                        ? 'bg-slate-700/50 text-slate-100 border border-red-500/60'
+                        : msg.isAIError
+                          ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
+                          : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
-                    {msg.isAIError && (
+                    {msg.isMessageTooLarge && (
+                      <div className="flex items-center gap-2 mb-2 text-red-400 text-xs font-medium">
+                        <span>✂️</span>
+                        <span>Pesan terlalu panjang untuk konteks AI</span>
+                      </div>
+                    )}
+                    {msg.isAIError && !msg.isMessageTooLarge && (
                       <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
                         <span>⚠️</span>
                         <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
-                    {msg.isAIError && (
+                    {msg.isAIError && !msg.isMessageTooLarge && (
                       <button
                         onClick={handleRetry}
                         disabled={isProcessing}

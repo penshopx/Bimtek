@@ -104,18 +104,26 @@ export default function AgenticChatPage() {
                   <div className={`rounded-2xl p-4 ${
                     msg.role === 'user' 
                       ? 'bg-amber-500 text-white' 
-                      : msg.isAIError
-                        ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
-                        : 'bg-slate-700/50 text-slate-100 border border-slate-600'
+                      : msg.isMessageTooLarge
+                        ? 'bg-slate-700/50 text-slate-100 border border-red-500/60'
+                        : msg.isAIError
+                          ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
+                          : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
-                    {msg.isAIError && (
+                    {msg.isMessageTooLarge && (
+                      <div className="flex items-center gap-2 mb-2 text-red-400 text-xs font-medium">
+                        <span>✂️</span>
+                        <span>Pesan terlalu panjang untuk konteks AI</span>
+                      </div>
+                    )}
+                    {msg.isAIError && !msg.isMessageTooLarge && (
                       <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
                         <span>⚠️</span>
                         <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
-                    {msg.isAIError && (
+                    {msg.isAIError && !msg.isMessageTooLarge && (
                       <button
                         onClick={() => retryLastMessage()}
                         disabled={isProcessing}

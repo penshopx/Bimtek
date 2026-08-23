@@ -50,3 +50,30 @@ export function trimHistoryByTokenBudget<T extends { role: string; content: stri
 
   return kept;
 }
+
+/**
+ * Returns true when a single message is too large to fit inside the context window
+ * even if the full budget were dedicated to it alone (i.e. no history at all).
+ *
+ * Use this to detect the "silent context loss" situation: trimHistoryByTokenBudget
+ * would return an empty array AND the user message itself still wouldn't fit.
+ *
+ * @param message            The candidate message text to check.
+ * @param systemPrompt       The system prompt that occupies part of the window.
+ * @param maxContextTokens   The model's total context-window size (e.g. 8000).
+ * @param reserveForResponse Tokens reserved for the model's reply (e.g. 1000).
+ * @returns true if the message alone exceeds the remaining budget.
+ */
+export function isMessageTooLargeForBudget(
+  message: string,
+  systemPrompt: string,
+  maxContextTokens: number,
+  reserveForResponse: number,
+): boolean {
+  const systemTokens = estimateTokens(systemPrompt);
+  const perMessageOverhead = 10;
+  // Tokens available for the message itself after system prompt + reserved response
+  const availableForMessage =
+    maxContextTokens - systemTokens - reserveForResponse - perMessageOverhead;
+  return availableForMessage <= 0 || estimateTokens(message) > availableForMessage;
+}

@@ -35,6 +35,15 @@ export interface ChatMessage {
   toolsUsed?: string[];
   isAIError?: boolean;
   retryMessage?: string;
+  isMessageTooLarge?: boolean;
+}
+
+/** Thrown when the user's own message exceeds the remaining context budget. */
+class MessageTooLargeError extends Error {
+  constructor() {
+    super('MESSAGE_TOO_LARGE');
+    this.name = 'MessageTooLargeError';
+  }
 }
 
 interface AgenticAIContextType {
@@ -130,7 +139,14 @@ async function callAIAPI(message: string, history: ChatMessage[]): Promise<strin
 
   // Trim history by estimated token budget rather than a fixed message count.
   // Budget: 8000 context tokens − system prompt − 1000 reserved for the response − 300 for the new user message.
-  const { trimHistoryByTokenBudget } = await import('@/lib/ai/token-utils');
+  const { trimHistoryByTokenBudget, isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
+
+  // Guard: if the user's own message is too large to fit in the context window
+  // (even with no history), throw a typed error so the caller can warn the user.
+  if (isMessageTooLargeForBudget(message, systemPrompt, 8000, 1000)) {
+    throw new MessageTooLargeError();
+  }
+
   const trimmedHistory = trimHistoryByTokenBudget(
     history.filter(m => m.role === 'user' || m.role === 'assistant'),
     systemPrompt,
@@ -366,6 +382,23 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
         response = await callAIAPI(userMessage, history);
       } catch (apiError) {
         console.error('AI API Error:', apiError);
+
+        // If the user's message is too large to fit the context window, surface a
+        // dedicated inline warning instead of falling back silently.
+        if (apiError instanceof MessageTooLargeError) {
+          const warningMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content:
+              'Pesan Anda terlalu panjang untuk diproses AI dalam satu konteks. Coba pisahkan pesan menjadi bagian-bagian yang lebih pendek atau kurangi panjangnya.',
+            timestamp: new Date(),
+            isMessageTooLarge: true,
+          };
+          setMessages(prev => [...prev, warningMessage]);
+          setIsProcessing(false);
+          return;
+        }
+
         aiError = true;
         // Fall back to rule-based if AI unavailable
         const fallback = generateRuleBasedResponse(userMessage);
