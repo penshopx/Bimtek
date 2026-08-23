@@ -376,10 +376,17 @@ export default function ChatPage() {
                           <span>Merespons versi yang diperpendek</span>
                         </div>
                       )}
-                      {msg.isMessageTooLarge && (
+                      {msg.isMessageTooLarge && !dismissedWarnings.has(msg.id) && (
                         <div className="flex items-center gap-2 text-red-500 text-xs mb-2 font-medium">
                           <span>✂️</span>
                           <span>Pesan terlalu panjang untuk konteks AI</span>
+                          <button
+                            onClick={() => dismissWarning(msg.id)}
+                            className="ml-auto text-red-400 hover:text-red-600 leading-none"
+                            aria-label="Tutup peringatan"
+                          >
+                            ×
+                          </button>
                         </div>
                       )}
                       {msg.isAIError && !msg.isMessageTooLarge && !dismissedWarnings.has(msg.id) && (
