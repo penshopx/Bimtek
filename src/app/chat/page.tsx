@@ -101,6 +101,11 @@ export default function ChatPage() {
   const [showFAQ, setShowFAQ] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
+
+  const dismissWarning = (id: string) => {
+    setDismissedWarnings(prev => new Set(prev).add(id));
+  };
 
   const generateResponse = async (
     userInput: string,
@@ -272,10 +277,17 @@ export default function ChatPage() {
                           <span>Pesan terlalu panjang untuk konteks AI</span>
                         </div>
                       )}
-                      {msg.isAIError && !msg.isMessageTooLarge && (
+                      {msg.isAIError && !msg.isMessageTooLarge && !dismissedWarnings.has(msg.id) && (
                         <div className="flex items-center gap-2 text-amber-600 text-xs mb-2">
                           <span>⚠️</span>
                           <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
+                          <button
+                            onClick={() => dismissWarning(msg.id)}
+                            className="ml-auto text-amber-400 hover:text-amber-600 leading-none"
+                            aria-label="Tutup peringatan"
+                          >
+                            ×
+                          </button>
                         </div>
                       )}
                       <p className="text-sm whitespace-pre-line">{msg.content}</p>

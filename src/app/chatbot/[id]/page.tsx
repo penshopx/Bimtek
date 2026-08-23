@@ -68,7 +68,12 @@ export default function ChatbotDetailPage() {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const dismissWarning = (id: string) => {
+    setDismissedWarnings(prev => new Set(prev).add(id));
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('customChatbots');
@@ -348,10 +353,17 @@ Apa yang ingin Anda konsultasikan?`;
                         <span>Pesan terlalu panjang untuk konteks AI</span>
                       </div>
                     )}
-                    {msg.isAIError && !msg.isMessageTooLarge && (
+                    {msg.isAIError && !msg.isMessageTooLarge && !dismissedWarnings.has(msg.id) && (
                       <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
                         <span>⚠️</span>
                         <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
+                        <button
+                          onClick={() => dismissWarning(msg.id)}
+                          className="ml-auto text-amber-300 hover:text-amber-100 leading-none"
+                          aria-label="Tutup peringatan"
+                        >
+                          ×
+                        </button>
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
