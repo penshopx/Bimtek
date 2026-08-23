@@ -269,9 +269,13 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     };
 
     try {
+      const regSessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
       const res = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(regSessionId ? { 'x-session-id': regSessionId } : {}),
+        },
         body: JSON.stringify({ action: 'register', eventId, participant: newParticipant }),
       });
       if (!res.ok) {

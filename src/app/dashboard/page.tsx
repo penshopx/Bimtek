@@ -70,6 +70,23 @@ export default function DashboardPage() {
 
   const loadDashboardData = async () => {
     try {
+      // Fetch certificate count from the DB
+      let certCount = 0;
+      const sessionId = localStorage.getItem('sessionId');
+      if (sessionId) {
+        try {
+          const certRes = await fetch('/api/events?action=my-certificates', {
+            headers: { 'x-session-id': sessionId },
+          });
+          if (certRes.ok) {
+            const certs = await certRes.json();
+            certCount = Array.isArray(certs) ? certs.length : 0;
+          }
+        } catch {
+          // silently ignore — non-critical
+        }
+      }
+
       const savedCompleted = localStorage.getItem('bimtekCompleted');
       const completed = savedCompleted ? JSON.parse(savedCompleted) : [];
 
@@ -117,7 +134,7 @@ export default function DashboardPage() {
         achievements: achievementsData.filter((a: any) => a.unlocked).length,
         totalAchievements: 14,
         hoursLearned: streakData.totalHours || Math.floor(completed.length * 2),
-        certificates: 0,
+        certificates: certCount,
       });
 
       setActivities(activitiesData.slice(0, 10));
@@ -416,6 +433,14 @@ export default function DashboardPage() {
                 <div className="text-3xl mb-2">🤖</div>
                 <div className="text-white font-semibold">AI Agent</div>
                 <div className="text-slate-400 text-sm">Konsultasi AI</div>
+              </Link>
+
+              <Link href="/my-certificates" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-amber-500 transition-all">
+                <div className="text-3xl mb-2">🏅</div>
+                <div className="text-white font-semibold">Sertifikat</div>
+                <div className="text-slate-400 text-sm">
+                  {stats.certificates > 0 ? `${stats.certificates} sertifikat` : 'Lihat sertifikat'}
+                </div>
               </Link>
             </div>
 

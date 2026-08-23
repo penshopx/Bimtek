@@ -98,6 +98,9 @@ export const eventParticipants = sqliteTable("event_participants", {
   company: text("company").notNull(),
   status: text("status").default("registered"),
   registeredAt: text("registered_at").notNull(),
+  // Set when the participant was logged in at registration time; used to
+  // securely scope certificate access without relying on email matching.
+  userId: text("user_id"),
 });
 
 export const certificates = sqliteTable("certificates", {

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const { eq } = await import('drizzle-orm');
     
     const sessions = await db.select().from(schema.sessions).where(eq(schema.sessions.id, sessionId));
-    if (!sessions[0]) {
+    if (!sessions[0] || new Date(sessions[0].expiresAt) <= new Date()) {
       return NextResponse.json({ user: null });
     }
     
@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
       const { sessionId } = body;
       const sessions = await db.select().from(schema.sessions).where(eq(schema.sessions.id, sessionId));
       
-      if (!sessions[0]) {
-        return NextResponse.json({ success: false, message: 'Session invalid' }, { status: 401 });
+      if (!sessions[0] || new Date(sessions[0].expiresAt) <= new Date()) {
+        return NextResponse.json({ success: false, message: 'Session invalid or expired' }, { status: 401 });
       }
       
       const users = await db.select().from(schema.users).where(eq(schema.users.id, sessions[0].userId));

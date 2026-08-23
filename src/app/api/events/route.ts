@@ -22,18 +22,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     if (searchParams.get('action') === 'certificates') {
-      // Certificates contain participant PII — require an admin session.
+      // Certificates contain participant PII — require a valid, non-expired admin session.
       const sessionId = request.headers.get('x-session-id');
       if (!sessionId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      const { eq } = await import('drizzle-orm');
+      const { eq, inArray, and, isNull } = await import('drizzle-orm');
       const sessions = await database
         .select()
         .from(sch.sessions)
         .where(eq(sch.sessions.id, sessionId));
       if (!sessions[0]) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      if (new Date(sessions[0].expiresAt) <= new Date()) {
+        return NextResponse.json({ error: 'Session expired' }, { status: 401 });
       }
       const users = await database
         .select()
@@ -43,6 +46,50 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
       const certs = await database.select().from(sch.certificates);
+      return NextResponse.json(certs);
+    }
+
+    if (searchParams.get('action') === 'my-certificates') {
+      // Return certificates belonging to the logged-in participant.
+      // Security: scope strictly by server-owned userId set at registration time.
+      // Email-based matching is intentionally omitted — account registration
+      // does not verify email ownership, so matching by email would allow an
+      // attacker to claim any participant record by creating an account with the
+      // same email address. Only participant records explicitly linked to a
+      // user account (userId set when the user was logged in during registration)
+      // are returned. Expired sessions are rejected.
+      const sessionId = request.headers.get('x-session-id');
+      if (!sessionId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const { eq, inArray } = await import('drizzle-orm');
+      const sessions = await database
+        .select()
+        .from(sch.sessions)
+        .where(eq(sch.sessions.id, sessionId));
+      if (!sessions[0]) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      // Reject expired sessions.
+      if (new Date(sessions[0].expiresAt) <= new Date()) {
+        return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+      }
+      const authenticatedUserId = sessions[0].userId;
+
+      // Only return participant records explicitly bound to this user at
+      // registration time; never infer ownership from email alone.
+      const participants = await database
+        .select()
+        .from(sch.eventParticipants)
+        .where(eq(sch.eventParticipants.userId, authenticatedUserId));
+      if (participants.length === 0) {
+        return NextResponse.json([]);
+      }
+      const participantIds = participants.map((p: any) => p.id);
+      const certs = await database
+        .select()
+        .from(sch.certificates)
+        .where(inArray(sch.certificates.participantId, participantIds));
       return NextResponse.json(certs);
     }
 
@@ -76,12 +123,25 @@ export async function POST(request: Request) {
           return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk salah satu event' }, { status: 400 });
         }
 
+        // If the requester is authenticated with a valid, non-expired session,
+        // bind the participant record to their user account so certificate access
+        // can be scoped by server-owned identity.
+        let registrantUserId: string | null = null;
+        const regSessionId = (request as Request & { headers: Headers }).headers.get('x-session-id');
+        if (regSessionId) {
+          const regSessions = await database.select().from(sch.sessions).where(eq(sch.sessions.id, regSessionId));
+          if (regSessions[0] && new Date(regSessions[0].expiresAt) > new Date()) {
+            registrantUserId = regSessions[0].userId;
+          }
+        }
+
         await database.insert(sch.eventParticipants).values({
           ...data.participant,
           email: data.participant.email.trim().toLowerCase(),
           eventId: data.eventId,
           status: 'registered',
           registeredAt: new Date().toISOString(),
+          userId: registrantUserId,
         });
 
         const newRegistered = (event[0].registered ?? 0) + 1;

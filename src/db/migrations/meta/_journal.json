@@ -57,6 +57,13 @@
       "when": 1787572000000,
       "tag": "0007_pkb_activities",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1787660000000,
+      "tag": "0008_participant_user_id",
+      "breakpoints": true
     }
   ]
 }
