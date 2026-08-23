@@ -9,6 +9,7 @@ import {
   createQuizQuestion,
   updateQuizQuestion,
   deleteQuizQuestion,
+  reorderQuizQuestions,
 } from '@/app/actions/quiz';
 import type { QuizQuestion } from '@/app/actions/quiz';
 
@@ -23,6 +24,7 @@ export default function AdminQuizPage() {
   const [form, setForm] = useState({ question: '', category: '', options: ['', '', '', ''], correct: 0 });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [reordering, setReordering] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -99,6 +101,46 @@ export default function AdminQuizPage() {
     }
   };
 
+  /** Move a question within the filtered list up (-1) or down (+1), then persist. */
+  const handleMove = async (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= filtered.length) return;
+
+    // Build new order for the filtered list
+    const newFiltered = [...filtered];
+    const [moved] = newFiltered.splice(index, 1);
+    newFiltered.splice(targetIndex, 0, moved);
+
+    // Merge back into the full questions list preserving positions of other categories
+    const newQuestions = [...questions];
+    newFiltered.forEach((q, i) => {
+      const globalIdx = newQuestions.findIndex((x) => x.id === filtered[i === 0 && direction === 1 ? i : i].id);
+      void globalIdx; // not needed below
+    });
+
+    // Replace the filtered slots in the full list with the new order
+    const filteredIds = new Set(filtered.map((q) => q.id));
+    let filteredPointer = 0;
+    const merged = newQuestions.map((q) => {
+      if (filteredIds.has(q.id)) {
+        return newFiltered[filteredPointer++];
+      }
+      return q;
+    });
+
+    setQuestions(merged);
+    setReordering(true);
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      await reorderQuizQuestions(merged.map((q) => q.id), sessionId);
+    } catch {
+      // revert on error
+      loadData();
+    } finally {
+      setReordering(false);
+    }
+  };
+
   if (user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
@@ -152,6 +194,14 @@ export default function AdminQuizPage() {
             </button>
           ))}
         </div>
+
+        {/* Reorder hint */}
+        {filtered.length > 1 && (
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            ↕ Gunakan tombol panah untuk mengubah urutan tampilan soal.
+            {reordering && <span className="ml-2 text-amber-500">Menyimpan urutan...</span>}
+          </p>
+        )}
 
         {/* Form modal */}
         {showForm && (
@@ -257,6 +307,7 @@ export default function AdminQuizPage() {
               <table className="w-full">
                 <thead className="bg-slate-100 dark:bg-slate-700">
                   <tr>
+                    <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300 w-16">Urutan</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-8">#</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Pertanyaan</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-28">Kategori</th>
@@ -267,13 +318,34 @@ export default function AdminQuizPage() {
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                         Belum ada soal di kategori ini.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((q, i) => (
                       <tr key={q.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                        {/* Up/Down buttons */}
+                        <td className="px-2 py-3">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button
+                              onClick={() => handleMove(i, -1)}
+                              disabled={i === 0 || reordering}
+                              title="Pindah ke atas"
+                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              onClick={() => handleMove(i, 1)}
+                              disabled={i === filtered.length - 1 || reordering}
+                              title="Pindah ke bawah"
+                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-slate-400 text-sm">{i + 1}</td>
                         <td className="px-4 py-3">
                           <p className="text-sm font-medium text-slate-900 dark:text-white">{q.question}</p>

@@ -2,7 +2,7 @@
 
 import { db } from '@/db';
 import { quizQuestions, sessions, users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 
 export interface QuizQuestion {
   id: number;
@@ -10,6 +10,7 @@ export interface QuizQuestion {
   category: string;
   options: string[];
   correct: number;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,12 +21,13 @@ type RawRow = {
   category: string;
   options: string;
   correct: number;
+  sortOrder: number | null;
   createdAt: string;
   updatedAt: string;
 };
 
 function parseRow(row: RawRow): QuizQuestion {
-  return { ...row, options: JSON.parse(row.options) };
+  return { ...row, options: JSON.parse(row.options), sortOrder: row.sortOrder ?? 0 };
 }
 
 // ---------------------------------------------------------------------------
@@ -88,8 +90,8 @@ function validateQuestionInput(data: {
 
 export async function getQuizQuestions(category?: string): Promise<QuizQuestion[]> {
   const rows = category && category !== 'Semua'
-    ? await db.select().from(quizQuestions).where(eq(quizQuestions.category, category))
-    : await db.select().from(quizQuestions);
+    ? await db.select().from(quizQuestions).where(eq(quizQuestions.category, category)).orderBy(asc(quizQuestions.sortOrder), asc(quizQuestions.id))
+    : await db.select().from(quizQuestions).orderBy(asc(quizQuestions.sortOrder), asc(quizQuestions.id));
   return rows.map(parseRow);
 }
 
@@ -110,11 +112,17 @@ export async function createQuizQuestion(
     await requireAdmin(sessionId);
     const validated = validateQuestionInput(data);
     const now = new Date().toISOString();
+
+    // Assign sort_order = max existing + 1 so new questions go to the end
+    const existing = await db.select({ sortOrder: quizQuestions.sortOrder }).from(quizQuestions);
+    const maxOrder = existing.reduce((m, r) => Math.max(m, r.sortOrder ?? 0), 0);
+
     await db.insert(quizQuestions).values({
       question: validated.question,
       category: validated.category,
       options: JSON.stringify(validated.options),
       correct: validated.correct,
+      sortOrder: maxOrder + 1,
       createdAt: now,
       updatedAt: now,
     });
@@ -159,6 +167,35 @@ export async function deleteQuizQuestion(
     await requireAdmin(sessionId);
     if (!Number.isInteger(id) || id <= 0) throw new Error('Invalid question id');
     await db.delete(quizQuestions).where(eq(quizQuestions.id, id));
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, message: msg };
+  }
+}
+
+/**
+ * Reorder quiz questions by saving a new sort_order for each id in the given order.
+ * `orderedIds` is the full list of question IDs in the desired display order.
+ */
+export async function reorderQuizQuestions(
+  orderedIds: number[],
+  sessionId: string | null | undefined
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    await requireAdmin(sessionId);
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      throw new Error('orderedIds must be a non-empty array');
+    }
+
+    // Update each row's sort_order in sequence
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        db.update(quizQuestions)
+          .set({ sortOrder: index, updatedAt: new Date().toISOString() })
+          .where(eq(quizQuestions.id, id))
+      )
+    );
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

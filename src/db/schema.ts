@@ -166,6 +166,7 @@ export const quizQuestions = sqliteTable("quiz_questions", {
   category: text("category").notNull(),
   options: text("options").notNull(), // JSON array of strings
   correct: integer("correct").notNull(), // index of correct option
+  sortOrder: integer("sort_order").default(0),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
