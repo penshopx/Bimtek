@@ -166,7 +166,29 @@ export async function deleteQuizQuestion(
   try {
     await requireAdmin(sessionId);
     if (!Number.isInteger(id) || id <= 0) throw new Error('Invalid question id');
+
     await db.delete(quizQuestions).where(eq(quizQuestions.id, id));
+
+    // Compact sort_order globally so values remain sequential (0..N-1).
+    // sort_order is a global ordering used across all categories, so we must
+    // renumber all remaining questions together to avoid gaps or duplicates.
+    const remaining = await db
+      .select({ id: quizQuestions.id })
+      .from(quizQuestions)
+      .orderBy(asc(quizQuestions.sortOrder), asc(quizQuestions.id));
+
+    if (remaining.length > 0) {
+      const now = new Date().toISOString();
+      await Promise.all(
+        remaining.map((row, index) =>
+          db
+            .update(quizQuestions)
+            .set({ sortOrder: index, updatedAt: now })
+            .where(eq(quizQuestions.id, row.id))
+        )
+      );
+    }
+
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
