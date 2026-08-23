@@ -170,3 +170,10 @@ export const quizQuestions = sqliteTable("quiz_questions", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const quizAttempts = sqliteTable("quiz_attempts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  questionId: integer("question_id").notNull(),
+  correct: integer("correct", { mode: "boolean" }).notNull(),
+  attemptedAt: text("attempted_at").notNull(),
+});

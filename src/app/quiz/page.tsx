@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { getQuizQuestions, getQuizCategories } from '@/app/actions/quiz';
+import { getQuizQuestions, getQuizCategories, recordQuizAttempt } from '@/app/actions/quiz';
 import type { QuizQuestion } from '@/app/actions/quiz';
 
 export default function QuizPage() {
@@ -49,9 +49,12 @@ export default function QuizPage() {
     if (answered) return;
     setSelectedAnswer(answerIndex);
     setAnswered(true);
-    if (answerIndex === questions[currentQuestion].correct) {
+    const isCorrect = answerIndex === questions[currentQuestion].correct;
+    if (isCorrect) {
       setScore(score + 1);
     }
+    // Record per-question attempt for admin analytics (server derives correctness)
+    recordQuizAttempt(questions[currentQuestion].id, answerIndex).catch(() => {});
   };
 
   const nextQuestion = () => {

@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/db';
-import { quizQuestions, sessions, users } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { quizQuestions, quizAttempts, sessions, users } from '@/db/schema';
+import { eq, asc, sql } from 'drizzle-orm';
 
 export interface QuizQuestion {
   id: number;
@@ -172,6 +172,79 @@ export async function deleteQuizQuestion(
     const msg = err instanceof Error ? err.message : 'Unknown error';
     return { success: false, message: msg };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Quiz attempt tracking (public — no auth required)
+// ---------------------------------------------------------------------------
+
+/**
+ * Record a user's answer for a specific question.
+ * Accepts the selected option index; correctness is derived server-side from
+ * the stored question record so the client cannot fabricate results.
+ */
+export async function recordQuizAttempt(
+  questionId: number,
+  selectedOption: number
+): Promise<void> {
+  if (!Number.isInteger(questionId) || questionId <= 0) return;
+  if (!Number.isInteger(selectedOption) || selectedOption < 0) return;
+
+  // Fetch the question to validate it exists and derive correctness server-side
+  const questionRows = await db
+    .select({ correct: quizQuestions.correct, options: quizQuestions.options })
+    .from(quizQuestions)
+    .where(eq(quizQuestions.id, questionId));
+  const question = questionRows[0];
+  if (!question) return; // unknown question id — ignore silently
+
+  const optionCount = (JSON.parse(question.options) as unknown[]).length;
+  if (selectedOption >= optionCount) return; // out-of-range index — ignore
+
+  const isCorrect = selectedOption === question.correct;
+
+  await db.insert(quizAttempts).values({
+    questionId,
+    correct: isCorrect ? 1 : 0,
+    attemptedAt: new Date().toISOString(),
+  } as never);
+}
+
+export interface QuizAttemptStat {
+  questionId: number;
+  totalAttempts: number;
+  correctAttempts: number;
+  successRate: number; // 0-100
+}
+
+/**
+ * Return per-question attempt stats for all questions that have at least one attempt.
+ * Requires a valid admin session.
+ */
+export async function getQuizAttemptStats(
+  sessionId: string | null | undefined
+): Promise<QuizAttemptStat[]> {
+  await requireAdmin(sessionId);
+
+  const rows = await db
+    .select({
+      questionId: quizAttempts.questionId,
+      totalAttempts: sql<number>`count(*)`,
+      correctAttempts: sql<number>`sum(${quizAttempts.correct})`,
+    })
+    .from(quizAttempts)
+    .groupBy(quizAttempts.questionId);
+
+  return rows.map((r) => {
+    const total = Number(r.totalAttempts) || 0;
+    const correct = Number(r.correctAttempts) || 0;
+    return {
+      questionId: r.questionId,
+      totalAttempts: total,
+      correctAttempts: correct,
+      successRate: total > 0 ? Math.round((correct / total) * 100) : 0,
+    };
+  });
 }
 
 /**

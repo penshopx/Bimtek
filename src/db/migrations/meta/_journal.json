@@ -30,5 +30,12 @@
       "tag": "0003_quiz_sort_order",
       "breakpoints": true
     }
+    ,{
+      "idx": 4,
+      "version": "6",
+      "when": 1756089600000,
+      "tag": "0004_quiz_attempts",
+      "breakpoints": true
+    }
   ]
 }

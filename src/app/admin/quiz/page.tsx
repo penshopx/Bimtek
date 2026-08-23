@@ -10,13 +10,15 @@ import {
   updateQuizQuestion,
   deleteQuizQuestion,
   reorderQuizQuestions,
+  getQuizAttemptStats,
 } from '@/app/actions/quiz';
-import type { QuizQuestion } from '@/app/actions/quiz';
+import type { QuizQuestion, QuizAttemptStat } from '@/app/actions/quiz';
 
 export default function AdminQuizPage() {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [stats, setStats] = useState<Map<number, QuizAttemptStat>>(new Map());
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState('Semua');
   const [showForm, setShowForm] = useState(false);
@@ -35,9 +37,15 @@ export default function AdminQuizPage() {
     setLoading(true);
     startTransition(async () => {
       try {
-        const [qs, cats] = await Promise.all([getQuizQuestions(), getQuizCategories()]);
+        const sessionId = localStorage.getItem('sessionId');
+        const [qs, cats, attemptStats] = await Promise.all([
+          getQuizQuestions(),
+          getQuizCategories(),
+          getQuizAttemptStats(sessionId),
+        ]);
         setQuestions(qs);
         setCategories(cats);
+        setStats(new Map(attemptStats.map((s) => [s.questionId, s])));
       } catch {
         // ignore
       } finally {
@@ -312,77 +320,120 @@ export default function AdminQuizPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Pertanyaan</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-28">Kategori</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-20">Benar</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-32">
+                      Tingkat Benar
+                      <span className="block text-xs font-normal text-slate-400 dark:text-slate-500">% jawaban benar</span>
+                    </th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-24">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                         Belum ada soal di kategori ini.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((q, i) => (
-                      <tr key={q.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        {/* Up/Down buttons */}
-                        <td className="px-2 py-3">
-                          <div className="flex flex-col items-center gap-0.5">
-                            <button
-                              onClick={() => handleMove(i, -1)}
-                              disabled={i === 0 || reordering}
-                              title="Pindah ke atas"
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              onClick={() => handleMove(i, 1)}
-                              disabled={i === filtered.length - 1 || reordering}
-                              title="Pindah ke bawah"
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            >
-                              ▼
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-slate-400 text-sm">{i + 1}</td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{q.question}</p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {q.options.map((o, idx) => (
-                              <span key={idx} className={idx === q.correct ? 'text-green-600 font-medium' : ''}>
-                                {String.fromCharCode(65 + idx)}. {o}{idx < q.options.length - 1 ? ' · ' : ''}
-                              </span>
-                            ))}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-xs">
-                            {q.category}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-green-600 font-medium">
-                          {String.fromCharCode(65 + q.correct)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEdit(q)}
-                              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(q.id)}
-                              className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
-                            >
-                              Hapus
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    filtered.map((q, i) => {
+                      const stat = stats.get(q.id);
+                      const hasAttempts = stat && stat.totalAttempts > 0;
+                      const isLowRate = hasAttempts && stat!.successRate < 40;
+                      return (
+                        <tr
+                          key={q.id}
+                          className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 ${isLowRate ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                        >
+                          {/* Up/Down buttons */}
+                          <td className="px-2 py-3">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <button
+                                onClick={() => handleMove(i, -1)}
+                                disabled={i === 0 || reordering}
+                                title="Pindah ke atas"
+                                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                onClick={() => handleMove(i, 1)}
+                                disabled={i === filtered.length - 1 || reordering}
+                                title="Pindah ke bawah"
+                                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              >
+                                ▼
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 text-sm">{i + 1}</td>
+                          <td className="px-4 py-3">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">{q.question}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {q.options.map((o, idx) => (
+                                <span key={idx} className={idx === q.correct ? 'text-green-600 font-medium' : ''}>
+                                  {String.fromCharCode(65 + idx)}. {o}{idx < q.options.length - 1 ? ' · ' : ''}
+                                </span>
+                              ))}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-xs">
+                              {q.category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-green-600 font-medium">
+                            {String.fromCharCode(65 + q.correct)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {hasAttempts ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  {isLowRate && (
+                                    <span title="Tingkat keberhasilan rendah — perlu ditinjau" className="text-red-500 text-xs">⚠️</span>
+                                  )}
+                                  <span className={`text-sm font-semibold ${
+                                    stat!.successRate >= 60 ? 'text-green-600' :
+                                    stat!.successRate >= 40 ? 'text-amber-500' :
+                                    'text-red-600'
+                                  }`}>
+                                    {stat!.successRate}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all ${
+                                      stat!.successRate >= 60 ? 'bg-green-500' :
+                                      stat!.successRate >= 40 ? 'bg-amber-400' :
+                                      'bg-red-500'
+                                    }`}
+                                    style={{ width: `${stat!.successRate}%` }}
+                                  />
+                                </div>
+                                <p className="text-xs text-slate-400">{stat!.totalAttempts} percobaan</p>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">Belum ada data</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openEdit(q)}
+                                className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(q.id)}
+                                className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
