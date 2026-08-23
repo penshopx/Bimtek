@@ -66,9 +66,11 @@ export function trimHistoryByTokenBudget<T extends { role: string; content: stri
   reserveForResponse: number,
   reserveForUserMessage = 300,
 ): T[] {
-  const systemTokens = estimateTokens(systemPrompt);
-  // Per-message overhead: role label + structural JSON tokens (~10 tokens each)
+  // Per-message overhead: role label + structural JSON tokens (~10 tokens each).
+  // Applied to the system message as well as every history message so the total
+  // payload guarantee is consistent across all message slots.
   const perMessageOverhead = 10;
+  const systemTokens = estimateTokens(systemPrompt) + perMessageOverhead;
   const availableTokens =
     maxContextTokens - systemTokens - reserveForResponse - reserveForUserMessage;
 
