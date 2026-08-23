@@ -228,6 +228,7 @@ export async function recordQuizAttempt(
   await db.insert(quizAttempts).values({
     questionId,
     correct: isCorrect ? 1 : 0,
+    selectedOption,
     attemptedAt: new Date().toISOString(),
   } as never);
 }
@@ -237,10 +238,13 @@ export interface QuizAttemptStat {
   totalAttempts: number;
   correctAttempts: number;
   successRate: number; // 0-100
+  /** optionCounts[i] = number of times option index i was selected */
+  optionCounts: number[];
 }
 
 /**
  * Return per-question attempt stats for all questions that have at least one attempt.
+ * Includes a per-option breakdown showing how many times each answer was chosen.
  * Requires a valid admin session.
  */
 export async function getQuizAttemptStats(
@@ -248,7 +252,8 @@ export async function getQuizAttemptStats(
 ): Promise<QuizAttemptStat[]> {
   await requireAdmin(sessionId);
 
-  const rows = await db
+  // Aggregate total/correct per question
+  const summaryRows = await db
     .select({
       questionId: quizAttempts.questionId,
       totalAttempts: sql<number>`count(*)`,
@@ -257,14 +262,52 @@ export async function getQuizAttemptStats(
     .from(quizAttempts)
     .groupBy(quizAttempts.questionId);
 
-  return rows.map((r) => {
+  // Aggregate per-option counts (only rows that have selected_option recorded)
+  const optionRows = await db
+    .select({
+      questionId: quizAttempts.questionId,
+      selectedOption: quizAttempts.selectedOption,
+      count: sql<number>`count(*)`,
+    })
+    .from(quizAttempts)
+    .where(sql`${quizAttempts.selectedOption} IS NOT NULL`)
+    .groupBy(quizAttempts.questionId, quizAttempts.selectedOption);
+
+  // Build a map: questionId -> { optionIndex -> count }
+  const optionMap = new Map<number, Map<number, number>>();
+  for (const row of optionRows) {
+    if (row.selectedOption === null || row.selectedOption === undefined) continue;
+    if (!optionMap.has(row.questionId)) {
+      optionMap.set(row.questionId, new Map());
+    }
+    optionMap.get(row.questionId)!.set(row.selectedOption, Number(row.count) || 0);
+  }
+
+  // Fetch option counts per question to know how many options each question has
+  const questionRows = await db
+    .select({ id: quizQuestions.id, options: quizQuestions.options })
+    .from(quizQuestions);
+  const optionCountMap = new Map<number, number>();
+  for (const q of questionRows) {
+    try {
+      optionCountMap.set(q.id, (JSON.parse(q.options) as unknown[]).length);
+    } catch {
+      optionCountMap.set(q.id, 4);
+    }
+  }
+
+  return summaryRows.map((r) => {
     const total = Number(r.totalAttempts) || 0;
     const correct = Number(r.correctAttempts) || 0;
+    const numOptions = optionCountMap.get(r.questionId) ?? 4;
+    const byOption = optionMap.get(r.questionId) ?? new Map();
+    const optionCounts = Array.from({ length: numOptions }, (_, i) => byOption.get(i) ?? 0);
     return {
       questionId: r.questionId,
       totalAttempts: total,
       correctAttempts: correct,
       successRate: total > 0 ? Math.round((correct / total) * 100) : 0,
+      optionCounts,
     };
   });
 }

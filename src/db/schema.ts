@@ -178,6 +178,7 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   questionId: integer("question_id").notNull(),
   correct: integer("correct", { mode: "boolean" }).notNull(),
+  selectedOption: integer("selected_option"),
   attemptedAt: text("attempted_at").notNull(),
 });
 

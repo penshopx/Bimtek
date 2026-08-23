@@ -7,3 +7,5 @@ CREATE TABLE `document_checklist` (
 	`checked_at` text,
 	`created_at` text NOT NULL
 );
+--> statement-breakpoint
+ALTER TABLE `quiz_attempts` ADD `selected_option` integer;

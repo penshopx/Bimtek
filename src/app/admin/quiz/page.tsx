@@ -386,7 +386,7 @@ export default function AdminQuizPage() {
                           </td>
                           <td className="px-4 py-3">
                             {hasAttempts ? (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <div className="flex items-center gap-1.5">
                                   {isLowRate && (
                                     <span title="Tingkat keberhasilan rendah — perlu ditinjau" className="text-red-500 text-xs">⚠️</span>
@@ -410,6 +410,48 @@ export default function AdminQuizPage() {
                                   />
                                 </div>
                                 <p className="text-xs text-slate-400">{stat!.totalAttempts} percobaan</p>
+                                {/* Per-option breakdown */}
+                                {stat!.optionCounts.length > 0 && stat!.optionCounts.some((c) => c > 0) && (
+                                  <div className="mt-1 space-y-0.5">
+                                    {stat!.optionCounts.map((count, optIdx) => {
+                                      const pct = stat!.totalAttempts > 0
+                                        ? Math.round((count / stat!.totalAttempts) * 100)
+                                        : 0;
+                                      const isCorrectOpt = optIdx === q.correct;
+                                      const isMostWrong = !isCorrectOpt && count > 0 && count === Math.max(
+                                        ...stat!.optionCounts.filter((_, i) => i !== q.correct)
+                                      );
+                                      return (
+                                        <div key={optIdx} className="flex items-center gap-1">
+                                          <span className={`text-xs font-medium w-5 shrink-0 ${
+                                            isCorrectOpt ? 'text-green-600' :
+                                            isMostWrong ? 'text-red-500' :
+                                            'text-slate-400'
+                                          }`}>
+                                            {String.fromCharCode(65 + optIdx)}.
+                                          </span>
+                                          <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                                            <div
+                                              className={`h-1.5 rounded-full ${
+                                                isCorrectOpt ? 'bg-green-400' :
+                                                isMostWrong ? 'bg-red-400' :
+                                                'bg-slate-300 dark:bg-slate-500'
+                                              }`}
+                                              style={{ width: `${pct}%` }}
+                                            />
+                                          </div>
+                                          <span className={`text-xs w-8 text-right shrink-0 ${
+                                            isCorrectOpt ? 'text-green-600' :
+                                            isMostWrong ? 'text-red-500' :
+                                            'text-slate-400'
+                                          }`}>
+                                            {pct}%
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <span className="text-xs text-slate-400 italic">Belum ada data</span>

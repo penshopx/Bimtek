@@ -43,6 +43,13 @@
       "when": 1787472390147,
       "tag": "0005_aromatic_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787489091882,
+      "tag": "0006_wooden_captain_universe",
+      "breakpoints": true
     }
   ]
 }
