@@ -35,6 +35,7 @@ const navItems = [
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
+  { href: '/simulator-wawancara', label: 'Simulator Wawancara', icon: '🎙️' },
   { href: '/diagnostik-kompetensi', label: 'Diagnostik SKK', icon: '🧠' },
   { href: '/solver', label: 'Solver', icon: '🧮' },
   { href: '/tools', label: 'Tools', icon: '🔧' },
