@@ -51,7 +51,7 @@ interface OfflineEventContextType {
   certificates: Certificate[];
   isHydrated: boolean;
   createEvent: (event: Omit<OfflineEvent, 'id' | 'createdAt' | 'registered' | 'participants' | 'status'>) => void;
-  registerForEvent: (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>) => Promise<boolean>;
+  registerForEvent: (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>) => Promise<string | null>;
   cancelRegistration: (eventId: string, participantId: string) => Promise<void>;
   markAttendance: (eventId: string, participantId: string) => Promise<void>;
   completeEvent: (eventId: string) => Promise<void>;
@@ -166,8 +166,20 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
           // DB is the source of truth when reachable — use it even if it returns 0 rows,
           // so stale localStorage sample data never overrides the real database.
           setEvents(dbEvents.map((e: any) => ({ ...e, participants: e.participants ?? [] })));
-          const savedCerts = localStorage.getItem('offlineCertificates');
-          if (savedCerts) setCertificates(JSON.parse(savedCerts));
+          // Load certificates from DB (source of truth when DB is available)
+          try {
+            const certRes = await fetch('/api/events?action=certificates');
+            if (certRes.ok) {
+              const dbCerts = await certRes.json();
+              setCertificates(dbCerts);
+            } else {
+              const savedCerts = localStorage.getItem('offlineCertificates');
+              if (savedCerts) setCertificates(JSON.parse(savedCerts));
+            }
+          } catch {
+            const savedCerts = localStorage.getItem('offlineCertificates');
+            if (savedCerts) setCertificates(JSON.parse(savedCerts));
+          }
           // Clear any stale localStorage events so they don't interfere on future visits
           localStorage.removeItem('offlineEvents');
           setDbAvailable(true);
@@ -235,29 +247,35 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     setEvents([newEvent, ...events]);
   };
 
-  const registerForEvent = async (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>): Promise<boolean> => {
+  const registerForEvent = async (eventId: string, participant: Omit<EventParticipant, 'id' | 'registeredAt' | 'status'>): Promise<string | null> => {
     const eventIndex = events.findIndex(e => e.id === eventId);
-    if (eventIndex === -1) return false;
+    if (eventIndex === -1) return 'Event tidak ditemukan';
     
     const event = events[eventIndex];
-    if (event.registered >= event.capacity) return false;
-    if (event.participants.some(p => p.email === participant.email)) return false;
+    if (event.registered >= event.capacity) return 'Kuota event sudah penuh';
+    const normalizedEmail = participant.email.trim().toLowerCase();
+    if (event.participants.some(p => p.email.toLowerCase() === normalizedEmail)) return 'Email ini sudah terdaftar untuk event ini';
 
     const newParticipant: EventParticipant = {
       ...participant,
+      email: normalizedEmail,
       id: `part-${Date.now()}`,
       registeredAt: new Date().toISOString(),
       status: 'registered',
     };
 
     try {
-      await fetch('/api/events', {
+      const res = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'register', eventId, participant: newParticipant }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return body.message ?? 'Gagal mendaftar, silakan coba lagi';
+      }
     } catch (e) {
-      console.log('DB not available, using localStorage');
+      // DB not reachable — continue with local state only
     }
 
     const updatedEvent = {
@@ -270,7 +288,7 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
     const newEvents = [...events];
     newEvents[eventIndex] = updatedEvent;
     setEvents(newEvents);
-    return true;
+    return null; // null = success
   };
 
   const cancelRegistration = async (eventId: string, participantId: string) => {

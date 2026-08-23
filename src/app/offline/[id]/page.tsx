@@ -28,6 +28,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [showRegister, setShowRegister] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '' });
   const [registered, setRegistered] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const event = events.find(e => e.id === resolvedParams.id);
 
@@ -45,9 +47,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await registerForEvent(event.id, form);
-    if (success) {
+    setRegisterError(null);
+    setSubmitting(true);
+    const error = await registerForEvent(event.id, form);
+    setSubmitting(false);
+    if (error === null) {
       setRegistered(true);
+    } else {
+      setRegisterError(error);
     }
   };
 
@@ -193,12 +200,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                           className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
+                      {registerError && (
+                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                          ⚠️ {registerError}
+                        </div>
+                      )}
                       <div className="flex gap-3">
                         <button
                           type="submit"
-                          className="flex-1 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                          disabled={submitting}
+                          className="flex-1 px-6 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-lg font-medium transition-colors"
                         >
-                          Konfirmasi Daftar
+                          {submitting ? 'Mendaftar...' : 'Konfirmasi Daftar'}
                         </button>
                         <button
                           type="button"
