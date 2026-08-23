@@ -68,6 +68,26 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  isAIError?: boolean;
+}
+
+function generateRuleBasedResponse(userInput: string, selectedExpert: string | null): string {
+  const expert = selectedExpert ? experts.find(e => e.id === selectedExpert) : null;
+  const lower = userInput.toLowerCase();
+
+  if (lower.includes('skk') || lower.includes('sertifikasi')) {
+    return 'Untuk pertanyaan tentang SKK dan sertifikasi, saya sarankan berbicara dengan Expert Sertifikasi kami. Mereka dapat membantu Anda dengan: \n\n• Persyaratan SKK per level\n• Proses pengajuan ke LSP\n• Dokumen yang diperlukan\n• Estimasi biaya\n\nSilakan pilih "Sertifikasi & Regulasi" dari expert di atas.';
+  } else if (lower.includes('struktur') || lower.includes('beton') || lower.includes('fondasi')) {
+    return expert
+      ? `Sebagai ${expert.name}, saya dapat membantu Anda dengan ${expert.description}. ${expert.id === 'sipil' ? 'Silakan gunakan toolbox untuk kalkulasi.' : ''} Apa spesifik yang ingin Anda tanyakan?`
+      : 'Untuk pertanyaan tentang struktur, beton, atau fondasi, saya sarankan memilih Expert "Ahli Teknik Sipil" di atas untuk hasil yang lebih optimal.';
+  } else if (lower.includes('k3') || lower.includes('keselamatan') || lower.includes('safety')) {
+    return 'Expert K3 kami siap membantu dengan masalah keselamatan kerja konstruksi. Silakan pilih "K3 Konstruksi" dari expert di atas, atau saya bisa langsung membantu dengan informasi umum K3.';
+  } else {
+    return expert
+      ? `Terima kasih atas pertanyaan Anda! Sebagai ${expert.name}, saya akan membantu dengan ${expert.description}. ${toolboxes[expert.id] ? 'Anda juga bisa menggunakan toolbox yang tersedia.' : ''} Silakan jelaskan lebih detail.`
+      : 'Terima kasih! Saya AI Assistant BimtekKita. Silakan pilih expert di atas untuk mendapat bantuan yang lebih spesifik, atau tanya langsung tentang:\n\n• Proses sertifikasi\n• Modul BIMTEK\n• Persyaratan SKK\n• Kalkulator teknis';
+  }
 }
 
 export default function ChatPage() {
@@ -77,33 +97,98 @@ export default function ChatPage() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [showFAQ, setShowFAQ] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
 
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return;
+  const generateResponse = async (
+    userInput: string,
+    currentExpert: string | null,
+    currentMessages: Message[]
+  ): Promise<{ content: string; isAIError: boolean }> => {
+    try {
+      const expertContext = currentExpert ? experts.find(e => e.id === currentExpert) : null;
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: inputMessage };
+      const systemPrompt = expertContext
+        ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description}. Jawab dalam Bahasa Indonesia.`
+        : 'Anda adalah AI Assistant BimtekKita, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
+
+      const history = currentMessages
+        .filter(m => !m.isAIError)
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...history,
+            { role: 'user', content: userInput },
+          ],
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('Empty AI response');
+
+      return { content, isAIError: false };
+    } catch (err) {
+      console.error('AI API error:', err);
+      return { content: generateRuleBasedResponse(userInput, currentExpert), isAIError: true };
+    }
+  };
+
+  const sendMessage = async () => {
+    const text = inputMessage;
+    if (!text.trim() || isProcessing) return;
+
+    const historySnapshot = messages;
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
     setInputMessage('');
+    setLastUserMessage(text);
+    setIsProcessing(true);
 
-    setTimeout(() => {
-      let response = '';
-      const expert = selectedExpert ? experts.find(e => e.id === selectedExpert) : null;
-      
-      if (inputMessage.toLowerCase().includes('skk') || inputMessage.toLowerCase().includes('sertifikasi')) {
-        response = 'Untuk pertanyaan tentang SKK dan sertifikasi, saya sarankan berbicara dengan Expert Sertifikasi kami. Mereka dapat membantu Anda dengan: \n\n• Persyaratan SKK per level\n• Proses pengajuan ke LSP\n• Dokumen yang diperlukan\n• Estimasi biaya\n\nSilakan pilih "Sertifikasi & Regulasi" dari expert di atas.';
-      } else if (inputMessage.toLowerCase().includes('struktur') || inputMessage.toLowerCase().includes('beton') || inputMessage.toLowerCase().includes('fondasi')) {
-        response = expert ? `Sebagai ${expert.name}, saya dapat membantu Anda dengan ${expert.description}. ${expert.id === 'sipil' ? 'Silakan gunakan toolbox untuk kalkulasi.' : ''} Apa spesifik yang ingin Anda tanyakan?` : 'Untuk pertanyaan tentang struktur, beton, atau fondasi, saya sarankan memilih Expert "Ahli Teknik Sipil" di atas untuk hasil yang lebih optimal.';
-      } else if (inputMessage.toLowerCase().includes('k3') || inputMessage.toLowerCase().includes('keselamatan') || inputMessage.toLowerCase().includes('safety')) {
-        response = 'Expert K3 kami siap membantu dengan masalah keselamatan kerja konstruksi. Silakan pilih "K3 Konstruksi" dari expert di atas, atau saya bisa langsung membantu dengan informasi umum K3.';
-      } else {
-        response = expert 
-          ? `Terima kasih atas pertanyaan Anda! Sebagai ${expert.name}, saya akan membantu dengan ${expert.description}. ${toolboxes[expert.id] ? 'Anda juga bisa menggunakan toolbox yang tersedia.' : ''} Silakan jelaskan lebih detail.`
-          : 'Terima kasih! Saya AI Assistant BimtekKita. Silakan pilih expert di atas untuk mendapat bantuan yang lebih spesifik, atau tanya langsung tentang:\n\n• Proses sertifikasi\n• Modul BIMTEK\n• Persyaratan SKK\n• Kalkulator teknis';
-      }
-      
-      const assistantMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: response };
-      setMessages(prev => [...prev, assistantMsg]);
-    }, 500);
+    const { content, isAIError } = await generateResponse(text, selectedExpert, historySnapshot);
+
+    const assistantMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content,
+      isAIError,
+    };
+    setMessages(prev => [...prev, assistantMsg]);
+    setIsProcessing(false);
+  };
+
+  const handleRetry = async () => {
+    if (!lastUserMessage || isProcessing) return;
+
+    // Compute the cleaned history (remove last error + last user) from current state snapshot.
+    const copy = [...messages];
+    const lastAiErrorIdx = copy.map(m => m.isAIError).lastIndexOf(true);
+    if (lastAiErrorIdx !== -1) copy.splice(lastAiErrorIdx, 1);
+    const lastUserIdx = copy.map(m => m.role).lastIndexOf('user');
+    if (lastUserIdx !== -1) copy.splice(lastUserIdx, 1);
+    const cleanedMessages = copy;
+
+    // Reconstruct visible list: cleaned history + the retried user message.
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: lastUserMessage };
+    setMessages([...cleanedMessages, userMsg]);
+
+    setIsProcessing(true);
+    const { content, isAIError } = await generateResponse(lastUserMessage, selectedExpert, cleanedMessages);
+    const assistantMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content,
+      isAIError,
+    };
+    setMessages(prev => [...prev, assistantMsg]);
+    setIsProcessing(false);
   };
 
   const handleExpertSelect = (expertId: string) => {
@@ -159,13 +244,39 @@ export default function ChatPage() {
                       className={`max-w-[80%] p-3 rounded-2xl ${
                         msg.role === 'user'
                           ? 'bg-amber-500 text-white'
+                          : msg.isAIError
+                          ? 'bg-slate-100 text-slate-800 border border-amber-500/50'
                           : 'bg-slate-100 text-slate-800'
                       }`}
                     >
+                      {msg.isAIError && (
+                        <div className="flex items-center gap-2 text-amber-600 text-xs mb-2">
+                          <span>⚠️</span>
+                          <span>AI sedang tidak tersedia — menggunakan respons otomatis</span>
+                        </div>
+                      )}
                       <p className="text-sm whitespace-pre-line">{msg.content}</p>
                     </div>
                   </div>
                 ))}
+                {messages[messages.length - 1]?.isAIError && (
+                  <div className="flex justify-start">
+                    <button
+                      onClick={handleRetry}
+                      disabled={isProcessing}
+                      className="text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      🔄 Coba lagi dengan AI
+                    </button>
+                  </div>
+                )}
+                {isProcessing && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-100 text-slate-800 p-3 rounded-2xl">
+                      <p className="text-sm">⏳ Sedang memproses...</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-4 border-t border-slate-200">
@@ -177,10 +288,12 @@ export default function ChatPage() {
                     onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                     placeholder="Tulis pertanyaan Anda..."
                     className="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-amber-500"
+                    disabled={isProcessing}
                   />
                   <button
-                    onClick={sendMessage}
-                    className="px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600"
+                    onClick={() => sendMessage()}
+                    disabled={isProcessing}
+                    className="px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Kirim
                   </button>
