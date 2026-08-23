@@ -89,6 +89,46 @@ export function trimHistoryByTokenBudget<T extends { role: string; content: stri
 }
 
 /**
+ * Truncates a message so it fits within the context window, then appends a
+ * visible indicator so the user and the model know the text was cut.
+ *
+ * @param message            The original message text to shorten.
+ * @param systemPrompt       The system prompt that occupies part of the window.
+ * @param maxContextTokens   The model's total context-window size (e.g. 8000).
+ * @param reserveForResponse Tokens reserved for the model's reply (e.g. 1000).
+ * @returns A shortened copy of the message that fits in the budget.
+ */
+export function truncateMessageToFit(
+  message: string,
+  systemPrompt: string,
+  maxContextTokens: number,
+  reserveForResponse: number,
+): string {
+  const suffix = '… [pesan dipotong]';
+  const suffixTokens = estimateTokens(suffix);
+  const systemTokens = estimateTokens(systemPrompt);
+  const perMessageOverhead = 10;
+  const availableForContent =
+    maxContextTokens - systemTokens - reserveForResponse - perMessageOverhead - suffixTokens;
+
+  if (availableForContent <= 0) return suffix;
+
+  // Binary-search the longest prefix that fits inside the token budget.
+  let lo = 0;
+  let hi = message.length;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2);
+    if (estimateTokens(message.slice(0, mid)) <= availableForContent) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  return message.slice(0, lo) + suffix;
+}
+
+/**
  * Returns true when a single message is too large to fit inside the context window
  * even if the full budget were dedicated to it alone (i.e. no history at all).
  *

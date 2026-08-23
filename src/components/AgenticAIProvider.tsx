@@ -36,6 +36,8 @@ export interface ChatMessage {
   isAIError?: boolean;
   retryMessage?: string;
   isMessageTooLarge?: boolean;
+  /** True when this message was sent as a truncated version of an oversized message. */
+  isMessageTruncated?: boolean;
 }
 
 /** Thrown when the user's own message exceeds the remaining context budget. */
@@ -56,6 +58,10 @@ interface AgenticAIContextType {
   retryLastMessage: () => Promise<void>;
   clearMessages: () => void;
   appFeatures: AppFeature[];
+  /** The original text of the most recent oversized message, or null if none. */
+  oversizedMessage: string | null;
+  /** Send a truncated version of the last oversized message to the AI. */
+  sendShortenedMessage: () => Promise<void>;
 }
 
 const appFeatures: AppFeature[] = [
@@ -160,11 +166,15 @@ KNOWLEDGE BASE MENCAKUP:
 Gunakan pengetahuan ini untuk membantu Asesi sukses dalam uji kompetensi SKK.`;
 }
 
-async function callAIAPI(message: string, history: ChatMessage[]): Promise<string> {
+async function callAIAPI(
+  message: string,
+  history: ChatMessage[],
+  reserveForUserMessage = 300,
+): Promise<string> {
   const systemPrompt = buildSystemPrompt();
 
   // Trim history by estimated token budget rather than a fixed message count.
-  // Budget: 8000 context tokens − system prompt − 1000 reserved for the response − 300 for the new user message.
+  // Budget: 8000 context tokens − system prompt − 1000 reserved for the response − reserveForUserMessage.
   const { trimHistoryByTokenBudget, isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
 
   // Guard: if the user's own message is too large to fit in the context window
@@ -178,6 +188,7 @@ async function callAIAPI(message: string, history: ChatMessage[]): Promise<strin
     systemPrompt,
     8000,
     1000,
+    reserveForUserMessage,
   );
 
   const messages = [
@@ -381,6 +392,7 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
+  const [oversizedMessage, setOversizedMessage] = useState<string | null>(null);
 
   const addMessage = (content: string, role: 'user' | 'assistant' | 'system') => {
     const newMessage: ChatMessage = {
@@ -410,13 +422,14 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
         console.error('AI API Error:', apiError);
 
         // If the user's message is too large to fit the context window, surface a
-        // dedicated inline warning instead of falling back silently.
+        // dedicated inline warning with a shorten offer instead of falling back silently.
         if (apiError instanceof MessageTooLargeError) {
+          setOversizedMessage(userMessage);
           const warningMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content:
-              'Pesan Anda terlalu panjang untuk diproses AI dalam satu konteks. Coba pisahkan pesan menjadi bagian-bagian yang lebih pendek atau kurangi panjangnya.',
+              'Pesan Anda terlalu panjang untuk diproses AI dalam satu konteks. Anda dapat mengirim versi yang diperpendek, atau pisahkan pesan menjadi bagian-bagian yang lebih pendek.',
             timestamp: new Date(),
             isMessageTooLarge: true,
           };
@@ -461,6 +474,78 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
     setIsProcessing(false);
   };
 
+  const sendShortenedMessage = async () => {
+    if (!oversizedMessage || isProcessing) return;
+    setIsProcessing(true);
+
+    const { truncateMessageToFit, estimateTokens } = await import('@/lib/ai/token-utils');
+    const systemPrompt = buildSystemPrompt();
+    const truncated = truncateMessageToFit(oversizedMessage, systemPrompt, 8000, 1000);
+    // Reserve the actual token count of the truncated message so history trimming
+    // leaves the right budget (not just the default 300-token reserve).
+    const truncatedTokens = estimateTokens(truncated) + 10;
+
+    // Compute the cleaned history: remove the oversized user bubble and the too-large warning.
+    let historyForAI = [...messages];
+    const lastTooLargeIdx = [...historyForAI].map(m => m.isMessageTooLarge).lastIndexOf(true);
+    if (lastTooLargeIdx !== -1) historyForAI.splice(lastTooLargeIdx, 1);
+    const lastUserIdx = [...historyForAI].map(m => m.role).lastIndexOf('user');
+    if (lastUserIdx !== -1) historyForAI.splice(lastUserIdx, 1);
+
+    const truncatedUserMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: truncated,
+      timestamp: new Date(),
+      isMessageTruncated: true,
+    };
+    setMessages([...historyForAI, truncatedUserMsg]);
+    setOversizedMessage(null);
+    setLastUserMessage(truncated);
+
+    try {
+      let response: string;
+      let aiError = false;
+
+      try {
+        response = await callAIAPI(truncated, historyForAI, truncatedTokens);
+      } catch (apiError) {
+        console.error('AI API Error (shortened):', apiError);
+        aiError = true;
+        const fallback = generateRuleBasedResponse(truncated);
+        response = fallback.content;
+      }
+
+      const suggestions = generateRuleBasedResponse(truncated).suggestions;
+      const responseMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date(),
+        suggestions,
+        toolsUsed: aiError ? [] : ['OpenAI API'],
+        isAIError: aiError,
+        retryMessage: aiError ? truncated : undefined,
+        isMessageTruncated: true,
+      };
+      setMessages(prev => [...prev, responseMsg]);
+    } catch (error) {
+      console.error('Error (shortened):', error);
+      const errorMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.',
+        timestamp: new Date(),
+        isAIError: true,
+        retryMessage: truncated,
+        isMessageTruncated: true,
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    }
+
+    setIsProcessing(false);
+  };
+
   const retryLastMessage = async () => {
     if (!lastUserMessage || isProcessing) return;
     // Remove the last assistant message (the error one) before retrying
@@ -495,6 +580,8 @@ export function AgenticAIProvider({ children }: { children: ReactNode }) {
       retryLastMessage,
       clearMessages,
       appFeatures,
+      oversizedMessage,
+      sendShortenedMessage,
     }}>
       {children}
     </AgenticAIContext.Provider>

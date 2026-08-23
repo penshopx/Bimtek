@@ -71,6 +71,8 @@ interface Message {
   content: string;
   isAIError?: boolean;
   isMessageTooLarge?: boolean;
+  /** True when this bubble is a truncated version of an oversized message. */
+  isMessageTruncated?: boolean;
 }
 
 function generateRuleBasedResponse(userInput: string, selectedExpert: string | null): string {
@@ -103,6 +105,7 @@ export default function ChatPage() {
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const [consecutiveAIErrors, setConsecutiveAIErrors] = useState(0);
+  const [oversizedMessage, setOversizedMessage] = useState<string | null>(null);
 
   const dismissWarning = (id: string) => {
     setDismissedWarnings(prev => new Set(prev).add(id));
@@ -186,7 +189,65 @@ export default function ChatPage() {
       isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
+
+    if (isMessageTooLarge) {
+      // Restore the input so the user can edit rather than retype.
+      setInputMessage(text);
+      setOversizedMessage(text);
+    } else {
+      setOversizedMessage(null);
+    }
+
     if (isAIError && !isMessageTooLarge) {
+      setConsecutiveAIErrors(prev => prev + 1);
+    } else {
+      setConsecutiveAIErrors(0);
+    }
+    setIsProcessing(false);
+  };
+
+  const handleSendShortened = async () => {
+    if (!oversizedMessage || isProcessing) return;
+    setIsProcessing(true);
+
+    const expertContext = selectedExpert ? experts.find(e => e.id === selectedExpert) : null;
+    const systemPrompt = expertContext
+      ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description}. Jawab dalam Bahasa Indonesia.`
+      : 'Anda adalah AI Assistant SiapSKK, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
+
+    const { truncateMessageToFit } = await import('@/lib/ai/token-utils');
+    const truncated = truncateMessageToFit(oversizedMessage, systemPrompt, 8000, 1000);
+
+    // Remove the isMessageTooLarge warning and the oversized user bubble.
+    let cleaned = [...messages];
+    const lastTooLargeIdx = cleaned.map(m => m.isMessageTooLarge).lastIndexOf(true);
+    if (lastTooLargeIdx !== -1) cleaned.splice(lastTooLargeIdx, 1);
+    const lastUserIdx = cleaned.map(m => m.role).lastIndexOf('user');
+    if (lastUserIdx !== -1) cleaned.splice(lastUserIdx, 1);
+
+    const truncatedUserMsg: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: truncated,
+      isMessageTruncated: true,
+    };
+    setMessages([...cleaned, truncatedUserMsg]);
+    setOversizedMessage(null);
+    setInputMessage('');
+    setLastUserMessage(truncated);
+
+    const { content, isAIError } = await generateResponse(truncated, selectedExpert, cleaned);
+
+    const assistantMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content,
+      isAIError,
+      isMessageTruncated: true,
+    };
+    setMessages(prev => [...prev, assistantMsg]);
+
+    if (isAIError) {
       setConsecutiveAIErrors(prev => prev + 1);
     } else {
       setConsecutiveAIErrors(0);
@@ -301,6 +362,20 @@ export default function ChatPage() {
                           : 'bg-slate-100 text-slate-800'
                       }`}
                     >
+                      {/* Truncation badge in user bubble */}
+                      {msg.role === 'user' && msg.isMessageTruncated && (
+                        <div className="flex items-center gap-1 mb-1.5 text-amber-200 text-xs opacity-90">
+                          <span>✂️</span>
+                          <span>diperpendek</span>
+                        </div>
+                      )}
+                      {/* Truncation header in assistant response */}
+                      {msg.role === 'assistant' && msg.isMessageTruncated && !msg.isAIError && (
+                        <div className="flex items-center gap-2 text-amber-600 text-xs mb-2 font-medium">
+                          <span>✂️</span>
+                          <span>Merespons versi yang diperpendek</span>
+                        </div>
+                      )}
                       {msg.isMessageTooLarge && (
                         <div className="flex items-center gap-2 text-red-500 text-xs mb-2 font-medium">
                           <span>✂️</span>
@@ -321,6 +396,16 @@ export default function ChatPage() {
                         </div>
                       )}
                       <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                      {msg.isMessageTooLarge && (
+                        <button
+                          onClick={handleSendShortened}
+                          disabled={isProcessing}
+                          className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 disabled:opacity-50 text-red-600 text-xs rounded-lg transition-colors"
+                        >
+                          <span>✂️</span>
+                          <span>Kirim versi yang diperpendek</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

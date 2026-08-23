@@ -166,9 +166,13 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
           // DB is the source of truth when reachable — use it even if it returns 0 rows,
           // so stale localStorage sample data never overrides the real database.
           setEvents(dbEvents.map((e: any) => ({ ...e, participants: e.participants ?? [] })));
-          // Load certificates from DB (source of truth when DB is available)
+          // Load certificates from DB (source of truth when DB is available).
+          // The endpoint requires an admin session — send the session ID if present.
           try {
-            const certRes = await fetch('/api/events?action=certificates');
+            const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
+            const certRes = await fetch('/api/events?action=certificates', {
+              headers: sessionId ? { 'x-session-id': sessionId } : {},
+            });
             if (certRes.ok) {
               const dbCerts = await certRes.json();
               setCertificates(dbCerts);

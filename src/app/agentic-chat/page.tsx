@@ -13,10 +13,18 @@ const quickActions = [
 ];
 
 export default function AgenticChatPage() {
-  const { messages, isProcessing, processMessage, retryLastMessage, appFeatures, clearMessages } = useAgenticAI();
+  const { messages, isProcessing, processMessage, retryLastMessage, appFeatures, clearMessages, oversizedMessage, sendShortenedMessage } = useAgenticAI();
   const [input, setInput] = useState('');
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Restore the original text to the input when a too-large message is detected,
+  // so the user can edit rather than retype.
+  useEffect(() => {
+    if (oversizedMessage) {
+      setInput(oversizedMessage);
+    }
+  }, [oversizedMessage]);
 
   // Count consecutive trailing AI-error assistant messages (ignoring user messages).
   const consecutiveAIErrors = useMemo(() => {
@@ -44,8 +52,9 @@ export default function AgenticChatPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isProcessing) return;
-    await processMessage(input);
+    const text = input;
     setInput('');
+    await processMessage(text);
   };
 
   const handleQuickAction = async (action: string) => {
@@ -144,6 +153,20 @@ export default function AgenticChatPage() {
                           ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
                           : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
+                    {/* Truncation badge in user bubble */}
+                    {msg.role === 'user' && msg.isMessageTruncated && (
+                      <div className="flex items-center gap-1 mb-1.5 text-amber-200 text-xs opacity-90">
+                        <span>✂️</span>
+                        <span>diperpendek</span>
+                      </div>
+                    )}
+                    {/* Truncation header in assistant response */}
+                    {msg.role === 'assistant' && msg.isMessageTruncated && !msg.isAIError && (
+                      <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
+                        <span>✂️</span>
+                        <span>Merespons versi yang diperpendek</span>
+                      </div>
+                    )}
                     {msg.isMessageTooLarge && (
                       <div className="flex items-center gap-2 mb-2 text-red-400 text-xs font-medium">
                         <span>✂️</span>
@@ -164,6 +187,16 @@ export default function AgenticChatPage() {
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {msg.isMessageTooLarge && (
+                      <button
+                        onClick={() => { sendShortenedMessage(); setInput(''); }}
+                        disabled={isProcessing}
+                        className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 disabled:opacity-50 text-red-300 text-xs rounded-lg transition-colors"
+                      >
+                        <span>✂️</span>
+                        <span>Kirim versi yang diperpendek</span>
+                      </button>
+                    )}
                     {msg.isAIError && !msg.isMessageTooLarge && (
                       <button
                         onClick={() => retryLastMessage()}
@@ -269,7 +302,7 @@ export default function AgenticChatPage() {
               </button>
             </div>
             <p className="text-xs text-slate-500 mt-2 text-center">
-              💡 Coba: "Bawa saya ke BIMTEK" atau "Apa saja fitur di aplikasi ini?"
+              💡 Coba: &quot;Bawa saya ke BIMTEK&quot; atau &quot;Apa saja fitur di aplikasi ini?&quot;
             </p>
           </form>
         </div>

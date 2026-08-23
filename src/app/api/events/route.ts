@@ -20,10 +20,32 @@ export async function GET(request: Request) {
   try {
     const { db: database, schema: sch } = await getDb();
     const { searchParams } = new URL(request.url);
+
     if (searchParams.get('action') === 'certificates') {
+      // Certificates contain participant PII — require an admin session.
+      const sessionId = request.headers.get('x-session-id');
+      if (!sessionId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const { eq } = await import('drizzle-orm');
+      const sessions = await database
+        .select()
+        .from(sch.sessions)
+        .where(eq(sch.sessions.id, sessionId));
+      if (!sessions[0]) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const users = await database
+        .select()
+        .from(sch.users)
+        .where(eq(sch.users.id, sessions[0].userId));
+      if (!users[0] || users[0].role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const certs = await database.select().from(sch.certificates);
       return NextResponse.json(certs);
     }
+
     const events = await database.select().from(sch.offlineEvents);
     return NextResponse.json(events);
   } catch (e) {
@@ -46,15 +68,12 @@ export async function POST(request: Request) {
           return NextResponse.json({ success: false, message: 'Event full or not found' }, { status: 400 });
         }
         
-        const { and } = await import('drizzle-orm');
-        const existing = await database.select().from(sch.eventParticipants).where(
-          and(
-            eq(sch.eventParticipants.email, data.participant.email.trim().toLowerCase()),
-            eq(sch.eventParticipants.eventId, data.eventId)
-          )
+        // Prevent the same email from registering for any event (cross-event duplicate protection).
+        const existingByEmail = await database.select().from(sch.eventParticipants).where(
+          eq(sch.eventParticipants.email, data.participant.email.trim().toLowerCase())
         );
-        if (existing.length > 0) {
-          return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk event ini' }, { status: 400 });
+        if (existingByEmail.length > 0) {
+          return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk salah satu event' }, { status: 400 });
         }
 
         await database.insert(sch.eventParticipants).values({

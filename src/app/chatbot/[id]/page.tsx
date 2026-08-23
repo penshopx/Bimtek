@@ -57,6 +57,8 @@ interface ChatMessage {
   timestamp: Date;
   isAIError?: boolean;
   isMessageTooLarge?: boolean;
+  /** True when this bubble is a truncated version of an oversized message. */
+  isMessageTruncated?: boolean;
 }
 
 export default function ChatbotDetailPage() {
@@ -70,6 +72,7 @@ export default function ChatbotDetailPage() {
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const [consecutiveAIErrors, setConsecutiveAIErrors] = useState(0);
+  const [oversizedMessage, setOversizedMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const dismissWarning = (id: string) => {
@@ -99,15 +102,18 @@ export default function ChatbotDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const generateResponse = async (userMessage: string): Promise<{ content: string; isAIError: boolean; isMessageTooLarge?: boolean }> => {
+  const generateResponse = async (
+    userMessage: string,
+    historyOverride?: ChatMessage[],
+  ): Promise<{ content: string; isAIError: boolean; isMessageTooLarge?: boolean }> => {
     if (!chatbot) return { content: 'Chatbot not found', isAIError: false };
     
     const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
     
     try {
       // Trim history by estimated token budget rather than a fixed message count.
-      // Budget: 8000 context tokens − system prompt − reserved response tokens − 300 for the new user message.
-      const { trimHistoryByTokenBudget, isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
+      // Budget: 8000 context tokens − system prompt − reserved response tokens − (actual user message tokens).
+      const { trimHistoryByTokenBudget, isMessageTooLargeForBudget, estimateTokens } = await import('@/lib/ai/token-utils');
       const reserveForResponse = chatbot.aiConfig?.maxTokens || 1024;
 
       // Guard: warn the user if their message alone exceeds the context window.
@@ -120,11 +126,16 @@ export default function ChatbotDetailPage() {
         };
       }
 
+      // Reserve the actual token count of the user message so history trimming
+      // leaves the right amount of space (not just the 300-token default).
+      const userMessageTokens = estimateTokens(userMessage) + 10;
+      const sourceHistory = historyOverride ?? messages;
       const trimmedHistory = trimHistoryByTokenBudget(
-        messages.filter(m => m.role === 'user' || m.role === 'assistant'),
+        sourceHistory.filter(m => m.role === 'user' || m.role === 'assistant'),
         systemPrompt,
         8000,
         reserveForResponse,
+        userMessageTokens,
       );
       const history = trimmedHistory.map(m => ({
         role: m.role,
@@ -235,7 +246,64 @@ Apa yang ingin Anda konsultasikan?`;
       isAIError,
       isMessageTooLarge,
     }]);
+
+    if (isMessageTooLarge) {
+      // Restore the input so the user can edit rather than retype.
+      setInput(userMessage);
+      setOversizedMessage(userMessage);
+    } else {
+      setOversizedMessage(null);
+    }
+
     if (isAIError && !isMessageTooLarge) {
+      setConsecutiveAIErrors(prev => prev + 1);
+    } else {
+      setConsecutiveAIErrors(0);
+    }
+    setIsProcessing(false);
+  };
+
+  const handleSendShortened = async () => {
+    if (!oversizedMessage || isProcessing || !chatbot) return;
+    setIsProcessing(true);
+
+    const { truncateMessageToFit } = await import('@/lib/ai/token-utils');
+    const systemPrompt = chatbot.personality?.systemPrompt || `Anda adalah ${chatbot.name} - ${chatbot.description || 'asisten AI'}`;
+    const reserveForResponse = chatbot.aiConfig?.maxTokens || 1024;
+    const truncated = truncateMessageToFit(oversizedMessage, systemPrompt, 8000, reserveForResponse);
+
+    // Remove the isMessageTooLarge warning and the oversized user bubble.
+    let cleaned = [...messages];
+    const lastTooLargeIdx = cleaned.map(m => m.isMessageTooLarge).lastIndexOf(true);
+    if (lastTooLargeIdx !== -1) cleaned.splice(lastTooLargeIdx, 1);
+    const lastUserIdx = cleaned.map(m => m.role).lastIndexOf('user');
+    if (lastUserIdx !== -1) cleaned.splice(lastUserIdx, 1);
+
+    const truncatedUserMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: truncated,
+      timestamp: new Date(),
+      isMessageTruncated: true,
+    };
+    setMessages([...cleaned, truncatedUserMsg]);
+    setOversizedMessage(null);
+    setInput('');
+    setLastUserMessage(truncated);
+
+    // Pass cleaned as historyOverride so generateResponse does not read stale component state.
+    const { content, isAIError } = await generateResponse(truncated, cleaned);
+
+    setMessages(prev => [...prev, {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content,
+      timestamp: new Date(),
+      isAIError,
+      isMessageTruncated: true,
+    }]);
+
+    if (isAIError) {
       setConsecutiveAIErrors(prev => prev + 1);
     } else {
       setConsecutiveAIErrors(0);
@@ -367,6 +435,20 @@ Apa yang ingin Anda konsultasikan?`;
                           ? 'bg-slate-700/50 text-slate-100 border border-amber-500/50'
                           : 'bg-slate-700/50 text-slate-100 border border-slate-600'
                   }`}>
+                    {/* Truncation badge in user bubble */}
+                    {msg.role === 'user' && msg.isMessageTruncated && (
+                      <div className="flex items-center gap-1 mb-1.5 text-amber-200 text-xs opacity-90">
+                        <span>✂️</span>
+                        <span>diperpendek</span>
+                      </div>
+                    )}
+                    {/* Truncation header in assistant response */}
+                    {msg.role === 'assistant' && msg.isMessageTruncated && !msg.isAIError && (
+                      <div className="flex items-center gap-2 mb-2 text-amber-400 text-xs font-medium">
+                        <span>✂️</span>
+                        <span>Merespons versi yang diperpendek</span>
+                      </div>
+                    )}
                     {msg.isMessageTooLarge && (
                       <div className="flex items-center gap-2 mb-2 text-red-400 text-xs font-medium">
                         <span>✂️</span>
@@ -387,6 +469,16 @@ Apa yang ingin Anda konsultasikan?`;
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {msg.isMessageTooLarge && (
+                      <button
+                        onClick={handleSendShortened}
+                        disabled={isProcessing}
+                        className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 disabled:opacity-50 text-red-300 text-xs rounded-lg transition-colors"
+                      >
+                        <span>✂️</span>
+                        <span>Kirim versi yang diperpendek</span>
+                      </button>
+                    )}
                     {msg.isAIError && !msg.isMessageTooLarge && (
                       <button
                         onClick={handleRetry}
