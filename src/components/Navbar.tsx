@@ -28,6 +28,8 @@ const navItems = [
   { href: '/tips-lolos', label: 'Tips Lolos', icon: '🏆' },
   { href: '/panduan-ajj', label: 'Panduan AJJ', icon: '📡' },
   { href: '/menjadi-asesor', label: 'Menjadi Asesor', icon: '🎖️' },
+  { href: '/siap-index', label: 'SIAP Index', icon: '🧭' },
+  { href: '/timeline-skk', label: 'Timeline SKK', icon: '🗺️' },
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
