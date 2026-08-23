@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `event_participants_event_id_email_unique` ON `event_participants` (`event_id`,`email`);

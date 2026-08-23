@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const bimtekProgress = sqliteTable("bimtek_progress", {
   moduleId: text("module_id").primaryKey(),
@@ -101,7 +101,9 @@ export const eventParticipants = sqliteTable("event_participants", {
   // Set when the participant was logged in at registration time; used to
   // securely scope certificate access without relying on email matching.
   userId: text("user_id"),
-});
+}, (t) => ({
+  eventEmailUnique: uniqueIndex("event_participants_event_id_email_unique").on(t.eventId, t.email),
+}));
 
 export const certificates = sqliteTable("certificates", {
   id: text("id").primaryKey(),

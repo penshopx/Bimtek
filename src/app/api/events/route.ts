@@ -135,14 +135,23 @@ export async function POST(request: Request) {
           }
         }
 
-        await database.insert(sch.eventParticipants).values({
-          ...data.participant,
-          email: data.participant.email.trim().toLowerCase(),
-          eventId: data.eventId,
-          status: 'registered',
-          registeredAt: new Date().toISOString(),
-          userId: registrantUserId,
-        });
+        try {
+          await database.insert(sch.eventParticipants).values({
+            ...data.participant,
+            email: data.participant.email.trim().toLowerCase(),
+            eventId: data.eventId,
+            status: 'registered',
+            registeredAt: new Date().toISOString(),
+            userId: registrantUserId,
+          });
+        } catch (insertErr: any) {
+          // Unique constraint violation: (event_id, email) — race condition guard.
+          const msg: string = insertErr?.message ?? '';
+          if (msg.includes('UNIQUE') || msg.includes('unique')) {
+            return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk event ini' }, { status: 400 });
+          }
+          throw insertErr;
+        }
 
         const newRegistered = (event[0].registered ?? 0) + 1;
         const newStatus = newRegistered >= event[0].capacity ? 'full' : 'open';
