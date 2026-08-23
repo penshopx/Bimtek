@@ -128,6 +128,9 @@ export const users = sqliteTable("users", {
   phone: text("phone"),
   company: text("company"),
   position: text("position"),
+  bidang: text("bidang"),
+  jabatanSkk: text("jabatan_skk"),
+  kualifikasiSkk: text("kualifikasi_skk"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

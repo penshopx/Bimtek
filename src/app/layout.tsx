@@ -11,6 +11,7 @@ import { AgenticAIProvider } from "@/components/AgenticAIProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { DatabaseSeeder } from "@/components/DatabaseSeeder";
+import { SkkSelectionModal } from "@/components/SkkSelectionModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,6 +62,7 @@ export default function RootLayout({
                     <ActivityProvider>
                       <ServiceWorkerRegistration />
                       <DatabaseSeeder />
+                      <SkkSelectionModal />
                       <Navbar />
                       <main>{children}</main>
                     </ActivityProvider>

@@ -11,6 +11,9 @@ export interface User {
   phone?: string;
   company?: string;
   position?: string;
+  bidang?: string;
+  jabatanSkk?: string;
+  kualifikasiSkk?: string;
   createdAt: string;
 }
 
@@ -152,19 +155,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
-    
+
+    const previousUser = user;
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
-    
+
     try {
-      await fetch('/api/auth?action=update', {
+      const res = await fetch('/api/auth?action=update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, updates }),
       });
+      if (!res.ok) {
+        // Rollback optimistic update on server failure
+        setUser(previousUser);
+        localStorage.setItem('user', JSON.stringify(previousUser));
+      }
     } catch (e) {
-      // local fallback
+      // Rollback on network error
+      setUser(previousUser);
+      localStorage.setItem('user', JSON.stringify(previousUser));
     }
   };
 

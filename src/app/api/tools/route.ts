@@ -1,5 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+async function getAuthenticatedUser(request: NextRequest) {
+  const sessionId =
+    request.cookies.get('sessionId')?.value ||
+    request.headers.get('x-session-id') ||
+    null;
+  if (!sessionId) return null;
+
+  try {
+    const { db } = await import('@/db');
+    const schema = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const sessions = await db
+      .select()
+      .from(schema.sessions)
+      .where(eq(schema.sessions.id, sessionId));
+    if (!sessions[0]) return null;
+
+    const users = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, sessions[0].userId));
+    return users[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const prompts: Record<string, (body: any) => string> = {
   k3: ({ proyekTipe, fase, lingkup }) =>
     `Kamu adalah Ahli K3 Konstruksi bersertifikat (SKK-601). Buat checklist K3 untuk proyek konstruksi berikut:
@@ -43,6 +71,11 @@ Kembalikan HANYA JSON.`,
 };
 
 export async function POST(request: NextRequest) {
+  const authUser = await getAuthenticatedUser(request);
+  if (!authUser) {
+    return NextResponse.json({ error: 'Autentikasi diperlukan' }, { status: 401 });
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'AI tidak tersedia' }, { status: 503 });
 

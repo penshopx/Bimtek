@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { getJabatanById, getRelatedCategories } from '@/lib/skkData';
 
 interface DashboardStats {
   completedModules: number;
@@ -59,6 +60,10 @@ export default function DashboardPage() {
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Derived jabatan info
+  const jabatan = user?.jabatanSkk ? getJabatanById(user.jabatanSkk) : null;
+  const relatedCategories = user?.jabatanSkk ? getRelatedCategories(user.jabatanSkk) : [];
+
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -67,26 +72,26 @@ export default function DashboardPage() {
     try {
       const savedCompleted = localStorage.getItem('bimtekCompleted');
       const completed = savedCompleted ? JSON.parse(savedCompleted) : [];
-      
+
       const savedQuizScores = localStorage.getItem('quizBestScores');
       const quizScoresData = savedQuizScores ? JSON.parse(savedQuizScores) : {};
-      
+
       const savedStreak = localStorage.getItem('learningStreak');
       const streakData = savedStreak ? JSON.parse(savedStreak) : { currentStreak: 0, longestStreak: 0, totalHours: 0 };
-      
+
       const savedBookmarks = localStorage.getItem('bookmarks');
       const bookmarksData = savedBookmarks ? JSON.parse(savedBookmarks) : [];
-      
+
       const savedAchievements = localStorage.getItem('achievements');
       const achievementsData = savedAchievements ? JSON.parse(savedAchievements) : [];
-      
+
       const savedActivities = localStorage.getItem('activities');
       const activitiesData: Activity[] = savedActivities ? JSON.parse(savedActivities) : [];
-      
+
       let totalScore = 0;
       let quizCount = 0;
       const quizList: QuizScore[] = [];
-      
+
       Object.entries(quizScoresData).forEach(([category, data]: [string, any]) => {
         totalScore += data.bestScore || 0;
         quizCount += 1;
@@ -97,11 +102,10 @@ export default function DashboardPage() {
           takenAt: data.lastTaken || new Date().toISOString(),
         });
       });
-      
+
       const avgScore = quizCount > 0 ? Math.round(totalScore / quizCount) : 0;
-      
       const weekly = generateWeeklyData(activitiesData);
-      
+
       setStats({
         completedModules: completed.length,
         totalModules: 67,
@@ -115,11 +119,10 @@ export default function DashboardPage() {
         hoursLearned: streakData.totalHours || Math.floor(completed.length * 2),
         certificates: 0,
       });
-      
+
       setActivities(activitiesData.slice(0, 10));
       setRecentQuizzes(quizList.slice(0, 5));
       setWeeklyData(weekly);
-      
     } catch (e) {
       console.error(e);
     }
@@ -130,34 +133,34 @@ export default function DashboardPage() {
     const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     const today = new Date();
     const result: WeeklyData[] = [];
-    
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      
-      const dayActivities = activities.filter((a: Activity) => 
+
+      const dayActivities = activities.filter((a: Activity) =>
         a.timestamp && a.timestamp.startsWith(dateStr)
       );
-      
+
       result.push({
         day: days[date.getDay()],
         hours: dayActivities.length * 0.5 + Math.random() * 1.5,
         activities: dayActivities.length,
       });
     }
-    
+
     return result;
   };
 
   const getActivityIcon = (type: string) => {
     const icons: Record<string, string> = {
-      'module_complete': '🎓',
-      'quiz_take': '✍️',
-      'bookmark_add': '🔖',
-      'profile_update': '👤',
-      'achievement_unlock': '🏆',
-      'streak_update': '🔥',
+      module_complete: '🎓',
+      quiz_take: '✍️',
+      bookmark_add: '🔖',
+      profile_update: '👤',
+      achievement_unlock: '🏆',
+      streak_update: '🔥',
     };
     return icons[type] || '📝';
   };
@@ -166,7 +169,6 @@ export default function DashboardPage() {
     const now = new Date();
     const time = new Date(timestamp);
     const diff = Math.floor((now.getTime() - time.getTime()) / 1000);
-    
     if (diff < 60) return 'Baru saja';
     if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
@@ -178,6 +180,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">
             {user ? `👋 Halo, ${user.name}!` : '📊 Dashboard'}
@@ -189,25 +192,94 @@ export default function DashboardPage() {
           <div className="text-center py-12 text-slate-400">Memuat data...</div>
         ) : (
           <>
+            {/* SKK Jabatan banner (only for logged-in users) */}
+            {user && (
+              <div className={`mb-6 rounded-2xl p-5 border ${
+                jabatan
+                  ? 'bg-gradient-to-r from-amber-500/15 to-orange-500/15 border-amber-500/30'
+                  : 'bg-slate-800/50 border-slate-700'
+              }`}>
+                {jabatan ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Target Sertifikasi Anda</p>
+                      <p className="text-white text-lg font-bold">{jabatan.name}</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded-full text-xs">{user.bidang}</span>
+                        <span className="px-2 py-0.5 bg-slate-700 text-slate-300 rounded-full text-xs">{jabatan.level}</span>
+                        <span className="px-2 py-0.5 bg-slate-700 text-slate-300 rounded-full text-xs">{user.kualifikasiSkk}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <Link
+                        href="/bimtek"
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition-all"
+                      >
+                        🎓 Modul Relevan
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-medium transition-all"
+                      >
+                        ✏️ Ubah
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-slate-300 font-semibold">🎯 Belum ada jabatan SKK yang dipilih</p>
+                      <p className="text-slate-400 text-sm mt-1">Pilih jabatan target Anda agar kami bisa menampilkan modul yang relevan</p>
+                    </div>
+                    <Link
+                      href="/profile"
+                      className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+                    >
+                      Pilih Jabatan SKK →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Recommended categories (only when jabatan is set) */}
+            {jabatan && relatedCategories.length > 0 && (
+              <div className="mb-6 bg-slate-800/50 rounded-2xl p-5 border border-slate-700">
+                <h2 className="text-white font-semibold mb-3">📚 Kategori BIMTEK Prioritas untuk {jabatan.name}</h2>
+                <div className="flex flex-wrap gap-2">
+                  {relatedCategories.map(cat => (
+                    <Link
+                      key={cat}
+                      href={`/bimtek?category=${encodeURIComponent(cat)}`}
+                      className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-full text-sm transition-all"
+                    >
+                      {cat} →
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
                 <div className="text-4xl font-bold">{stats.completedModules}</div>
                 <div className="text-amber-100 text-sm">Modul Selesai</div>
-                <div className="mt-2 text-xs text-amber-200">{progressPercentage}% dari 67 modul</div>
+                <div className="mt-2 text-xs text-amber-200">{progressPercentage}% dari {stats.totalModules} modul</div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl p-6 text-white">
                 <div className="text-4xl font-bold">{stats.streak}</div>
                 <div className="text-blue-100 text-sm">Hari Streak</div>
                 <div className="mt-2 text-xs text-blue-200">Terpanjang: {stats.longestStreak} hari</div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
                 <div className="text-4xl font-bold">{stats.averageScore}%</div>
                 <div className="text-green-100 text-sm">Rata-rata Quiz</div>
                 <div className="mt-2 text-xs text-green-200">{stats.quizScores} kali mengerjakan</div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 text-white">
                 <div className="text-4xl font-bold">{stats.achievements}/{stats.totalAchievements}</div>
                 <div className="text-purple-100 text-sm">Achievements</div>
@@ -215,13 +287,14 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Charts row */}
             <div className="grid lg:grid-cols-3 gap-6 mb-8">
               <div className="lg:col-span-2 bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
                 <h2 className="text-xl font-semibold text-white mb-4">📈 Aktivitas Mingguan</h2>
                 <div className="flex items-end justify-between h-48 gap-2">
                   {weeklyData.map((day, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center">
-                      <div 
+                      <div
                         className="w-full bg-gradient-to-t from-amber-500 to-orange-500 rounded-t-lg transition-all"
                         style={{ height: `${Math.min(day.hours * 30, 160)}px` }}
                       />
@@ -237,14 +310,12 @@ export default function DashboardPage() {
                 <div className="relative pt-1">
                   <div className="flex mb-2 items-center justify-between">
                     <div className="text-right w-full">
-                      <span className="text-xs font-semibold inline-block text-amber-500">
-                        {progressPercentage}%
-                      </span>
+                      <span className="text-xs font-semibold inline-block text-amber-500">{progressPercentage}%</span>
                     </div>
                   </div>
                   <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-slate-700">
-                    <div 
-                      style={{ width: `${progressPercentage}%` }} 
+                    <div
+                      style={{ width: `${progressPercentage}%` }}
                       className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-amber-500 to-orange-500"
                     />
                   </div>
@@ -266,6 +337,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Activity & Quiz */}
             <div className="grid lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
                 <div className="flex justify-between items-center mb-4">
@@ -302,9 +374,7 @@ export default function DashboardPage() {
                       <div key={i} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
                         <div>
                           <div className="text-white text-sm font-medium">{quiz.category}</div>
-                          <div className="text-slate-400 text-xs">
-                            {new Date(quiz.takenAt).toLocaleDateString('id-ID')}
-                          </div>
+                          <div className="text-slate-400 text-xs">{new Date(quiz.takenAt).toLocaleDateString('id-ID')}</div>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-sm font-bold ${
                           quiz.score >= 80 ? 'bg-green-500/20 text-green-400' :
@@ -320,25 +390,28 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Quick links */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link href="/bimtek" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-amber-500 transition-all">
                 <div className="text-3xl mb-2">🎓</div>
                 <div className="text-white font-semibold">BIMTEK</div>
-                <div className="text-slate-400 text-sm">67+ Modul</div>
+                <div className="text-slate-400 text-sm">
+                  {jabatan ? `${relatedCategories.length} kategori relevan` : '67+ Modul'}
+                </div>
               </Link>
-              
+
               <Link href="/quiz" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-amber-500 transition-all">
                 <div className="text-3xl mb-2">✍️</div>
                 <div className="text-white font-semibold">Quiz</div>
                 <div className="text-slate-400 text-sm">65+ Pertanyaan</div>
               </Link>
-              
+
               <Link href="/offline" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-amber-500 transition-all">
                 <div className="text-3xl mb-2">📍</div>
                 <div className="text-white font-semibold">Offline</div>
                 <div className="text-slate-400 text-sm">Event Terbesar</div>
               </Link>
-              
+
               <Link href="/agentic-chat" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-amber-500 transition-all">
                 <div className="text-3xl mb-2">🤖</div>
                 <div className="text-white font-semibold">AI Agent</div>
@@ -354,12 +427,8 @@ export default function DashboardPage() {
                     <p className="text-slate-400">Daftar sekarang untuk akses penuh ke semua fitur</p>
                   </div>
                   <div className="flex gap-3">
-                    <Link href="/login" className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium">
-                      Masuk
-                    </Link>
-                    <Link href="/register" className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium">
-                      Daftar Gratis
-                    </Link>
+                    <Link href="/login" className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium">Masuk</Link>
+                    <Link href="/register" className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium">Daftar Gratis</Link>
                   </div>
                 </div>
               </div>

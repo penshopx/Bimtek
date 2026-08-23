@@ -22,19 +22,26 @@
       "when": 1785547009284,
       "tag": "0002_worried_forgotten_one",
       "breakpoints": true
-    }
-    ,{
+    },
+    {
       "idx": 3,
       "version": "6",
       "when": 1756003200000,
       "tag": "0003_quiz_sort_order",
       "breakpoints": true
-    }
-    ,{
+    },
+    {
       "idx": 4,
       "version": "6",
       "when": 1756089600000,
       "tag": "0004_quiz_attempts",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787472390147,
+      "tag": "0005_aromatic_magik",
       "breakpoints": true
     }
   ]

@@ -69,6 +69,9 @@ export async function GET(request: NextRequest) {
         phone: user.phone,
         company: user.company,
         position: user.position,
+        bidang: user.bidang,
+        jabatanSkk: user.jabatanSkk,
+        kualifikasiSkk: user.kualifikasiSkk,
         createdAt: user.createdAt,
       }
     });
@@ -162,6 +165,9 @@ export async function POST(request: NextRequest) {
           phone: user.phone,
           company: user.company,
           position: user.position,
+          bidang: user.bidang,
+          jabatanSkk: user.jabatanSkk,
+          kualifikasiSkk: user.kualifikasiSkk,
           createdAt: user.createdAt,
         },
         sessionId,
@@ -202,6 +208,9 @@ export async function POST(request: NextRequest) {
           phone: user.phone,
           company: user.company,
           position: user.position,
+          bidang: user.bidang,
+          jabatanSkk: user.jabatanSkk,
+          kualifikasiSkk: user.kualifikasiSkk,
           createdAt: user.createdAt,
         },
       });
