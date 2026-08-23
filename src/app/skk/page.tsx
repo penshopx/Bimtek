@@ -21,6 +21,7 @@ const tools: Record<string, { icon: string; name: string; desc: string; href: st
     { icon: '📆', name: 'Rencana Belajar SKK', desc: 'Jadwal belajar per minggu otomatis + progress tracker per unit kompetensi', href: '/rencana-belajar' },
     { icon: '📖', name: 'Glosarium SKK', desc: '55+ singkatan & istilah teknis sertifikasi konstruksi yang bisa dicari', href: '/glosarium' },
     { icon: '❓', name: 'FAQ SKK', desc: '36 pertanyaan paling umum tentang persyaratan, pendaftaran, asesmen & biaya', href: '/faq-skk' },
+    { icon: '🏆', name: 'Tips Lolos Asesmen', desc: 'Strategi per bagian asesmen: portofolio, wawancara, tes tertulis, hari-H & mental', href: '/tips-lolos' },
     { icon: '🎯', name: 'Mock Asesmen SKK', desc: 'Simulasi 5 soal AI berbasis SKKNI per domain', href: '/mock-asesmen' },
     { icon: '🏥', name: 'Klinik Uji Kompetensi', desc: 'Jalur lengkap: Dialog → Blueprint → Chatbot → Ujian', href: '/klinik-uji-kompetensi' },
     { icon: '💬', name: 'SKK Coach AI', desc: '5 agen spesialis: kelayakan, dokumen, jabatan, perpanjangan, SBU', href: '/skk-coach' },
