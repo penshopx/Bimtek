@@ -32,6 +32,7 @@ const navItems = [
   { href: '/tools', label: 'Tools', icon: '🔧' },
   { href: '/iso-generator', label: 'ISO Generator', icon: '📄' },
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
+  { href: '/pkb', label: 'Tracker PKB', icon: '📈' },
   { href: '/dokumen', label: 'Persiapan Dokumen', icon: '📄' },
   { href: '/prosedur', label: 'Prosedur UJK', icon: '📋' },
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },

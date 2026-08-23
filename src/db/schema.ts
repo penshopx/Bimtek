@@ -191,3 +191,16 @@ export const documentChecklist = sqliteTable("document_checklist", {
   checkedAt: text("checked_at"),
   createdAt: text("created_at").notNull(),
 });
+
+export const pkbActivities = sqliteTable("pkb_activities", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(), // pelatihan | seminar | workshop | publikasi | pengabdian
+  title: text("title").notNull(),
+  date: text("date").notNull(),
+  organizer: text("organizer").notNull(),
+  points: integer("points").notNull(),
+  description: text("description"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
