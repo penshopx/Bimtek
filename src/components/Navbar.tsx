@@ -19,6 +19,7 @@ const navItems = [
   { href: '/bimtek', label: 'BIMTEK', icon: '🎓' },
   { href: '/quiz', label: 'Quiz', icon: '✍️' },
   { href: '/skk', label: 'SKK Hub', icon: '🏗️' },
+  { href: '/pantau-skk', label: 'Pantau SKK', icon: '🗓️' },
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
