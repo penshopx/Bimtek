@@ -170,7 +170,7 @@ function generatePlan(jabatan: JabatanData, daysLeft: number, jamPerHari: number
   weeks.push({
     week: wrev, label: `Minggu ${wrev}`, theme: 'Review Menyeluruh & Latihan Soal', icon: '🎯',
     items: [
-      { id: 'rev-1', type: 'latihan', label: 'Latihan Soal Mock Asesmen (Domain 1–3)', desc: 'Kerjakan minimal 30 soal di SiapSKK Mock Asesmen', jam: 3 },
+      { id: 'rev-1', type: 'latihan', label: 'Latihan Soal Mock Asesmen (Domain 1–3)', desc: 'Kerjakan minimal 30 soal di SIAP SKK Mock Asesmen', jam: 3 },
       { id: 'rev-2', type: 'latihan', label: 'Latihan Soal Mock Asesmen (Domain 4–7)', desc: 'Fokus pada domain yang nilai latihan paling rendah', jam: 3 },
       { id: 'rev-3', type: 'review', label: 'Review Catatan Semua UK', desc: 'Baca ulang rangkuman tiap UK, perkuat yang masih lemah', jam: 4 },
       { id: 'rev-4', type: 'latihan', label: 'Latihan Wawancara (Metode STAR)', desc: 'Siapkan 2–3 contoh proyek nyata per unit kompetensi', jam: 4 },

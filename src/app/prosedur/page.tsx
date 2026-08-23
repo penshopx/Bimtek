@@ -462,7 +462,7 @@ export default function ProsedurPage() {
         {/* CTA */}
         <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Siap Memulai Perjalanan SKK Anda?</h2>
-          <p className="text-slate-400 mb-6">Gunakan fitur-fitur di SiapSKK untuk mempersiapkan diri sebelum asesmen.</p>
+          <p className="text-slate-400 mb-6">Gunakan fitur-fitur di SIAP SKK untuk mempersiapkan diri sebelum asesmen.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="/klinik-uji-kompetensi"
                className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-semibold px-5 py-2.5 rounded-xl transition-all">

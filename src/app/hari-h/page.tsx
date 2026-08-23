@@ -66,7 +66,7 @@ const timelineH7: TimelineStep[] = [
   {
     time: 'H-7', icon: '📚', title: 'Review Materi Unit Kompetensi',
     desc: 'Pelajari kembali unit kompetensi (UK) yang akan diuji. Fokus pada Kriteria Unjuk Kerja (KUK) di setiap UK.',
-    tips: ['Download SKKNI jabatan Anda dari BSN', 'Gunakan Mock Asesmen di SiapSKK untuk latihan soal', 'Buat rangkuman poin penting per UK'],
+    tips: ['Download SKKNI jabatan Anda dari BSN', 'Gunakan Mock Asesmen di SIAP SKK untuk latihan soal', 'Buat rangkuman poin penting per UK'],
     color: 'amber',
   },
   {

@@ -24,13 +24,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SiapSKK - Pelatihan Konstruksi Indonesia",
-  description: "Platform pelatihan dan sertifikasi bidang konstruksi Indonesia",
+  title: "SIAP SKK — Sistem Interaktif Asesmen & Persiapan Uji Kompetensi",
+  description: "Platform persiapan uji kompetensi SKK konstruksi Indonesia — materi SKKNI, simulasi asesmen, AI tutor, dan panduan sertifikasi lengkap.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SiapSKK",
+    title: "SIAP SKK",
   },
 };
 

@@ -23,11 +23,11 @@ const features = [
     color: 'from-green-500 to-emerald-600',
   },
   {
-    icon: '💬',
-    title: 'AI Tutor SKK',
-    description: '8 expert AI siap menjawab pertanyaan teknis, regulasi SKK, dan strategi persiapan uji kompetensi',
-    href: '/chat',
-    color: 'from-slate-600 to-slate-800',
+    icon: '🗺️',
+    title: 'Timeline Proses SKK',
+    description: '8 tahap lengkap dari persiapan hingga terima sertifikat — dokumen, biaya, dan tips per fase',
+    href: '/timeline-skk',
+    color: 'from-teal-500 to-cyan-600',
   },
   {
     icon: '🔗',
@@ -121,6 +121,15 @@ const methods = [
   },
 ];
 
+const aiExperts = [
+  { icon: '🔍', name: 'Cek Kelayakan', desc: 'Jabatan SKK mana yang bisa diambil sekarang', href: '/skk-coach/chat?agent=kelayakan' },
+  { icon: '📄', name: 'Panduan Dokumen', desc: 'FR.APL.01, FR.APL.02, dan bukti per jabatan', href: '/skk-coach/chat?agent=dokumen' },
+  { icon: '🏗️', name: 'Info Jabatan SKK', desc: 'Detail skema, unit kompetensi & syarat', href: '/skk-coach/chat?agent=jabatan' },
+  { icon: '♻️', name: 'Perpanjangan SKK', desc: 'Surveillance, PKB, dan re-sertifikasi', href: '/skk-coach/chat?agent=perpanjangan' },
+  { icon: '🔗', name: 'SKK & SBU', desc: 'Persyaratan SKK untuk izin BUJK', href: '/skk-coach/chat?agent=sbu' },
+  { icon: '💬', name: 'Expert AI Chat', desc: 'Konsultasi teknis bebas dengan AI konstruksi', href: '/chat' },
+];
+
 export default function Home() {
   return (
     <div className="min-h-screen">
@@ -134,13 +143,16 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-block mb-4 px-4 py-1 bg-amber-500/20 border border-amber-500/40 rounded-full text-amber-400 text-sm font-medium">
-              Platform Persiapan Uji Kompetensi SKK
+              Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-3 tracking-tight">
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                SiapSKK
+                SIAP SKK
               </span>
             </h1>
+            <p className="text-sm md:text-base text-slate-500 mb-5 tracking-widest uppercase font-medium">
+              Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK Konstruksi
+            </p>
             <p className="text-xl md:text-2xl text-slate-300 mb-4 max-w-3xl mx-auto">
               Persiapkan Uji Kompetensi SKK Anda dengan
               <span className="text-amber-400 font-semibold"> Panduan Terstruktur</span>
@@ -157,10 +169,10 @@ export default function Home() {
                 🎓 Mulai Persiapan SKK
               </Link>
               <Link
-                href="/sertifikasi"
-                className="px-8 py-3 bg-slate-700/50 border border-slate-600 rounded-xl font-semibold hover:bg-slate-700 transition-all"
+                href="/chat"
+                className="px-8 py-3 bg-slate-700/60 border border-slate-600 rounded-xl font-semibold hover:bg-slate-700 transition-all"
               >
-                📋 Cari Jabatan SKK
+                🤖 Tanya AI SIAP SKK
               </Link>
             </div>
           </div>
@@ -176,6 +188,74 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── AI SIAP SKK — Pusat Pengetahuan ── */}
+      <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium mb-4">
+              🤖 Didukung GPT-4o · Tersedia 24/7
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              AI SIAP SKK —{' '}
+              <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                Pusat Pengetahuan
+              </span>
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              Tanya apa saja tentang SKK konstruksi — kelayakan jabatan, dokumen, peraturan, jadwal, biaya — langsung dijawab oleh AI yang sudah dilatih regulasi SKK terbaru.
+            </p>
+          </div>
+
+          {/* AI Entry Points */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {aiExperts.map((expert) => (
+              <Link
+                key={expert.href}
+                href={expert.href}
+                className="group flex items-start gap-4 p-5 bg-slate-800/60 border border-slate-700/50 rounded-2xl hover:border-amber-500/40 hover:bg-slate-800/80 transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+                  {expert.icon}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white group-hover:text-amber-400 transition-colors">{expert.name}</h3>
+                  <p className="text-slate-400 text-sm mt-0.5">{expert.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Big CTA row */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/chat"
+              className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl font-bold text-white hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-amber-500/25 text-lg"
+            >
+              🤖 Mulai Chat dengan AI SIAP SKK
+            </Link>
+            <Link
+              href="/agentic-chat"
+              className="px-8 py-4 bg-slate-700/60 border border-slate-600 rounded-2xl font-bold text-white hover:bg-slate-700 transition-all text-lg"
+            >
+              ⚡ Agentic AI — Multi-Step Analysis
+            </Link>
+            <Link
+              href="/skk-coach"
+              className="px-8 py-4 bg-slate-700/60 border border-slate-600 rounded-2xl font-bold text-white hover:bg-slate-700 transition-all text-lg"
+            >
+              💼 SKK Coach — 5 Agen Spesialis
+            </Link>
+          </div>
+
+          {/* Disclaimer */}
+          <p className="text-center text-slate-600 text-xs mt-6">
+            AI SIAP SKK mengacu pada Permen PU 6/2025, KM 713/2022, SK DJBK 114/2024, dan SKKNI terkini.
+            Jawaban AI bersifat panduan — konfirmasi ke LSP untuk keputusan final.
+          </p>
+        </div>
+      </section>
+
       {/* Tantangan Asesi */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -184,7 +264,7 @@ export default function Home() {
               3 Tantangan Utama Asesi SKK
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              Masalah yang paling sering dihadapi peserta uji kompetensi bidang Sipil dan Manajemen Pelaksanaan — dan cara SiapSKK membantu mengatasinya.
+              Masalah yang paling sering dihadapi peserta uji kompetensi bidang Sipil dan Manajemen Pelaksanaan — dan cara SIAP SKK membantu mengatasinya.
             </p>
           </div>
 
@@ -238,8 +318,8 @@ export default function Home() {
               href="/chat"
               className="inline-flex items-center px-6 py-3 bg-slate-800 text-white rounded-xl font-semibold hover:bg-slate-700 transition-all"
             >
-              <span className="mr-2">💬</span>
-              Tanya AI Tentang Prosedur Asesmen
+              <span className="mr-2">🤖</span>
+              Tanya AI SIAP SKK Tentang Prosedur Asesmen
             </Link>
           </div>
         </div>
@@ -252,7 +332,7 @@ export default function Home() {
             Semua yang Anda Butuhkan untuk Lulus SKK
           </h2>
           <p className="text-center text-slate-600 mb-12 max-w-2xl mx-auto">
-            Dari persiapan dokumen hingga simulasi asesmen — SiapSKK memandu Asesi bidang Sipil &amp; Manajemen Pelaksanaan.
+            Dari persiapan dokumen hingga simulasi asesmen — SIAP SKK memandu Asesi bidang Sipil &amp; Manajemen Pelaksanaan.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -284,7 +364,7 @@ export default function Home() {
             Siap Lulus Uji Kompetensi SKK?
           </h2>
           <p className="text-amber-100 mb-8 max-w-2xl mx-auto text-lg">
-            Mulai persiapan sekarang dengan panduan terstruktur, materi lengkap, dan AI tutor yang siap membantu 24/7.
+            Mulai persiapan sekarang dengan panduan terstruktur, materi lengkap, dan AI SIAP SKK yang siap membantu 24/7.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
@@ -297,7 +377,13 @@ export default function Home() {
               href="/chat"
               className="px-8 py-3 bg-amber-700/50 border border-amber-300/50 rounded-xl font-semibold hover:bg-amber-700 transition-all"
             >
-              💬 Tanya AI Tutor
+              🤖 Tanya AI SIAP SKK
+            </Link>
+            <Link
+              href="/skk"
+              className="px-8 py-3 bg-amber-700/50 border border-amber-300/50 rounded-xl font-semibold hover:bg-amber-700 transition-all"
+            >
+              🏗️ Jelajahi SKK Hub
             </Link>
           </div>
         </div>
@@ -305,8 +391,9 @@ export default function Home() {
 
       <footer className="bg-slate-900 text-slate-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="mb-2">© 2026 SiapSKK — Platform Persiapan Uji Kompetensi SKK</p>
-          <p className="text-xs text-slate-500">
+          <p className="font-bold text-white text-lg tracking-wider mb-1">SIAP SKK</p>
+          <p className="text-xs text-slate-500 mb-3">Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK Konstruksi</p>
+          <p className="text-xs text-slate-600">
             Referensi: Permen PU No. 6/2025 · KM PUPR No. 713/KPTS/M/2022 · SK DJBK No. 114/KPTS/DK/2024 · Permen PU No. 12/2021
           </p>
         </div>

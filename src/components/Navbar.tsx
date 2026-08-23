@@ -31,6 +31,7 @@ const navItems = [
   { href: '/siap-index', label: 'SIAP Index', icon: '🧭' },
   { href: '/timeline-skk', label: 'Timeline SKK', icon: '🗺️' },
   { href: '/karir-skk', label: 'Karir SKK', icon: '🎯' },
+  { href: '/direktori-lsp', label: 'Direktori LSP', icon: '🏛️' },
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
@@ -78,11 +79,16 @@ export function Navbar() {
       <nav className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg sticky top-0 z-50 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center gap-2 shrink-0 group">
               <span className="text-2xl">🏗️</span>
-              <span className="font-bold text-xl bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                SiapSKK
-              </span>
+              <div className="flex flex-col leading-none whitespace-nowrap">
+                <span className="font-extrabold text-xl tracking-wide bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                  SIAP SKK
+                </span>
+                <span className="text-[9px] text-slate-500 font-medium tracking-widest uppercase hidden lg:block">
+                  Sistem Interaktif Asesmen &amp; Persiapan
+                </span>
+              </div>
             </Link>
             
             <div className="hidden lg:flex items-center space-x-1">

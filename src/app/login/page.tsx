@@ -35,7 +35,7 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-4xl">🏗️</span>
             <span className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-              SiapSKK
+              SIAP SKK
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-white mt-6">Masuk ke Akun</h1>

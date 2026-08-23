@@ -21,7 +21,7 @@ export default function LeaderboardPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">🏆 Leaderboard</h1>
-          <p className="text-slate-600 dark:text-slate-400">Peringkat tertinggi learner SiapSKK</p>
+          <p className="text-slate-600 dark:text-slate-400">Peringkat tertinggi learner SIAP SKK</p>
         </div>
 
         <div className="mb-8">

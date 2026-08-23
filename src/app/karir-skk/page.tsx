@@ -761,7 +761,7 @@ export default function KarirSKKPage() {
         <div className="mt-12 bg-gradient-to-r from-amber-600/20 to-yellow-600/15 border border-amber-500/30 rounded-2xl p-6 text-center">
           <h3 className="text-white font-bold text-lg mb-2">Siap Naik Level?</h3>
           <p className="text-slate-400 text-sm mb-5">
-            Periksa kelayakan SKK Anda, rencanakan belajar, dan latihan soal asesmen — semuanya di SiapSKK.
+            Periksa kelayakan SKK Anda, rencanakan belajar, dan latihan soal asesmen — semuanya di SIAP SKK.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="/skk-coach/chat?agent=kelayakan" className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold rounded-xl transition-colors">

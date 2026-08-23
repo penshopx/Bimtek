@@ -202,7 +202,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-white">
             {user ? `👋 Halo, ${user.name}!` : '📊 Dashboard'}
           </h1>
-          <p className="text-slate-400 mt-1">Selamat datang di SiapSKK - Platform Pelatihan Konstruksi</p>
+          <p className="text-slate-400 mt-1">Selamat datang di SIAP SKK - Platform Pelatihan Konstruksi</p>
         </div>
 
         {loading ? (

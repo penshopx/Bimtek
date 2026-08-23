@@ -69,19 +69,19 @@ interface CustomChatbot {
 const defaultChatbots: CustomChatbot[] = [
   {
     id: 'demo-bimtek',
-    name: 'SiapSKK Assistant',
+    name: 'SIAP SKK Assistant',
     tagline: 'Asisten pembelajaran konstruksi',
     description: 'Chatbot AI untuk membantu belajar BIMTEK dan konsultasi konstruksi',
     avatar: '🤖',
     type: 'mentoring',
     language: 'Bahasa Indonesia',
     welcome: {
-      greeting: 'Halo! Saya SiapSKK Assistant - asisten AI untuk pembelajaran konstruksi. Saya bisa membantu Anda dengan:\n\n📚 Pembelajaran modul BIMTEK\n❓ Jawaban pertanyaan teknis\n🏗️ Konsultasi proyek\n\nAda yang bisa saya bantu?',
+      greeting: 'Halo! Saya SIAP SKK Assistant - asisten AI untuk pembelajaran konstruksi. Saya bisa membantu Anda dengan:\n\n📚 Pembelajaran modul BIMTEK\n❓ Jawaban pertanyaan teknis\n🏗️ Konsultasi proyek\n\nAda yang bisa saya bantu?',
       starters: ['Apa itu BIMTEK?', 'Cara belajar struktur beton', 'Jadwal pelatihan terdekat'],
     },
     personality: {
       communicationStyle: 'Membantu, sabar, dan educational. Selalu berikan contoh nyata dari industri konstruksi Indonesia.',
-      systemPrompt: `Anda adalah SiapSKK Assistant - asisten AI untuk platform pelatihan konstruksi.
+      systemPrompt: `Anda adalah SIAP SKK Assistant - asisten AI untuk platform pelatihan konstruksi.
 
 TENTANG SIAPSKK:
 - Platform pelatihan konstruksi No.1 di Indonesia
@@ -103,7 +103,7 @@ PERATURAN:
     },
     offTopic: {
       strategy: 'polite_redirect',
-      customResponse: 'Maaf, saya fokus membantu pertanyaan tentang konstruksi dan pembelajaran di SiapSKK. Apakah ada yang bisa saya bantu tentang BIMTEK, Quiz, atau Sertifikasi?',
+      customResponse: 'Maaf, saya fokus membantu pertanyaan tentang konstruksi dan pembelajaran di SIAP SKK. Apakah ada yang bisa saya bantu tentang BIMTEK, Quiz, atau Sertifikasi?',
     },
     aiConfig: {
       model: 'gpt-4o-mini',
