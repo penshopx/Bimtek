@@ -87,7 +87,7 @@ export function Navbar() {
                   SIAP SKK
                 </span>
                 <span className="text-[9px] text-slate-500 font-medium tracking-widest uppercase hidden lg:block">
-                  Sistem Interaktif Asesmen &amp; Persiapan
+                  Sistem Intensif Asistensi Pra-Uji
                 </span>
               </div>
             </Link>

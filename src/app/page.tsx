@@ -195,7 +195,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-block mb-4 px-4 py-1 bg-amber-500/20 border border-amber-500/40 rounded-full text-amber-400 text-sm font-medium">
-              Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK
+              Sistem Intensif Asistensi Pra-Uji · Uji Kompetensi SKK
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold mb-3 tracking-tight">
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
@@ -203,7 +203,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-sm md:text-base text-slate-500 mb-5 tracking-widest uppercase font-medium">
-              Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK Konstruksi
+              Sistem Intensif Asistensi Pra-Uji · Uji Kompetensi SKK Konstruksi
             </p>
             <p className="text-xl md:text-2xl text-slate-300 mb-4 max-w-3xl mx-auto">
               Persiapkan Uji Kompetensi SKK Anda dengan
@@ -525,7 +525,7 @@ export default function Home() {
       <footer className="bg-slate-900 text-slate-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="font-bold text-white text-lg tracking-wider mb-1">SIAP SKK</p>
-          <p className="text-xs text-slate-500 mb-3">Sistem Interaktif Asesmen &amp; Persiapan · Uji Kompetensi SKK Konstruksi</p>
+          <p className="text-xs text-slate-500 mb-3">Sistem Intensif Asistensi Pra-Uji · Uji Kompetensi SKK Konstruksi</p>
           <p className="text-xs text-slate-600">
             Referensi: Permen PU No. 6/2025 · KM PUPR No. 713/KPTS/M/2022 · SK DJBK No. 114/KPTS/DK/2024 · Permen PU No. 12/2021
           </p>

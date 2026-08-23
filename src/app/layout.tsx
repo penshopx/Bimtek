@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIAP SKK — Sistem Interaktif Asesmen & Persiapan Uji Kompetensi",
+  title: "SIAP SKK — Sistem Intensif Asistensi Pra-Uji Kompetensi SKK",
   description: "Platform persiapan uji kompetensi SKK konstruksi Indonesia — materi SKKNI, simulasi asesmen, AI tutor, dan panduan sertifikasi lengkap.",
   manifest: "/manifest.json",
   appleWebApp: {
