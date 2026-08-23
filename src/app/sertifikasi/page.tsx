@@ -66,8 +66,33 @@ const jobPositions = [
   { id: 'LK003', name: 'Auditor LKUT', level: 'Ahli', subklasifikasi: 'LK', requirements: ['S1 Akuntansi', 'Sertifikasi auditor', 'Pengalaman 7 tahun', 'CPA/CA'] },
 ];
 
+// Tambahan jabatan Manajemen Pelaksanaan (fokus bidang Sipil)
+const manPelaksanaan = [
+  { id: 'MP001', name: 'Pelaksana Lapangan Pekerjaan Gedung', level: 'Pelaksana', subklasifikasi: 'MP', requirements: ['SMA/SMK Bangunan', 'Pengalaman 2 tahun di lapangan', 'SKK Level 3 (KKNI)', 'Mampu baca gambar teknik'] },
+  { id: 'MP002', name: 'Pelaksana Lapangan Pekerjaan Jalan', level: 'Pelaksana', subklasifikasi: 'MP', requirements: ['SMA/SMK Teknik Sipil', 'Pengalaman 2 tahun konstruksi jalan', 'SKK Level 3 (KKNI)', 'Menguasai metode pelaksanaan jalan'] },
+  { id: 'MP003', name: 'Site Engineer / Ahli Teknik Pelaksana', level: 'Ahli', subklasifikasi: 'MP', requirements: ['S1 Teknik Sipil', 'Pengalaman 3 tahun pelaksanaan', 'SKK Level 6 (KKNI)', 'Menguasai metode konstruksi & quality control'] },
+  { id: 'MP004', name: 'Site Manager Pekerjaan Gedung', level: 'Manager', subklasifikasi: 'MP', requirements: ['S1 Teknik Sipil/Arsitektur', 'Pengalaman 5 tahun manajemen lapangan', 'SKK Level 7 (KKNI)', 'Menguasai scheduling & cost control'] },
+  { id: 'MP005', name: 'Project Manager Konstruksi', level: 'Ahli Madya', subklasifikasi: 'MP', requirements: ['S1 Teknik Sipil', 'Pengalaman 8 tahun', 'SKK Level 8 (KKNI)', 'Menguasai PMBOK / manajemen proyek'] },
+  { id: 'MP006', name: 'Quality Control Engineer', level: 'Teknisi', subklasifikasi: 'MP', requirements: ['D3/S1 Teknik Sipil', 'Pengalaman 2 tahun QC konstruksi', 'SKK Level 5 (KKNI)', 'Menguasai SNI beton, baja, dan tanah'] },
+  { id: 'MP007', name: 'Quantity Surveyor / Cost Estimator', level: 'Ahli', subklasifikasi: 'MP', requirements: ['S1 Teknik Sipil/Ekonomi', 'Pengalaman 3 tahun estimasi', 'SKK Level 6 (KKNI)', 'Menguasai BOQ, analisa SNI, dan AHSP'] },
+  { id: 'MP008', name: 'Scheduling Engineer (Perencana Jadwal)', level: 'Ahli', subklasifikasi: 'MP', requirements: ['S1 Teknik Sipil', 'Pengalaman 3 tahun', 'SKK Level 6 (KKNI)', 'Menguasai MS Project / Primavera', 'Mampu buat Kurva S dan NWP'] },
+  { id: 'MP009', name: 'Inspector Pekerjaan Sipil', level: 'Teknisi', subklasifikasi: 'MP', requirements: ['D3/SMK Teknik Sipil', 'Pengalaman 2 tahun inspeksi', 'SKK Level 4 (KKNI)', 'Memahami spesifikasi teknis & gambar kerja'] },
+  { id: 'MP010', name: 'Kepala Tukang Batu / Beton', level: 'Pelaksana', subklasifikasi: 'MP', requirements: ['SMP/SMA + pelatihan vokasi', 'Pengalaman 3 tahun sebagai tukang', 'SKK Level 2 (KKNI)', 'Menguasai pengerjaan batu dan beton'] },
+];
+
+const allPositions = [...jobPositions, ...manPelaksanaan];
+
 const levels = ['Semua', 'Ahli Utama', 'Ahli Madya', 'Ahli', 'Supervisor', 'Manager', 'PJBU', 'PJT', 'PJKB', 'PJSKBBU', 'K3', 'Teknisi', 'Pelaksana'];
-const subklasifikasis = ['Semua', 'B - Gedung', 'C - Sipil', 'D - Mekanikal', 'E - Elektrikal', 'F - Jalan', 'G - Jembatan', 'H - Benda', 'MG - Personil Managerial', 'PN - Pengadaan', 'LK - LKUT'];
+const subklasifikasis = ['Semua', 'B - Gedung', 'C - Sipil', 'D - Mekanikal', 'E - Elektrikal', 'F - Jalan', 'G - Jembatan', 'H - Benda', 'MG - Personil Managerial', 'MP - Manajemen Pelaksanaan', 'PN - Pengadaan', 'LK - LKUT'];
+
+const quickFilters = [
+  { label: '🏗️ Sipil', sub: 'C' },
+  { label: '🏢 Gedung', sub: 'B' },
+  { label: '📋 Manajemen Pelaksanaan', sub: 'MP' },
+  { label: '🛣️ Jalan', sub: 'F' },
+  { label: '🌉 Jembatan', sub: 'G' },
+  { label: '⚙️ Mekanikal', sub: 'D' },
+];
 
 export default function SertifikasiPage() {
   const [search, setSearch] = useState('');
@@ -75,7 +100,13 @@ export default function SertifikasiPage() {
   const [subFilter, setSubFilter] = useState('Semua');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const filteredPositions = jobPositions.filter(pos => {
+  const applyQuickFilter = (sub: string) => {
+    setSubFilter(subklasifikasis.find(s => s.startsWith(sub)) ?? 'Semua');
+    setLevelFilter('Semua');
+    setSearch('');
+  };
+
+  const filteredPositions = allPositions.filter(pos => {
     const matchSearch = pos.name.toLowerCase().includes(search.toLowerCase()) || pos.id.toLowerCase().includes(search.toLowerCase());
     const matchLevel = levelFilter === 'Semua' || pos.level === levelFilter;
     const matchSub = subFilter === 'Semua' || pos.subklasifikasi === subFilter.split(' ')[0];
@@ -86,10 +117,35 @@ export default function SertifikasiPage() {
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-4">📋 Sertifikasi</h1>
-          <p className="text-lg text-slate-600">
-            Database posisi pekerjaan & persyaratan SKK ({jobPositions.length}+ posisi, 334 total dalam sistem)
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">📋 Cari Jabatan SKK</h1>
+          <p className="text-lg text-slate-600 mb-2">
+            Temukan jabatan SKK yang sesuai dan lihat persyaratan uji kompetensinya
           </p>
+          <p className="text-sm text-slate-400">Berdasarkan KM PUPR No. 713/KPTS/M/2022 · {allPositions.length} jabatan tersedia</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 justify-center mb-6">
+          {quickFilters.map(qf => (
+            <button
+              key={qf.sub}
+              onClick={() => applyQuickFilter(qf.sub)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                subFilter.startsWith(qf.sub)
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-white text-slate-700 border-slate-300 hover:border-amber-400 hover:text-amber-600'
+              }`}
+            >
+              {qf.label}
+            </button>
+          ))}
+          {subFilter !== 'Semua' && (
+            <button
+              onClick={() => setSubFilter('Semua')}
+              className="px-4 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-slate-700"
+            >
+              × Semua bidang
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -169,12 +225,18 @@ export default function SertifikasiPage() {
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-4 flex gap-2">
-                    <a href="/certify" className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600">
-                      Lihat Proses Sertifikasi
+                  <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 mb-3">
+                    <span className="font-medium">📋 Dokumen wajib untuk jabatan ini:</span> FR.APL.01 (formulir permohonan), FR.APL.02 (asesmen mandiri), bukti pengalaman kerja, ijazah, KTP.
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <a href="/agentic-chat" className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600">
+                      🤖 Tanya AI tentang jabatan ini
                     </a>
-                    <a href="/chat" className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">
-                      Tanya AI
+                    <a href="/quiz" className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">
+                      ✍️ Latihan Soal
+                    </a>
+                    <a href="/offline" className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">
+                      📅 Event BIMTEK
                     </a>
                   </div>
                 </div>
@@ -184,7 +246,7 @@ export default function SertifikasiPage() {
         </div>
 
         <div className="mt-6 text-center text-slate-500">
-          Menampilkan {filteredPositions.length} dari {jobPositions.length} posisi
+          Menampilkan {filteredPositions.length} dari {allPositions.length} jabatan SKK
         </div>
       </div>
     </div>
