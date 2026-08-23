@@ -4,12 +4,12 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAgenticAI } from '@/components/AgenticAIProvider';
 
 const quickActions = [
-  { label: '🎓 BIMTEK', action: 'bimtek' },
-  { label: '✍️ Quiz', action: 'quiz' },
-  { label: '📋 Sertifikasi', action: 'sertifikasi' },
-  { label: '📍 Event Offline', action: 'offline' },
-  { label: '🧮 Kalkulator', action: 'solver' },
-  { label: '💬 Expert Chat', action: 'expert' },
+  { label: '📋 Syarat Dokumen SKK', action: 'dokumen' },
+  { label: '🎯 Pilih Jabatan SKK', action: 'jabatan' },
+  { label: '📡 Prosedur AJJ', action: 'ajj' },
+  { label: '📅 Event BIMTEK', action: 'offline' },
+  { label: '✍️ Latihan Soal', action: 'quiz' },
+  { label: '💬 Expert AI', action: 'expert' },
 ];
 
 export default function AgenticChatPage() {
@@ -50,12 +50,12 @@ export default function AgenticChatPage() {
 
   const handleQuickAction = async (action: string) => {
     const prompts: Record<string, string> = {
-      bimtek: 'Apa itu BIMTEK?',
-      quiz: 'Jelaskan tentang Quiz',
-      sertifikasi: 'Bagaimana cara sertifikasi?',
-      offline: 'Apa itu Bimtek Offline?',
-      solver: 'Apa saja kalkulator yang tersedia?',
-      expert: 'Siapa saja expert yang tersedia?',
+      dokumen: 'Dokumen apa saja yang wajib disiapkan untuk uji kompetensi SKK? Jelaskan FR.APL.01 dan FR.APL.02.',
+      jabatan: 'Bagaimana cara memilih jabatan SKK yang tepat untuk saya di bidang Sipil atau Manajemen Pelaksanaan?',
+      ajj: 'Jelaskan prosedur Asesmen Jarak Jauh (AJJ) untuk uji kompetensi SKK dari awal hingga selesai.',
+      offline: 'Tampilkan event BIMTEK offline yang tersedia.',
+      quiz: 'Apa saja latihan soal yang tersedia untuk persiapan uji kompetensi SKK?',
+      expert: 'Siapa saja expert AI yang tersedia dan bagaimana cara menggunakannya?',
     };
     await processMessage(prompts[action] || action);
   };
@@ -93,6 +93,13 @@ export default function AgenticChatPage() {
             <div className="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
               <span>⚠️</span>
               <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
+              <button
+                onClick={retryLastMessage}
+                disabled={isProcessing}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔄 Coba Lagi
+              </button>
             </div>
           )}
 
@@ -103,17 +110,17 @@ export default function AgenticChatPage() {
                 <p className="text-lg">Halo! Saya Agentic AI SiapSKK</p>
                 <p className="text-sm mt-2">Tanyakan apa saja tentang aplikasi ini!</p>
                 <div className="mt-6 grid grid-cols-2 gap-2 text-left max-w-md mx-auto">
-                  <button onClick={() => handleQuickAction('bimtek')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
-                    <span className="text-amber-400">🎓</span> Apa itu BIMTEK?
+                  <button onClick={() => handleQuickAction('dokumen')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
+                    <span className="text-amber-400">📋</span> Dokumen wajib SKK?
                   </button>
-                  <button onClick={() => handleQuickAction('sertifikasi')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
-                    <span className="text-amber-400">📋</span> Cara sertifikasi?
+                  <button onClick={() => handleQuickAction('jabatan')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
+                    <span className="text-amber-400">🎯</span> Pilih jabatan SKK?
                   </button>
-                  <button onClick={() => handleQuickAction('solver')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
-                    <span className="text-amber-400">🧮</span> Kalkulator apa saja?
+                  <button onClick={() => handleQuickAction('ajj')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
+                    <span className="text-amber-400">📡</span> Prosedur AJJ?
                   </button>
                   <button onClick={() => handleQuickAction('expert')} className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left text-sm">
-                    <span className="text-amber-400">💬</span> Siapa expert?
+                    <span className="text-amber-400">💬</span> Expert AI apa saja?
                   </button>
                 </div>
               </div>

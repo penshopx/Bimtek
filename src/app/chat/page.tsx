@@ -274,6 +274,13 @@ export default function ChatPage() {
                 <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-amber-700 text-sm">
                   <span>⚠️</span>
                   <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
+                  <button
+                    onClick={handleRetry}
+                    disabled={isProcessing}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    🔄 Coba Lagi
+                  </button>
                 </div>
               )}
 
