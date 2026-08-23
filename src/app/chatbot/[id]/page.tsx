@@ -69,6 +69,7 @@ export default function ChatbotDetailPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
+  const [consecutiveAIErrors, setConsecutiveAIErrors] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const dismissWarning = (id: string) => {
@@ -234,7 +235,11 @@ Apa yang ingin Anda konsultasikan?`;
       isAIError,
       isMessageTooLarge,
     }]);
-    
+    if (isAIError && !isMessageTooLarge) {
+      setConsecutiveAIErrors(prev => prev + 1);
+    } else {
+      setConsecutiveAIErrors(0);
+    }
     setIsProcessing(false);
   };
 
@@ -324,6 +329,14 @@ Apa yang ingin Anda konsultasikan?`;
                   {starter}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Persistent AI outage banner */}
+          {consecutiveAIErrors >= 2 && (
+            <div className="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
+              <span>⚠️</span>
+              <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAgenticAI } from '@/components/AgenticAIProvider';
 
 const quickActions = [
@@ -17,6 +17,21 @@ export default function AgenticChatPage() {
   const [input, setInput] = useState('');
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Count consecutive trailing AI-error assistant messages (ignoring user messages).
+  const consecutiveAIErrors = useMemo(() => {
+    let count = 0;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.role === 'user') continue;
+      if (msg.role === 'assistant' && msg.isAIError && !msg.isMessageTooLarge) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [messages]);
 
   const dismissWarning = (id: string) => {
     setDismissedWarnings(prev => new Set(prev).add(id));
@@ -73,6 +88,13 @@ export default function AgenticChatPage() {
               </button>
             ))}
           </div>
+
+          {consecutiveAIErrors >= 2 && (
+            <div className="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
+              <span>⚠️</span>
+              <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
+            </div>
+          )}
 
           <div className="h-[500px] overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (

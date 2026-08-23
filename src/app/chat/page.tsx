@@ -102,6 +102,7 @@ export default function ChatPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
+  const [consecutiveAIErrors, setConsecutiveAIErrors] = useState(0);
 
   const dismissWarning = (id: string) => {
     setDismissedWarnings(prev => new Set(prev).add(id));
@@ -180,6 +181,11 @@ export default function ChatPage() {
       isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
+    if (isAIError && !isMessageTooLarge) {
+      setConsecutiveAIErrors(prev => prev + 1);
+    } else {
+      setConsecutiveAIErrors(0);
+    }
     setIsProcessing(false);
   };
 
@@ -208,6 +214,11 @@ export default function ChatPage() {
       isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
+    if (assistantMsg.isAIError && !assistantMsg.isMessageTooLarge) {
+      setConsecutiveAIErrors(prev => prev + 1);
+    } else {
+      setConsecutiveAIErrors(0);
+    }
     setIsProcessing(false);
   };
 
@@ -253,6 +264,13 @@ export default function ChatPage() {
                   </button>
                 )}
               </div>
+
+              {consecutiveAIErrors >= 2 && (
+                <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-amber-700 text-sm">
+                  <span>⚠️</span>
+                  <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
+                </div>
+              )}
 
               <div className="h-[400px] overflow-y-auto p-4 space-y-4">
                 {messages.map((msg) => (
