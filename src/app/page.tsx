@@ -1,5 +1,57 @@
 import Link from 'next/link';
 
+const journeySteps = [
+  {
+    step: 1,
+    icon: '🧠',
+    title: 'Diagnostik Kompetensi',
+    desc: 'Analisis gap KKNI dari profil pendidikan & pengalaman kerja Anda',
+    href: '/diagnostik-kompetensi',
+    cta: 'Mulai Diagnostik',
+  },
+  {
+    step: 2,
+    icon: '🏥',
+    title: 'Klinik Uji Kompetensi',
+    desc: 'Jalur terstruktur: Dialog → Blueprint → Chatbot → Ujian per unit kompetensi',
+    href: '/klinik-uji-kompetensi',
+    cta: 'Buka Klinik',
+  },
+  {
+    step: 3,
+    icon: '🎯',
+    title: 'Mock Asesmen SKK',
+    desc: 'Simulasi 5 soal AI berbasis SKKNI — latihan per domain sebelum hari H',
+    href: '/mock-asesmen',
+    cta: 'Coba Mock Asesmen',
+  },
+  {
+    step: 4,
+    icon: '💬',
+    title: 'SKK Coach AI',
+    desc: '5 agen spesialis: kelayakan jabatan, dokumen, perpanjangan, dan SBU',
+    href: '/skk-coach',
+    cta: 'Tanya SKK Coach',
+  },
+  {
+    step: 5,
+    icon: '📊',
+    title: 'Pantau SKK',
+    desc: 'Lacak progress persiapan, jadwal, dan kesiapan Anda menuju asesmen',
+    href: '/siap-index',
+    cta: 'Cek SIAP Index',
+  },
+];
+
+const quickTools = [
+  { icon: '📋', name: 'Sertifikasi', desc: 'Cari jabatan & cek persyaratan dokumen', href: '/sertifikasi' },
+  { icon: '🎯', name: 'Mock Asesmen', desc: 'Simulasi soal SKKNI berbasis AI', href: '/mock-asesmen' },
+  { icon: '🏥', name: 'Klinik', desc: 'Jalur latihan terstruktur per unit kompetensi', href: '/klinik-uji-kompetensi' },
+  { icon: '💬', name: 'SKK Coach', desc: '5 agen spesialis siap membantu', href: '/skk-coach' },
+  { icon: '🧠', name: 'Diagnostik', desc: 'Analisis gap KKNI dari profil Anda', href: '/diagnostik-kompetensi' },
+  { icon: '🏗️', name: 'SKK Hub', desc: 'Semua alat SKK dalam satu portal', href: '/skk' },
+];
+
 const features = [
   {
     icon: '📋',
@@ -184,6 +236,87 @@ export default function Home() {
                 <div className="text-slate-400 text-sm md:text-base">{stat.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Perjalanan SKK ── */}
+      <section className="py-16 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium mb-4">
+              🗺️ Panduan Langkah demi Langkah
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Mulai Perjalanan{' '}
+              <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                SKK Kamu
+              </span>
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              Ikuti 5 tahap persiapan ini secara berurutan — dari mengenali gap kompetensi hingga siap menghadapi asesor.
+            </p>
+          </div>
+
+          {/* Step-by-step flow */}
+          <div className="relative">
+            {/* Connector line (desktop) */}
+            <div className="hidden lg:block absolute top-10 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/10 via-amber-500/40 to-amber-500/10 z-0" style={{ top: '2.5rem' }} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
+              {journeySteps.map((step, idx) => (
+                <div key={step.step} className="flex flex-col items-center text-center group">
+                  {/* Step number bubble */}
+                  <div className="relative mb-4">
+                    <div className="w-20 h-20 rounded-2xl bg-slate-800 border-2 border-slate-700 group-hover:border-amber-500/60 flex items-center justify-center text-3xl transition-all shadow-lg">
+                      {step.icon}
+                    </div>
+                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 text-slate-900 text-xs font-bold flex items-center justify-center shadow">
+                      {step.step}
+                    </span>
+                    {/* Arrow between steps (desktop) */}
+                    {idx < journeySteps.length - 1 && (
+                      <span className="hidden lg:block absolute top-1/2 -right-[calc(50%+0.75rem)] -translate-y-1/2 text-amber-500/50 text-xl pointer-events-none select-none">›</span>
+                    )}
+                  </div>
+
+                  <h3 className="font-bold text-white text-sm mb-1 group-hover:text-amber-400 transition-colors leading-tight">
+                    {step.title}
+                  </h3>
+                  <p className="text-slate-400 text-xs mb-4 leading-relaxed px-1">
+                    {step.desc}
+                  </p>
+                  <Link
+                    href={step.href}
+                    className="inline-block px-4 py-2 bg-slate-800 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-500/50 rounded-xl text-xs font-semibold text-slate-300 hover:text-amber-400 transition-all"
+                  >
+                    {step.cta} →
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick-access grid */}
+          <div className="mt-16">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-white mb-1">Akses Cepat Alat Terpopuler</h3>
+              <p className="text-slate-500 text-sm">6 fitur paling sering digunakan Asesi SKK</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {quickTools.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group flex flex-col items-center text-center p-4 bg-slate-800/60 border border-slate-700/50 rounded-2xl hover:border-amber-500/40 hover:bg-slate-800 transition-all"
+                >
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{tool.icon}</div>
+                  <div className="font-semibold text-white text-sm group-hover:text-amber-400 transition-colors">{tool.name}</div>
+                  <div className="text-slate-500 text-xs mt-1 leading-snug">{tool.desc}</div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
