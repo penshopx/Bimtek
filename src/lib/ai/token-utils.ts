@@ -1,17 +1,54 @@
-// Lightweight token estimation utilities
-// Uses the ~4 chars/token heuristic which works well for English and mixed Indonesian/English text.
+// Accurate token counting using js-tiktoken with the o200k_base encoding,
+// which is what gpt-4o and gpt-4o-mini use.
+// Falls back to the ~4 chars/token heuristic only if the tokenizer cannot be loaded.
+
+import type { Tiktoken } from 'js-tiktoken';
+
+// ---------------------------------------------------------------------------
+// Synchronous initialisation — runs once when the module is first imported.
+// getEncoding is synchronous in Node.js / Bun (WASM is bundled as a buffer),
+// so there is no async race: every call to estimateTokens is accurate from the
+// very first invocation.
+// ---------------------------------------------------------------------------
+let _encoder: Tiktoken | null = null;
+
+try {
+  const { getEncoding } = require('js-tiktoken') as typeof import('js-tiktoken');
+  _encoder = getEncoding('o200k_base');
+} catch (err) {
+  // Wasm unavailable or package not bundled — silently fall back to heuristic.
+  console.warn('[token-utils] tiktoken unavailable, using heuristic fallback:', err);
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
- * Estimates the number of tokens in a string using the ~4 chars/token heuristic.
- * This is a conservative approximation — real tokenization (tiktoken) may differ,
- * but this avoids a large dependency and is accurate enough to prevent context-limit errors.
+ * Counts tokens in a string using OpenAI's o200k_base encoding
+ * (the encoding used by gpt-4o and gpt-4o-mini).
+ *
+ * Falls back to the ~4 chars/token heuristic when the tokenizer is unavailable.
+ * This is accurate for English, Indonesian, code blocks, and emoji-heavy text.
  */
 export function estimateTokens(text: string): number {
+  if (_encoder) {
+    return _encoder.encode(text).length;
+  }
+  // Heuristic fallback: ~4 chars per token.
   return Math.ceil(text.length / 4);
 }
 
 /**
- * Trims a conversation history array so that the total estimated token count fits
+ * Returns true when the real tokenizer is loaded and active.
+ * Primarily useful for diagnostics and tests.
+ */
+export function isTokenizerLoaded(): boolean {
+  return _encoder !== null;
+}
+
+/**
+ * Trims a conversation history array so that the total token count fits
  * within the available budget. The oldest messages are dropped first.
  *
  * @param history     Full message history (oldest first).
