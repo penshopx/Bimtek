@@ -4,6 +4,30 @@ import { useState } from 'react';
 
 const articles = [
   {
+    id: 101,
+    title: 'Permen PU No. 6 Tahun 2025 — Standar Kompetensi Tenaga Kerja Konstruksi',
+    category: 'SKK',
+    content: 'Peraturan Menteri Pekerjaan Umum terbaru yang menetapkan standar kompetensi tenaga kerja konstruksi Indonesia. Mengatur kualifikasi jabatan (Operator, Teknisi/Analis, Ahli Muda, Ahli Madya, Ahli Utama), persyaratan sertifikasi, dan mekanisme pengakuan kompetensi. Menjadi acuan utama bagi LSP dalam melaksanakan uji kompetensi SKK di seluruh bidang konstruksi.',
+  },
+  {
+    id: 102,
+    title: 'KM PUPR No. 713/KPTS/M/2022 — Jabatan dan Kualifikasi SKK',
+    category: 'SKK',
+    content: 'Keputusan Menteri PUPR yang mengatur daftar jabatan kerja konstruksi beserta kualifikasinya. Mencakup 334+ jabatan di bidang Sipil, Arsitektur, Mekanikal, Elektrikal, Tata Lingkungan, dan Manajemen Pelaksanaan. Setiap jabatan dilengkapi kode jabatan, jenjang KKNI, dan persyaratan pendidikan serta pengalaman minimal.',
+  },
+  {
+    id: 103,
+    title: 'SK DJBK No. 114/KPTS/DK/2024 — Pedoman Asesmen Jarak Jauh (AJJ)',
+    category: 'SKK',
+    content: 'Surat Keputusan Direktur Jenderal Bina Konstruksi yang mengatur pelaksanaan Asesmen Jarak Jauh (AJJ) untuk uji kompetensi SKK. Menetapkan: persyaratan teknis video call, tata cara verifikasi identitas Asesi, prosedur pelaksanaan portofolio dan wawancara online, kewajiban LSP dalam AJJ, dan standar keamanan data. AJJ memungkinkan Asesi mengikuti uji kompetensi dari lokasi manapun.',
+  },
+  {
+    id: 104,
+    title: 'Permen PU No. 12 Tahun 2021 — Standar & Pedoman Pengadaan Jasa Konstruksi',
+    category: 'SKK',
+    content: 'Peraturan Menteri PU yang mengatur standar dan pedoman pengadaan pekerjaan konstruksi, termasuk kewajiban penyedia jasa memiliki tenaga kerja bersertifikat SKK. Mewajibkan kontraktor untuk menempatkan tenaga ahli bersertifikat SKK sesuai jabatan dan kualifikasi yang ditentukan. Pelanggaran dapat berdampak pada sanksi kontrak dan perizinan usaha.',
+  },
+  {
     id: 1,
     title: 'Peraturan Pemerintah No. 14 Tahun 2021',
     category: 'Regulasi',
@@ -101,7 +125,7 @@ const articles = [
   },
 ];
 
-const categories = ['Semua', 'Regulasi', 'Standar', 'Sertifikasi', 'K3', 'Manajemen'];
+const categories = ['Semua', 'SKK', 'Regulasi', 'Standar', 'Sertifikasi', 'K3', 'Manajemen'];
 
 export default function KnowledgeBase() {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -119,7 +143,7 @@ export default function KnowledgeBase() {
             📚 Knowledge Base
           </h1>
           <p className="text-lg text-slate-600">
-            Kumpulan regulasi, standar, dan best practice konstruksi Indonesia
+            Regulasi SKK, standar teknis, dan best practice konstruksi Indonesia
           </p>
         </div>
 
