@@ -18,6 +18,8 @@ const navItems = [
   { href: '/knowledge-base', label: 'Knowledge Base', icon: '📚' },
   { href: '/bimtek', label: 'BIMTEK', icon: '🎓' },
   { href: '/quiz', label: 'Quiz', icon: '✍️' },
+  { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
+  { href: '/diagnostik-kompetensi', label: 'Diagnostik SKK', icon: '🧠' },
   { href: '/solver', label: 'Solver', icon: '🧮' },
   { href: '/tools', label: 'Tools', icon: '🔧' },
   { href: '/iso-generator', label: 'ISO Generator', icon: '📄' },
