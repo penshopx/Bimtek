@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useOfflineEvents, OfflineEvent } from '@/components/OfflineEventProvider';
+import { useOfflineEvents, OfflineEvent, EventParticipant } from '@/components/OfflineEventProvider';
 
 const statusColors = {
   open: 'bg-green-500',
@@ -24,14 +24,48 @@ const statusLabels = {
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { events, registerForEvent } = useOfflineEvents();
+  const { events, registerForEvent, isHydrated } = useOfflineEvents();
   const [showRegister, setShowRegister] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '' });
   const [registered, setRegistered] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [existingParticipant, setExistingParticipant] = useState<EventParticipant | null>(null);
 
   const event = events.find(e => e.id === resolvedParams.id);
+
+  // Check whether the user is already registered for this event.
+  //
+  // Strategy: at registration time we write the submitted form data into
+  // localStorage under the key `registeredEvents` (a map of eventId → record).
+  // On page load we read that map — no API call, no server-side PII exposure.
+  //
+  // Fallback: in offline/localStorage mode `event.participants` is populated
+  // in memory, so we also check there in case the entry is missing from the map
+  // (e.g. the user registered before this feature existed).
+  //
+  // The effect resets `existingParticipant` to null before each lookup so
+  // client-side navigation between events always reflects the current event.
+  useEffect(() => {
+    setExistingParticipant(null);
+    if (!isHydrated || !event) return;
+
+    // Primary path: per-event localStorage record (works in DB and offline modes)
+    const registeredEvents: Record<string, EventParticipant> = JSON.parse(
+      localStorage.getItem('registeredEvents') ?? '{}'
+    );
+    if (registeredEvents[event.id]) {
+      setExistingParticipant(registeredEvents[event.id]);
+      return;
+    }
+
+    // Fallback: in-memory participants list (populated in offline/localStorage mode)
+    const storedEmail = localStorage.getItem('userEmail');
+    if (!storedEmail) return;
+    const normalized = storedEmail.trim().toLowerCase();
+    const match = event.participants.find(p => p.email.toLowerCase() === normalized);
+    if (match) setExistingParticipant(match);
+  }, [isHydrated, event?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!event) {
     return (
@@ -52,6 +86,24 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const error = await registerForEvent(event.id, form);
     setSubmitting(false);
     if (error === null) {
+      // Persist the registration so future visits show the "already registered" banner.
+      // We store the submitted data (which the user already knows) keyed by eventId —
+      // no server-side lookup needed and no other participants' PII is exposed.
+      const normalizedEmail = form.email.trim().toLowerCase();
+      const registeredEvents: Record<string, EventParticipant> = JSON.parse(
+        localStorage.getItem('registeredEvents') ?? '{}'
+      );
+      registeredEvents[event.id] = {
+        id: `local-${Date.now()}`,
+        name: form.name,
+        email: normalizedEmail,
+        phone: form.phone,
+        company: form.company,
+        registeredAt: new Date().toISOString(),
+        status: 'registered',
+      };
+      localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
+      localStorage.setItem('userEmail', normalizedEmail);
       setRegistered(true);
     } else {
       setRegisterError(error);
@@ -154,7 +206,30 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {isOpen && !registered && (
+            {/* Already-registered banner — shown when we detect the user's email in the participant list */}
+            {existingParticipant && !registered && (
+              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🎟️</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-blue-800 dark:text-blue-300 text-lg mb-1">
+                        Anda sudah terdaftar untuk event ini
+                      </div>
+                      <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                        <div><span className="font-medium">Nama:</span> {existingParticipant.name}</div>
+                        <div><span className="font-medium">Email:</span> {existingParticipant.email}</div>
+                        <div><span className="font-medium">No. HP:</span> {existingParticipant.phone}</div>
+                        <div><span className="font-medium">Perusahaan:</span> {existingParticipant.company}</div>
+                        <div><span className="font-medium">Terdaftar pada:</span> {new Date(existingParticipant.registeredAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isOpen && !registered && !existingParticipant && (
               <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
                 {showRegister ? (
                   <form onSubmit={handleRegister} className="max-w-md">
