@@ -2,7 +2,13 @@
 
 import { db } from '@/db';
 import { quizQuestions, quizAttempts, sessions, users } from '@/db/schema';
-import { eq, asc, sql } from 'drizzle-orm';
+import { eq, asc, lt, sql } from 'drizzle-orm';
+
+/**
+ * Attempts older than this many days are purged on each insert.
+ * Keeps the quiz_attempts table bounded regardless of activity volume.
+ */
+const ATTEMPT_RETENTION_DAYS = 90;
 
 export interface QuizQuestion {
   id: number;
@@ -231,6 +237,11 @@ export async function recordQuizAttempt(
     selectedOption,
     attemptedAt: new Date().toISOString(),
   } as never);
+
+  // Trim attempts older than the retention window to keep the table bounded.
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - ATTEMPT_RETENTION_DAYS);
+  await db.delete(quizAttempts).where(lt(quizAttempts.attemptedAt, cutoff.toISOString()));
 }
 
 export interface QuizAttemptStat {
