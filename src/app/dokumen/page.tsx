@@ -1,0 +1,781 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+
+// ──────────────────────────────────────────────────────────────
+// Data: jabatan & document requirements
+// ──────────────────────────────────────────────────────────────
+
+interface DocItem {
+  id: string;
+  name: string;
+  description: string;
+  category: 'identitas' | 'formulir' | 'pendidikan' | 'pengalaman' | 'portofolio' | 'sertifikasi';
+  templateUrl?: string;
+  note?: string;
+}
+
+interface Jabatan {
+  id: string;
+  name: string;
+  bidang: string;
+  kualifikasi: string;
+  skema?: string;
+  docs: DocItem[];
+}
+
+const COMMON_DOCS: DocItem[] = [
+  {
+    id: 'ktp',
+    name: 'KTP / Kartu Identitas',
+    description: 'Fotokopi KTP yang masih berlaku (scan/foto jelas).',
+    category: 'identitas',
+  },
+  {
+    id: 'foto',
+    name: 'Pas Foto 3×4',
+    description: 'Foto formal terbaru latar merah/biru (2 lembar atau file digital).',
+    category: 'identitas',
+  },
+  {
+    id: 'ijazah',
+    name: 'Ijazah Pendidikan Terakhir',
+    description: 'Fotokopi ijazah yang dilegalisir sesuai jenjang pendidikan.',
+    category: 'pendidikan',
+  },
+  {
+    id: 'fraplo1',
+    name: 'FR.APL.01 — Permohonan Sertifikasi',
+    description:
+      'Formulir permohonan sertifikasi kompetensi yang diisi lengkap dan ditandatangani.',
+    category: 'formulir',
+    templateUrl: 'https://bnsp.go.id/unduhan',
+    note: 'Unduh dari LSP/BNSP atau minta ke TUK tempat Anda mendaftar.',
+  },
+  {
+    id: 'fraplo2',
+    name: 'FR.APL.02 — Asesmen Mandiri',
+    description:
+      'Formulir self-assessment per unit kompetensi: nyatakan bukti dan tingkat penguasaan Anda.',
+    category: 'formulir',
+    templateUrl: 'https://bnsp.go.id/unduhan',
+    note: 'Isi jujur; asesor menggunakannya sebagai dasar wawancara.',
+  },
+  {
+    id: 'cv',
+    name: 'CV / Daftar Riwayat Hidup',
+    description:
+      'Riwayat pekerjaan lengkap: nama proyek, posisi, nilai kontrak, tahun pelaksanaan.',
+    category: 'pengalaman',
+  },
+  {
+    id: 'surat_kerja',
+    name: 'Surat Keterangan Pengalaman Kerja',
+    description:
+      'Surat dari perusahaan/pemberi kerja yang menerangkan jabatan dan masa kerja.',
+    category: 'pengalaman',
+  },
+];
+
+const PORTOFOLIO_DOC: DocItem = {
+  id: 'portofolio',
+  name: 'Portofolio Proyek',
+  description:
+    'Dokumentasi proyek relevan: gambar kerja, foto, laporan, atau as-built yang menunjukkan keterlibatan langsung Anda.',
+  category: 'portofolio',
+};
+
+const SKK_LAMA_DOC: DocItem = {
+  id: 'skk_lama',
+  name: 'SKK / SKA / SKTK Lama (jika perpanjangan)',
+  description:
+    'Fotokopi sertifikat kompetensi sebelumnya bila ini adalah perpanjangan/re-sertifikasi.',
+  category: 'sertifikasi',
+};
+
+const JOB_DESK_DOC: DocItem = {
+  id: 'jobdesk',
+  name: 'Uraian Tugas / Job Description',
+  description: 'Dokumen resmi dari perusahaan yang merinci tugas dan tanggung jawab Anda di jabatan yang bersangkutan.',
+  category: 'pengalaman',
+};
+
+// Jabatan-specific extra docs
+const SIPIL_EXTRA: DocItem[] = [
+  {
+    id: 'gambar_kerja',
+    name: 'Gambar Kerja / Shop Drawing',
+    description: 'Contoh gambar kerja proyek yang pernah Anda buat atau supervisi (sebagian).',
+    category: 'portofolio',
+  },
+  {
+    id: 'laporan_harian',
+    name: 'Laporan Harian / Mingguan Proyek',
+    description: 'Contoh laporan kemajuan pekerjaan (daily/weekly report) yang Anda susun.',
+    category: 'portofolio',
+  },
+];
+
+const MANPEL_EXTRA: DocItem[] = [
+  {
+    id: 'rencana_mutu',
+    name: 'Rencana Mutu Kontrak (RMK)',
+    description: 'Dokumen RMK proyek yang pernah Anda susun atau terlibat dalam penyusunannya.',
+    category: 'portofolio',
+  },
+  {
+    id: 'schedule',
+    name: 'Jadwal Pelaksanaan / S-Curve',
+    description: 'Master schedule atau S-Curve proyek yang Anda kelola.',
+    category: 'portofolio',
+  },
+  {
+    id: 'bop',
+    name: 'Dokumen Biaya / RAB / BOP',
+    description:
+      'Rencana Anggaran Biaya atau Bill of Quantity proyek sebagai bukti kompetensi estimasi.',
+    category: 'portofolio',
+  },
+];
+
+const JABATAN_LIST: Jabatan[] = [
+  // ── Sipil ──────────────────────────────────────────────────────
+  {
+    id: 'pelaks-gedung',
+    name: 'Pelaksana Lapangan Pekerjaan Gedung',
+    bidang: 'Sipil',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...SIPIL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'pelaks-jalan',
+    name: 'Pelaksana Lapangan Pekerjaan Jalan',
+    bidang: 'Sipil',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...SIPIL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'pelaks-jembatan',
+    name: 'Pelaksana Lapangan Pekerjaan Jembatan',
+    bidang: 'Sipil',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...SIPIL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'surveyor',
+    name: 'Teknisi Survey Pemetaan',
+    bidang: 'Sipil',
+    kualifikasi: 'Analis / Teknisi Madya (L4)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      {
+        id: 'laporan_survey',
+        name: 'Laporan Hasil Survey / Peta Topografi',
+        description: 'Contoh laporan survey lapangan atau peta yang pernah Anda buat.',
+        category: 'portofolio',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'drafter',
+    name: 'Drafter / Juru Gambar Sipil',
+    bidang: 'Sipil',
+    kualifikasi: 'Operator / Teknisi (L1–L3)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      {
+        id: 'contoh_gambar',
+        name: 'Contoh Hasil Gambar Teknik',
+        description: 'File CAD / PDF gambar teknik yang pernah Anda buat sebagai portofolio.',
+        category: 'portofolio',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'ahli-sipil-madya',
+    name: 'Ahli Teknik Jalan – Madya',
+    bidang: 'Sipil',
+    kualifikasi: 'Ahli Madya (L6)',
+    skema: 'SKK Konstruksi – Sipil',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...SIPIL_EXTRA,
+      {
+        id: 'desain_perkerasan',
+        name: 'Dokumen Desain Perkerasan / Analisis Teknis',
+        description: 'Laporan atau perhitungan teknis desain jalan yang pernah Anda susun.',
+        category: 'portofolio',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  // ── Manajemen Pelaksanaan ───────────────────────────────────────
+  {
+    id: 'manajer-proyek',
+    name: 'Manajer Proyek',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Madya (L6)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...MANPEL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'manajer-lapangan',
+    name: 'Manajer Lapangan Pekerjaan Gedung',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...MANPEL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'site-engineer',
+    name: 'Site Engineer',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Pertama (L4)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      PORTOFOLIO_DOC,
+      ...SIPIL_EXTRA,
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'qs',
+    name: 'Quantity Surveyor',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      {
+        id: 'bq',
+        name: 'Bill of Quantity (BQ) / RAB',
+        description:
+          'Contoh BQ atau RAB proyek yang pernah Anda hitung / verifikasi.',
+        category: 'portofolio',
+      },
+      {
+        id: 'progres_bayar',
+        name: 'Dokumen Kemajuan Pembayaran / Monthly Certificate',
+        description: 'Laporan monthly certificate atau progress billing yang pernah Anda kelola.',
+        category: 'portofolio',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'qc',
+    name: 'Quality Control (QC) Konstruksi',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      {
+        id: 'rmk_qc',
+        name: 'Rencana Mutu Kontrak (RMK)',
+        description: 'Dokumen RMK / Quality Plan proyek yang Anda susun.',
+        category: 'portofolio',
+      },
+      {
+        id: 'checklist_qc',
+        name: 'Checklist Inspeksi / Pengujian Material',
+        description: 'Contoh checklist inspeksi atau laporan hasil uji material (test report).',
+        category: 'portofolio',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+  {
+    id: 'k3',
+    name: 'Ahli K3 Konstruksi',
+    bidang: 'Manajemen Pelaksanaan',
+    kualifikasi: 'Ahli Muda (L5)',
+    skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
+    docs: [
+      ...COMMON_DOCS,
+      {
+        id: 'rk3k',
+        name: 'Rencana K3 Kontrak (RK3K)',
+        description: 'Dokumen RK3K proyek yang pernah Anda susun atau implementasikan.',
+        category: 'portofolio',
+      },
+      {
+        id: 'laporan_k3',
+        name: 'Laporan Kecelakaan / Near Miss / Safety Patrol',
+        description: 'Laporan inspeksi K3 atau investigasi insiden yang pernah Anda buat.',
+        category: 'portofolio',
+      },
+      {
+        id: 'sertifikat_k3',
+        name: 'Sertifikat K3 Umum / AK3',
+        description: 'Fotokopi sertifikat K3 Umum Kemenaker atau sertifikat Ahli K3 yang relevan.',
+        category: 'sertifikasi',
+      },
+      JOB_DESK_DOC,
+      SKK_LAMA_DOC,
+    ],
+  },
+];
+
+// Group jabatan by bidang
+const BIDANG_LIST = ['Sipil', 'Manajemen Pelaksanaan'];
+
+// Category labels & colors
+const CATEGORY_META: Record<string, { label: string; color: string; bg: string }> = {
+  identitas:   { label: 'Identitas',   color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30' },
+  formulir:    { label: 'Formulir',    color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/30' },
+  pendidikan:  { label: 'Pendidikan',  color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/30' },
+  pengalaman:  { label: 'Pengalaman',  color: 'text-green-400',  bg: 'bg-green-500/10 border-green-500/30' },
+  portofolio:  { label: 'Portofolio',  color: 'text-cyan-400',   bg: 'bg-cyan-500/10 border-cyan-500/30' },
+  sertifikasi: { label: 'Sertifikasi', color: 'text-rose-400',   bg: 'bg-rose-500/10 border-rose-500/30' },
+};
+
+// ──────────────────────────────────────────────────────────────
+// Auth helpers — read sessionId from localStorage; generate a
+// per-device guest ID so guest checklists are never shared.
+// ──────────────────────────────────────────────────────────────
+
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const headers: Record<string, string> = {};
+
+  const sessionId = localStorage.getItem('sessionId');
+  if (sessionId) {
+    headers['x-session-id'] = sessionId;
+  } else {
+    // Generate a stable per-device guest ID so every device gets its own
+    // isolated checklist instead of sharing a single "guest" bucket.
+    let deviceId = localStorage.getItem('siapskk-device-id');
+    if (!deviceId) {
+      deviceId = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem('siapskk-device-id', deviceId);
+    }
+    headers['x-device-id'] = deviceId;
+  }
+
+  return headers;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Component
+// ──────────────────────────────────────────────────────────────
+
+export default function DokumenPage() {
+  const [activeBidang, setActiveBidang] = useState<string>('Sipil');
+  const [activeJabatan, setActiveJabatan] = useState<Jabatan | null>(null);
+  const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const jabatanInBidang = JABATAN_LIST.filter((j) => j.bidang === activeBidang);
+
+  // Load saved state when jabatan changes
+  const loadChecklist = useCallback(async (jabatan: Jabatan) => {
+    setLoading(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(
+        `/api/dokumen?jabatan=${encodeURIComponent(jabatan.id)}`,
+        { headers: getAuthHeaders() },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const map: Record<string, boolean> = {};
+        (data.items as { documentId: string; checked: boolean }[]).forEach((item) => {
+          map[item.documentId] = item.checked;
+        });
+        setCheckedMap(map);
+      }
+      // Non-OK (e.g. 401 on first-ever load before device ID exists) → start with empty map
+    } catch {
+      // network error → start with empty map
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeJabatan) {
+      loadChecklist(activeJabatan);
+    }
+  }, [activeJabatan, loadChecklist]);
+
+  const toggleDoc = async (docId: string, currentVal: boolean) => {
+    if (!activeJabatan) return;
+    const newVal = !currentVal;
+    // Optimistic update
+    setCheckedMap((prev) => ({ ...prev, [docId]: newVal }));
+    setSaving(docId);
+    setSaveError(null);
+    try {
+      const res = await fetch('/api/dokumen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          jabatanId: activeJabatan.id,
+          documentId: docId,
+          checked: newVal,
+        }),
+      });
+      if (!res.ok) {
+        // Rollback on server error
+        setCheckedMap((prev) => ({ ...prev, [docId]: currentVal }));
+        setSaveError('Gagal menyimpan. Silakan coba lagi.');
+      }
+    } catch {
+      // Rollback on network error
+      setCheckedMap((prev) => ({ ...prev, [docId]: currentVal }));
+      setSaveError('Koneksi gagal. Perubahan tidak tersimpan.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const checkedCount = activeJabatan
+    ? activeJabatan.docs.filter((d) => checkedMap[d.id]).length
+    : 0;
+  const totalCount = activeJabatan?.docs.length ?? 0;
+  const progressPct = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+
+  // Group docs by category
+  const docsByCategory = activeJabatan
+    ? activeJabatan.docs.reduce<Record<string, DocItem[]>>((acc, doc) => {
+        if (!acc[doc.category]) acc[doc.category] = [];
+        acc[doc.category].push(doc);
+        return acc;
+      }, {})
+    : {};
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
+      <div className="max-w-5xl mx-auto">
+
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium mb-4">
+            📄 Persiapan Dokumen SKK · KM PUPR 713/2022 · SK DJBK 114/2024
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-3">
+            Checklist Dokumen
+            <span className="block bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+              Persiapan Sertifikasi SKK
+            </span>
+          </h1>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            Pilih jabatan SKK Anda untuk melihat daftar dokumen yang harus disiapkan.
+            Status centang tersimpan otomatis.
+          </p>
+        </div>
+
+        {/* Bidang tabs */}
+        <div className="flex gap-3 mb-6 justify-center flex-wrap">
+          {BIDANG_LIST.map((b) => (
+            <button
+              key={b}
+              onClick={() => {
+                setActiveBidang(b);
+                setActiveJabatan(null);
+                setCheckedMap({});
+              }}
+              className={`px-5 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                activeBidang === b
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                  : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+              }`}
+            >
+              {b === 'Sipil' ? '🏗️' : '📋'} {b}
+            </button>
+          ))}
+        </div>
+
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: jabatan list */}
+          <div className="lg:col-span-1">
+            <h2 className="text-slate-400 text-xs uppercase font-semibold mb-3 tracking-wider">
+              Pilih Jabatan
+            </h2>
+            <div className="space-y-2">
+              {jabatanInBidang.map((j) => {
+                const isActive = activeJabatan?.id === j.id;
+                return (
+                  <button
+                    key={j.id}
+                    onClick={() => {
+                      if (activeJabatan?.id !== j.id) {
+                        setActiveJabatan(j);
+                        setCheckedMap({});
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                      isActive
+                        ? 'bg-amber-500/15 border-amber-500/60 text-white'
+                        : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'
+                    }`}
+                  >
+                    <div className="font-medium text-sm leading-snug">{j.name}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{j.kualifikasi}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: checklist */}
+          <div className="lg:col-span-2">
+            {!activeJabatan ? (
+              <div className="h-72 flex flex-col items-center justify-center border border-dashed border-slate-700 rounded-2xl text-slate-500">
+                <span className="text-4xl mb-3">📂</span>
+                <p className="text-sm">Pilih jabatan di sebelah kiri untuk memulai</p>
+              </div>
+            ) : loading ? (
+              <div className="h-72 flex flex-col items-center justify-center rounded-2xl text-slate-500">
+                <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-sm">Memuat checklist...</p>
+              </div>
+            ) : (
+              <div>
+                {/* Jabatan header & progress */}
+                <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 mb-5">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h2 className="text-white font-bold text-xl">{activeJabatan.name}</h2>
+                      <p className="text-slate-400 text-sm mt-0.5">
+                        {activeJabatan.bidang} · {activeJabatan.kualifikasi}
+                      </p>
+                      {activeJabatan.skema && (
+                        <p className="text-slate-500 text-xs mt-0.5">{activeJabatan.skema}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-3xl font-bold text-amber-400">{progressPct}%</span>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        {checkedCount} / {totalCount} dokumen
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-2.5 rounded-full transition-all duration-500 ${
+                        progressPct === 100
+                          ? 'bg-green-500'
+                          : progressPct >= 60
+                          ? 'bg-amber-500'
+                          : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+
+                  {progressPct === 100 && (
+                    <div className="mt-3 flex items-center gap-2 text-green-400 text-sm font-medium">
+                      <span>✅</span>
+                      <span>Semua dokumen sudah disiapkan! Anda siap mendaftar asesmen.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Reference banner */}
+                <div className="mb-5 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-300 text-xs flex gap-2">
+                  <span>ℹ️</span>
+                  <span>
+                    Berdasarkan <strong>KM PUPR No. 713/KPTS/M/2022</strong> dan{' '}
+                    <strong>SK DJBK No. 114/KPTS/DK/2024</strong>. Persyaratan dokumen dapat
+                    berbeda antar LSP/TUK — konfirmasi ke lembaga tempat Anda mendaftar.
+                  </span>
+                </div>
+
+                {/* Documents grouped by category */}
+                {Object.entries(docsByCategory).map(([cat, docs]) => {
+                  const meta = CATEGORY_META[cat] ?? {
+                    label: cat,
+                    color: 'text-slate-400',
+                    bg: 'bg-slate-700/40 border-slate-600',
+                  };
+                  return (
+                    <div key={cat} className="mb-5">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold mb-3 ${meta.bg} ${meta.color}`}>
+                        {meta.label}
+                      </div>
+                      <div className="space-y-2">
+                        {docs.map((doc) => {
+                          const isChecked = !!checkedMap[doc.id];
+                          const isSaving = saving === doc.id;
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => !isSaving && toggleDoc(doc.id, isChecked)}
+                              className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                                isChecked
+                                  ? 'bg-green-500/10 border-green-500/30'
+                                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'
+                              }`}
+                            >
+                              {/* Checkbox */}
+                              <div className="mt-0.5 flex-shrink-0">
+                                {isSaving ? (
+                                  <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <div
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                                      isChecked
+                                        ? 'bg-green-500 border-green-500'
+                                        : 'border-slate-600'
+                                    }`}
+                                  >
+                                    {isChecked && (
+                                      <svg className="w-3 h-3 text-white" viewBox="0 0 12 10" fill="none">
+                                        <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className={`font-semibold text-sm ${isChecked ? 'text-green-300 line-through decoration-green-500/50' : 'text-white'}`}>
+                                  {doc.name}
+                                </div>
+                                <div className="text-slate-400 text-xs mt-1 leading-relaxed">
+                                  {doc.description}
+                                </div>
+                                {doc.note && (
+                                  <div className="text-amber-400/80 text-xs mt-1.5 italic">
+                                    💡 {doc.note}
+                                  </div>
+                                )}
+                                {doc.templateUrl && (
+                                  <a
+                                    href={doc.templateUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2"
+                                  >
+                                    ⬇️ Unduh Template
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Save error banner */}
+                {saveError && (
+                  <div className="mt-3 flex items-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs">
+                    <span>⚠️</span>
+                    <span>{saveError}</span>
+                    <button
+                      onClick={() => setSaveError(null)}
+                      className="ml-auto text-red-400/60 hover:text-red-300"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* Reset all button */}
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={async () => {
+                      if (!activeJabatan) return;
+                      const prevMap = { ...checkedMap };
+                      setCheckedMap({});
+                      setSaveError(null);
+                      try {
+                        const results = await Promise.all(
+                          activeJabatan.docs.map((d) =>
+                            fetch('/api/dokumen', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                              body: JSON.stringify({
+                                jabatanId: activeJabatan.id,
+                                documentId: d.id,
+                                checked: false,
+                              }),
+                            }),
+                          ),
+                        );
+                        const anyFailed = results.some((r) => !r.ok);
+                        if (anyFailed) {
+                          setCheckedMap(prevMap);
+                          setSaveError('Gagal mereset sebagian dokumen. Silakan coba lagi.');
+                        }
+                      } catch {
+                        setCheckedMap(prevMap);
+                        setSaveError('Koneksi gagal saat mereset. Perubahan tidak tersimpan.');
+                      }
+                    }}
+                    className="text-xs text-slate-500 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/10"
+                  >
+                    Reset Semua
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <p className="text-center text-slate-600 text-xs mt-10">
+          Status centang tersimpan secara otomatis di server. Gunakan fitur ini bersama{' '}
+          <a href="/skk-coach/chat?agent=dokumen" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">SKK Coach AI</a>{' '}
+          untuk panduan per dokumen.
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -28,6 +28,7 @@ const navItems = [
   { href: '/tools', label: 'Tools', icon: '🔧' },
   { href: '/iso-generator', label: 'ISO Generator', icon: '📄' },
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
+  { href: '/dokumen', label: 'Persiapan Dokumen', icon: '📄' },
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
   { href: '/chat', label: 'Expert Chat', icon: '💬' },

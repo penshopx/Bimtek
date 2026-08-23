@@ -180,3 +180,13 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   correct: integer("correct", { mode: "boolean" }).notNull(),
   attemptedAt: text("attempted_at").notNull(),
 });
+
+export const documentChecklist = sqliteTable("document_checklist", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  jabatanId: text("jabatan_id").notNull(),
+  documentId: text("document_id").notNull(),
+  checked: integer("checked", { mode: "boolean" }).default(false),
+  checkedAt: text("checked_at"),
+  createdAt: text("created_at").notNull(),
+});
