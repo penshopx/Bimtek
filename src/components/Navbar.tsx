@@ -39,6 +39,7 @@ const navItems = [
   { href: '/diagnostik-kompetensi', label: 'Diagnostik SKK', icon: '🧠' },
   { href: '/solver', label: 'Solver', icon: '🧮' },
   { href: '/tools', label: 'Tools', icon: '🔧' },
+  { href: '/apl02-generator', label: 'Generator APL.02', icon: '📝' },
   { href: '/iso-generator', label: 'ISO Generator', icon: '📄' },
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
   { href: '/pkb', label: 'Tracker PKB', icon: '📈' },
