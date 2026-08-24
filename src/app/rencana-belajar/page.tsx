@@ -211,6 +211,15 @@ const type_color: Record<string, string> = {
   latihan: 'border-green-500/30',
   harih: 'border-purple-500/30',
 };
+const priority_weight: Record<'tinggi' | 'sedang' | 'rendah', number> = {
+  tinggi: 2,
+  sedang: 1.5,
+  rendah: 1,
+};
+
+function getPriorityWeight(prio?: StudyItem['prio']) {
+  return prio ? priority_weight[prio] : priority_weight.rendah;
+}
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
@@ -261,6 +270,40 @@ export default function RencanaBelajarPage() {
   const pct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
   const totalJam = plan ? plan.flatMap(w => w.items).reduce((s, i) => s + i.jam, 0) : 0;
+
+  const readiness = useMemo(() => {
+    if (!plan || pct < 50) return null;
+
+    const items = plan.flatMap(w => w.items);
+    const totalWeight = items.reduce((sum, item) => sum + getPriorityWeight(item.prio), 0);
+    const completedWeight = items
+      .filter(item => checked[item.id])
+      .reduce((sum, item) => sum + getPriorityWeight(item.prio), 0);
+    const score = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0;
+
+    if (score >= 85) {
+      return {
+        score,
+        tier: 'Siap' as const,
+        action: 'Kamu siap daftar asesmen',
+        accent: 'green' as const,
+      };
+    }
+    if (score >= 60) {
+      return {
+        score,
+        tier: 'Perlu Penguatan' as const,
+        action: 'Selesaikan 2 UK lagi dulu',
+        accent: 'amber' as const,
+      };
+    }
+    return {
+      score,
+      tier: 'Belum Siap' as const,
+      action: 'Latih soal Mock Asesmen dulu',
+      accent: 'red' as const,
+    };
+  }, [plan, checked, pct]);
 
   const toggle = (id: string) => {
     const next = { ...checked, [id]: !checked[id] };
@@ -412,6 +455,8 @@ export default function RencanaBelajarPage() {
               </div>
             </div>
 
+            {readiness && <ReadinessCard readiness={readiness} />}
+
             {/* Today's topic */}
             {todayItem && (
               <div className="flex items-start gap-4 p-5 bg-purple-500/10 border border-purple-500/30 rounded-2xl">
@@ -493,6 +538,77 @@ export default function RencanaBelajarPage() {
 
       </div>
     </div>
+  );
+}
+
+// ─── ReadinessCard ─────────────────────────────────────────────────────────────
+
+function ReadinessCard({
+  readiness,
+}: {
+  readiness: {
+    score: number;
+    tier: 'Siap' | 'Perlu Penguatan' | 'Belum Siap';
+    action: string;
+    accent: 'green' | 'amber' | 'red';
+  };
+}) {
+  const accentStyles = {
+    green: {
+      border: 'border-green-500/30',
+      background: 'bg-green-500/10',
+      text: 'text-green-300',
+      muted: 'text-green-400/70',
+      bar: 'bg-green-400',
+      icon: '✅',
+    },
+    amber: {
+      border: 'border-amber-500/30',
+      background: 'bg-amber-500/10',
+      text: 'text-amber-300',
+      muted: 'text-amber-400/70',
+      bar: 'bg-amber-400',
+      icon: '💪',
+    },
+    red: {
+      border: 'border-red-500/30',
+      background: 'bg-red-500/10',
+      text: 'text-red-300',
+      muted: 'text-red-400/70',
+      bar: 'bg-red-400',
+      icon: '📚',
+    },
+  }[readiness.accent];
+
+  return (
+    <section
+      aria-labelledby="readiness-heading"
+      className={`p-5 rounded-2xl border ${accentStyles.border} ${accentStyles.background}`}
+    >
+      <div className="flex items-start gap-4">
+        <span className="text-3xl flex-shrink-0" aria-hidden="true">{accentStyles.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${accentStyles.text}`}>
+                Kesiapan Asesmen
+              </p>
+              <h2 id="readiness-heading" className="text-white text-lg font-semibold">{readiness.tier}</h2>
+            </div>
+            <div className={`text-3xl font-bold ${accentStyles.text}`} aria-label={`Skor kesiapan ${readiness.score} persen`}>
+              {readiness.score}%
+            </div>
+          </div>
+          <div className="h-2 bg-slate-700/80 rounded-full overflow-hidden mt-4">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${accentStyles.bar}`}
+              style={{ width: `${readiness.score}%` }}
+            />
+          </div>
+          <p className={`text-sm mt-3 ${accentStyles.muted}`}>{readiness.action}</p>
+        </div>
+      </div>
+    </section>
   );
 }
 
