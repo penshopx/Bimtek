@@ -1,0 +1,1573 @@
+Baik. Saya akan **memperdalam sampai level blueprint produk**, tetapi tetap menjaga prinsip yang sebelumnya kita tetapkan untuk Gustafta: **khusus BUJK/UKM jasa konstruksi, tidak terlalu kompleks, tetapi profesional, efisien, produktif, tertib administrasi dan kepatuhan**.
+
+Dan ada satu koreksi penting dari rancangan sebelumnya:
+
+> **SIAP SKK jangan menjadi "sistem besar baru" di dalam Gustafta.**
+>
+> SIAP SKK harus menjadi **vertical competency module** yang memanfaatkan Core Gustafta yang sudah ada.
+
+Dengan begitu, investasi pengembangan Gustafta tidak terduplikasi.
+
+---
+
+# I. ARSITEKTUR BESAR YANG SAYA SARANKAN
+
+Gustafta yang sudah kita arahkan memiliki fondasi:
+
+* Company OS
+* Project OS
+* Contract/Obligation
+* Project Control
+* Document Center
+* Digital Project File / Evidence
+* Compliance Engine
+* AI Command Center
+* MultiClaw/OpenClaw
+* specialist agents
+* human approval untuk keputusan yang mengikat.
+
+Sekarang kita tambahkan:
+
+# **WORKFORCE & COMPETENCY DOMAIN**
+
+dan di dalamnya:
+
+# **SIAP SKK**
+
+Arsitekturnya:
+
+```text
+                         GUSTAFTA
+           AI Construction Operating System
+                         │
+ ┌───────────────────────┼────────────────────────┐
+ │                       │                        │
+ ▼                       ▼                        ▼
+COMPANY OS            PROJECT OS             WORKFORCE OS
+ │                       │                        │
+ │                       │               ┌────────▼────────┐
+ │                       │               │    SIAP SKK      │
+ │                       │               │                  │
+ │                       │               │  CERTIFICATION   │
+ │                       │               │  PREPARATION     │
+ │                       │               │  SIMULATION      │
+ │                       │               │  READINESS       │
+ │                       │               └──────────────────┘
+ │                       │
+ └──────────────┬────────┴─────────────────┐
+                │                          │
+         DOCUMENT CENTER              COMPLIANCE
+                │                          │
+                └────────────┬─────────────┘
+                             │
+                     AI COMMAND CENTER
+                             │
+                    MULTICLAW / OPENCLAW
+                             │
+             ┌───────────────┼────────────────┐
+             │               │                │
+          AGENTS           TOOLS          KNOWLEDGE
+```
+
+---
+
+# II. PERUBAHAN KONSEPTUAL TERPENTING
+
+Sebelumnya kita berbicara:
+
+> "Gustafta memiliki SIAP SKK."
+
+Saya ingin mempertajam menjadi:
+
+> **Gustafta mengetahui kondisi perusahaan, proyek, tenaga kerja, dokumen, dan kompetensi; SIAP SKK menggunakan pengetahuan tersebut untuk mengelola perjalanan sertifikasi dan persiapan kompetensi.**
+
+Jadi SIAP bukan sekadar menu.
+
+SIAP adalah **business capability**.
+
+---
+
+# III. EMPAT CORE YANG HARUS DIPISAH
+
+Agar sistem tidak kacau, kita pisahkan empat domain.
+
+## 1. Certification Management
+
+Mengelola:
+
+> **proses administrasi sertifikasi.**
+
+## 2. Competency Preparation
+
+Mengelola:
+
+> **persiapan peserta sebelum asesmen.**
+
+## 3. Official Assessment Boundary
+
+Menandai:
+
+> **apa yang bukan kewenangan SIAP.**
+
+## 4. Workforce Intelligence
+
+Mengelola:
+
+> **kebutuhan kompetensi dan sertifikasi perusahaan.**
+
+Ini empat hal yang saling berhubungan tetapi **tidak boleh dicampur**.
+
+---
+
+# IV. SIAP SKK SEBENARNYA MEMILIKI 3 USER UTAMA
+
+Ini penting untuk desain sistem.
+
+## A. INDIVIDUAL
+
+Orang yang ingin:
+
+> mendapatkan SKK.
+
+## B. PESERTA PREPARATION
+
+Orang yang:
+
+> akan mengikuti uji kompetensi dan membutuhkan persiapan.
+
+## C. BUJK
+
+Perusahaan yang:
+
+> mengelola banyak tenaga kerja dan kebutuhan sertifikasinya.
+
+Jadi satu platform memiliki tiga perspektif.
+
+---
+
+# V. ROLE MODEL
+
+Minimal:
+
+```text
+SUPER ADMIN
+   │
+   ├── Certification Admin
+   ├── Preparation Admin
+   ├── Content Manager
+   ├── Customer Service
+   ├── Certification Officer
+   ├── Coach / Instructor
+   └── Corporate Admin
+```
+
+Peserta:
+
+```text
+INDIVIDUAL USER
+CORPORATE USER
+PARTICIPANT
+```
+
+Dan jika diperlukan:
+
+```text
+ASESSMENT EXTERNAL / REFERENCE ONLY
+```
+
+**Asesor tidak ditempatkan sebagai operator SIAP untuk melakukan asesmen resmi.**
+
+---
+
+# VI. SATU DATA TERPENTING: PERSONNEL MASTER
+
+Gustafta harus mempunyai:
+
+# **PERSONNEL MASTER**
+
+Bukan:
+
+> database peserta SIAP.
+
+Ini perbedaan arsitektur yang sangat penting.
+
+Contoh:
+
+```text
+PERSONNEL ID
+P-000127
+
+Nama
+Budi Santoso
+
+Perusahaan
+PT ABC Konstruksi
+
+Jabatan
+Site Supervisor
+
+Experience
+5 tahun
+
+Current SKK
+...
+
+Target SKK
+...
+
+Project History
+...
+
+Certification Case
+...
+
+Preparation Status
+...
+```
+
+Semua modul membaca `Personnel ID` yang sama.
+
+---
+
+# VII. PERSONNEL → PROJECT → EXPERIENCE → SKK
+
+Ini menjadi hubungan inti:
+
+```text
+PERSON
+  │
+  ├── EMPLOYMENT
+  │
+  ├── PROJECT HISTORY
+  │       │
+  │       └── EVIDENCE
+  │
+  ├── CURRENT CERTIFICATION
+  │
+  ├── TARGET CERTIFICATION
+  │
+  └── PREPARATION
+          │
+          ├── Diagnostic
+          ├── Learning
+          ├── Practice
+          ├── Simulation
+          └── Readiness
+```
+
+Dengan ini, Gustafta mulai memiliki **competency profile** yang hidup.
+
+---
+
+# VIII. PROJECT OS GUSTAFTA MENJADI SUMBER DATA SIAP
+
+Misalnya Gustafta sudah mencatat:
+
+```text
+PROJECT:
+Gedung XYZ
+
+PERSONNEL:
+Budi
+
+ROLE:
+Site Supervisor
+
+PERIOD:
+2024–2025
+
+ACTIVITY:
+Supervision
+Coordination
+Quality Control
+Progress Monitoring
+```
+
+SIAP tidak meminta Budi mengetik semuanya lagi.
+
+SIAP dapat mengatakan:
+
+> "Kami menemukan data pengalaman Anda pada Project XYZ. Periksa dan konfirmasikan apakah data tersebut benar dan relevan untuk profil persiapan Anda."
+
+Ini:
+
+### efisien
+
+### mengurangi data entry
+
+### mengurangi kesalahan
+
+### meningkatkan traceability.
+
+---
+
+# IX. TETAPI HARUS ADA "USER CONFIRMATION"
+
+AI tidak boleh mengambil:
+
+> "Budi bekerja di proyek XYZ"
+
+lalu otomatis menyatakan:
+
+> "Budi memiliki kompetensi X."
+
+Itu terlalu jauh.
+
+Workflow:
+
+```text
+PROJECT DATA
+      ↓
+AI IDENTIFICATION
+      ↓
+POTENTIAL EXPERIENCE
+      ↓
+USER CONFIRMATION
+      ↓
+PREPARATION EVIDENCE
+```
+
+---
+
+# X. EXPERIENCE EVIDENCE ≠ ASSESSMENT EVIDENCE
+
+Ini harus dibedakan.
+
+SIAP dapat membantu:
+
+> menyiapkan pengalaman dan bukti untuk **tujuan persiapan**.
+
+Tetapi:
+
+> penilaian kecukupan bukti dalam asesmen resmi adalah ranah asesmen resmi.
+
+Ini menjadi boundary penting.
+
+---
+
+# XI. SIAP CERTIFICATION ENGINE
+
+Sekarang masuk ke jasa pengurusan SKK.
+
+Saya sarankan modul ini:
+
+# **CERTIFICATION CASE MANAGEMENT**
+
+Bukan sekadar form.
+
+Setiap permohonan menjadi satu case.
+
+Contoh:
+
+```text
+CASE
+SKK-2026-00128
+
+Customer
+Budi Santoso
+
+Target
+[Skema/Jabatan]
+
+Level
+7
+
+Service
+Certification Service + Preparation
+
+Status
+Document Collection
+
+Progress
+68%
+```
+
+---
+
+# XII. CASE WORKFLOW
+
+```text
+LEAD
+ ↓
+CONSULTATION
+ ↓
+PROFILE
+ ↓
+PRELIMINARY ELIGIBILITY
+ ↓
+SERVICE SELECTION
+ ↓
+DOCUMENT COLLECTION
+ ↓
+DOCUMENT REVIEW
+ ↓
+APPLICATION PREPARATION
+ ↓
+SUBMISSION
+ ↓
+EXTERNAL PROCESS
+ ↓
+PREPARATION
+ ↓
+OFFICIAL ASSESSMENT
+ ↓
+CERTIFICATION RESULT
+ ↓
+CASE CLOSED
+```
+
+**External Process** harus diberi warna/status berbeda karena berada di luar kendali SIAP.
+
+---
+
+# XIII. DOKUMEN MENJADI "SMART CHECKLIST"
+
+Bukan hanya:
+
+> upload ijazah.
+
+Tetapi:
+
+```text
+REQUIREMENT
+      ↓
+REQUIRED?
+      ↓
+AVAILABLE?
+      ↓
+UPLOADED?
+      ↓
+READABLE?
+      ↓
+CONSISTENT?
+      ↓
+NEED HUMAN REVIEW?
+```
+
+Output:
+
+# **Document Readiness**
+
+---
+
+# XIV. DOCUMENT AI
+
+Agent dokumen dapat:
+
+### 1. Classify
+
+Mengenali jenis dokumen.
+
+### 2. Extract
+
+Mengambil informasi.
+
+### 3. Compare
+
+Membandingkan dengan data profil.
+
+### 4. Detect Gap
+
+Mencari kekurangan.
+
+### 5. Flag
+
+Memberi tanda perlu pemeriksaan manusia.
+
+### 6. Track
+
+Memantau perubahan status.
+
+---
+
+# XV. JANGAN MEMBERIKAN "VALIDATED" TERLALU DINI
+
+Gunakan status:
+
+### AI CHECKED
+
+Pemeriksaan otomatis.
+
+### OFFICER REVIEWED
+
+Sudah diperiksa petugas SIAP.
+
+### OFFICIAL VERIFIED
+
+Hanya jika benar-benar berasal dari pihak yang berwenang dan proses resmi.
+
+Ini sangat penting untuk akuntabilitas.
+
+---
+
+# XVI. SIAP PREPARATION ENGINE
+
+Sekarang bagian yang menjadi pembeda utama.
+
+# **SIAP PREPARE**
+
+Tidak sekadar LMS.
+
+Strukturnya:
+
+```text
+TARGET CERTIFICATION
+        ↓
+COMPETENCY PROFILE
+        ↓
+DIAGNOSTIC
+        ↓
+GAP ANALYSIS
+        ↓
+PERSONALIZED PATH
+        ↓
+LEARNING
+        ↓
+PRACTICE
+        ↓
+SIMULATION
+        ↓
+FEEDBACK
+        ↓
+REMEDIAL
+        ↓
+RE-SIMULATION
+        ↓
+READINESS
+```
+
+---
+
+# XVII. JENJANG 1–3, 4–6, 7–9 HARUS MENJADI "MODE"
+
+Jangan hanya filter.
+
+Harus menjadi **different competency behavior model**.
+
+## MODE 1–3
+
+### "Task Execution"
+
+Fokus:
+
+* memahami tugas;
+* mengikuti prosedur;
+* melakukan pekerjaan;
+* mengenali masalah sederhana;
+* keselamatan;
+* kualitas dasar.
+
+AI:
+
+> lebih instruktif.
+
+---
+
+## MODE 4–6
+
+### "Supervision & Problem Solving"
+
+Fokus:
+
+* koordinasi;
+* pengendalian;
+* penyelesaian masalah;
+* kualitas;
+* produktivitas;
+* pelaksanaan.
+
+AI:
+
+> lebih berbasis kasus.
+
+---
+
+## MODE 7–9
+
+### "Professional Judgement & Management"
+
+Fokus:
+
+* analisis;
+* perencanaan;
+* keputusan;
+* risiko;
+* leadership;
+* evaluasi;
+* improvement.
+
+AI:
+
+> lebih banyak scenario reasoning dan professional discussion.
+
+---
+
+# XVIII. COMPETENCY KNOWLEDGE MODEL
+
+SIAP jangan menyimpan MUK sebagai PDF yang hanya dibaca manusia.
+
+Ubah menjadi:
+
+# **Structured Competency Knowledge**
+
+Misalnya:
+
+```text
+SCHEME
+   │
+   ├── LEVEL
+   │
+   ├── COMPETENCY UNIT
+   │
+   ├── ELEMENT
+   │
+   ├── PERFORMANCE CRITERIA
+   │
+   ├── KNOWLEDGE
+   │
+   ├── SKILL
+   │
+   ├── ATTITUDE
+   │
+   └── EVIDENCE / REFERENCE
+```
+
+Dengan demikian AI dapat melakukan mapping.
+
+---
+
+# XIX. MUK 2023 → COMPETENCY GRAPH
+
+Inilah bagian yang harus kita buat sangat serius.
+
+Misalnya:
+
+```text
+MUK
+ │
+ └── Unit Kompetensi
+       │
+       ├── Knowledge
+       ├── Skill
+       ├── Criteria
+       ├── Evidence
+       └── Practice
+```
+
+Kemudian:
+
+```text
+COMPETENCY
+     │
+     ├── MATERIAL
+     ├── QUESTION
+     ├── PRACTICE
+     ├── SCENARIO
+     ├── SIMULATION
+     └── READINESS METRIC
+```
+
+Sehingga setiap materi SIAP punya **asal-usul yang dapat ditelusuri**.
+
+---
+
+# XX. KNOWLEDGE VERSION CONTROL
+
+Setiap konten harus memiliki:
+
+```text
+Source
+Issuer
+Document
+Version
+Year
+Effective Date
+Competency Scheme
+Level
+Unit
+Status
+Reviewer
+Review Date
+```
+
+Ini menghindari AI memakai referensi yang sudah tidak sesuai.
+
+---
+
+# XXI. "TRUSTED KNOWLEDGE GATE"
+
+Sebelum AI menggunakan dokumen:
+
+```text
+DOCUMENT
+   ↓
+SOURCE CHECK
+   ↓
+VERSION CHECK
+   ↓
+SCOPE CHECK
+   ↓
+APPROVAL CHECK
+   ↓
+TRUSTED KNOWLEDGE
+```
+
+Hanya knowledge yang lolos yang boleh menjadi dasar jawaban tertentu.
+
+---
+
+# XXII. AGENT TIDAK BOLEH BEBAS MENGAMBIL DATA
+
+Ini inti Agentic AI yang profesional.
+
+Setiap agent mempunyai:
+
+### Scope
+
+Apa yang boleh dikerjakan.
+
+### Knowledge Access
+
+Data apa yang boleh dibaca.
+
+### Tool Access
+
+Apa yang boleh dilakukan.
+
+### Action Permission
+
+Apa yang boleh dieksekusi.
+
+### Approval Requirement
+
+Kapan harus meminta manusia.
+
+---
+
+# XXIII. AGENT PERMISSION MATRIX
+
+Contoh:
+
+| Agent         | Read          | Write           | Execute         | Human Approval        |
+| ------------- | ------------- | --------------- | --------------- | --------------------- |
+| Consultant    | Profile       | Case            | Recommendation  | Tidak                 |
+| Eligibility   | Profile/Rules | Result          | Screening       | Untuk keputusan resmi |
+| Document      | Documents     | Checklist       | AI check        | Flagged review        |
+| Case          | Case          | Status          | Workflow        | Tindakan eksternal    |
+| Preparation   | Competency    | Learning record | Learning plan   | Tidak                 |
+| Simulation    | Knowledge     | Result          | Simulation      | Tidak                 |
+| Readiness     | Performance   | Readiness       | Analysis        | Tidak                 |
+| Certification | Case          | Status          | External action | **Ya**                |
+| Governance    | All logs      | Audit           | Flag            | **Ya**                |
+
+Ini membuat MultiClaw/OpenClaw **terkendali**, bukan autonomous tanpa batas.
+
+---
+
+# XXIV. HUMAN-IN-THE-LOOP
+
+Keputusan penting:
+
+```text
+AI
+ ↓
+Recommendation
+ ↓
+Human Review
+ ↓
+Approval
+ ↓
+Action
+```
+
+Terutama untuk:
+
+* eligibility final;
+* dokumen bermasalah;
+* submission;
+* perubahan data penting;
+* komunikasi resmi;
+* tindakan eksternal.
+
+---
+
+# XXV. AI COMMAND CENTER
+
+Sekarang kita kembali ke Gustafta.
+
+User tidak harus membuka SIAP.
+
+Dia cukup bertanya:
+
+> **"Siapa tenaga kerja saya yang perlu diperpanjang SKK?"**
+
+Gustafta Orchestrator akan:
+
+```text
+Intent
+ ↓
+Workforce Agent
+ ↓
+SKK Agent
+ ↓
+Personnel Master
+ ↓
+Expiry Analysis
+ ↓
+Result
+```
+
+---
+
+# XXVI. CONTOH COMMAND LAIN
+
+> "Budi mau mengambil SKK jenjang 7. Apa yang harus disiapkan?"
+
+↓
+
+SIAP Consultant + Eligibility + Document Agent.
+
+---
+
+> "Budi sudah siap ujikom belum?"
+
+↓
+
+Diagnostic + Simulation + Readiness Agent.
+
+---
+
+> "Apa gap kompetensi Budi?"
+
+↓
+
+Competency Agent.
+
+---
+
+> "Buatkan program persiapan untuk 10 orang jenjang 4–6."
+
+↓
+
+Preparation Agent.
+
+---
+
+> "Tampilkan siapa saja yang perlu dokumen tambahan."
+
+↓
+
+Document Agent.
+
+---
+
+# XXVII. GUSTAFTA MENJADI "CONTEXT-AWARE"
+
+Inilah yang tidak bisa dilakukan chatbot biasa.
+
+Ketika user berkata:
+
+> "Budi"
+
+Gustafta tahu Budi adalah:
+
+* personel perusahaan;
+* bekerja di proyek tertentu;
+* mempunyai riwayat tertentu;
+* memiliki SKK tertentu;
+* memiliki target tertentu;
+* sedang dalam case tertentu.
+
+Jadi user tidak perlu menjelaskan semuanya setiap kali.
+
+---
+
+# XXVIII. MULTICLAW/OPENCLAW: JANGAN DIPOSISIKAN SEBAGAI FITUR
+
+Ini juga perlu dipertajam.
+
+MultiClaw/OpenClaw bukan sesuatu yang perlu dijual kepada pengguna.
+
+Ia adalah:
+
+# **Agent Runtime / Orchestration Infrastructure**
+
+User hanya merasakan:
+
+> "Gustafta mengerti pekerjaan saya dan membantu menyelesaikannya."
+
+---
+
+# XXIX. AGENT FLOW CONTOH
+
+User:
+
+> "Tolong cek 15 tenaga kerja saya yang akan habis SKK-nya dan siapkan prosesnya."
+
+Orchestrator memecah:
+
+```text
+1. Identify company
+2. Read personnel
+3. Read SKK
+4. Detect expiry
+5. Group personnel
+6. Check requirements
+7. Identify document gaps
+8. Create cases
+9. Generate action list
+10. Ask human approval
+```
+
+Kemudian:
+
+> **"Saya menemukan 6 personel. 4 dapat langsung masuk proses, 2 memerlukan pemeriksaan dokumen. Apakah saya buatkan 6 case?"**
+
+Itulah Agentic AI yang benar.
+
+---
+
+# XXX. SIAP WORKFORCE
+
+Di sinilah hubungan Gustafta-SIAP menjadi sangat kuat.
+
+Dashboard BUJK:
+
+# **WORKFORCE CERTIFICATION HEALTH**
+
+```text
+TOTAL PERSONNEL              48
+
+SKK ACTIVE                   31
+NEED RENEWAL                  7
+NO SKK                         6
+UNDER PROCESS                  3
+PREPARATION                    1
+```
+
+Kemudian:
+
+# **Competency Health**
+
+```text
+Level 1–3       8
+Level 4–6      25
+Level 7–9      15
+```
+
+---
+
+# XXXI. WORKFORCE GAP
+
+Gustafta tidak hanya bertanya:
+
+> "Siapa yang punya SKK?"
+
+Tetapi:
+
+> **"Apakah komposisi kompetensi tenaga kerja perusahaan sudah sesuai kebutuhan?"**
+
+Ini level yang lebih tinggi.
+
+Contoh:
+
+```text
+PROJECT REQUIREMENT
+        ↓
+REQUIRED PERSONNEL
+        ↓
+AVAILABLE PERSONNEL
+        ↓
+CERTIFICATION STATUS
+        ↓
+COMPETENCY GAP
+```
+
+---
+
+# XXXII. PROJECT → WORKFORCE → SKK
+
+Ini memungkinkan Gustafta memberikan insight:
+
+> "Untuk proyek baru, perusahaan membutuhkan personel dengan kompetensi tertentu. Dari workforce saat ini, tersedia 8 orang; 3 belum memiliki sertifikasi yang diperlukan."
+
+Lalu SIAP:
+
+> membantu membuat certification/preparation pathway.
+
+Ini adalah **closed loop**.
+
+---
+
+# XXXIII. CLOSED LOOP GUSTAFTA
+
+```text
+BUSINESS
+   ↓
+PROJECT
+   ↓
+WORKFORCE REQUIREMENT
+   ↓
+PERSONNEL
+   ↓
+COMPETENCY
+   ↓
+CERTIFICATION
+   ↓
+PREPARATION
+   ↓
+READINESS
+   ↓
+PROJECT DEPLOYMENT
+   ↓
+PROJECT EXPERIENCE
+   ↓
+NEW COMPETENCY EVIDENCE
+   ↓
+BACK TO WORKFORCE
+```
+
+Ini menurut saya merupakan **fitur strategis paling kuat** dari integrasi Gustafta + SIAP.
+
+---
+
+# XXXIV. DATA YANG TIDAK BOLEH DIGABUNG SEMBARANGAN
+
+Ada tiga boundary:
+
+### 1. Corporate Data
+
+Milik perusahaan.
+
+### 2. Participant Preparation Data
+
+Milik/terkait peserta sesuai kebijakan layanan dan persetujuan.
+
+### 3. Official Assessment Data
+
+Berada pada proses resmi LSP/asesor dan **tidak dianggap sebagai data SIAP** kecuali memang secara sah diberikan dan penggunaannya diizinkan.
+
+---
+
+# XXXV. PRIVACY / TENANT ISOLATION
+
+Karena Gustafta untuk banyak BUJK:
+
+```text
+TENANT A
+ ├── Personnel
+ ├── Projects
+ └── SIAP Data
+
+TENANT B
+ ├── Personnel
+ ├── Projects
+ └── SIAP Data
+```
+
+Agent harus selalu mengetahui:
+
+> **Tenant Context**
+
+Sebelum membaca data.
+
+---
+
+# XXXVI. AGENT CONTEXT
+
+Setiap agent execution minimal membawa:
+
+```text
+Tenant ID
+User ID
+Role
+Case ID
+Personnel ID
+Intent
+Knowledge Scope
+Permission
+Tool Scope
+```
+
+Ini sangat penting jika nanti Gustafta menjadi SaaS.
+
+---
+
+# XXXVII. AUDIT LOG AGENT
+
+Setiap agent action:
+
+```text
+TIMESTAMP
+USER
+AGENT
+CASE
+ACTION
+DATA SOURCE
+KNOWLEDGE VERSION
+TOOL
+OUTPUT
+APPROVAL
+```
+
+Sehingga ketika terjadi masalah:
+
+> kita dapat melakukan trace-back.
+
+---
+
+# XXXVIII. DASHBOARD MANAGEMENT
+
+Untuk manajemen Gustafta/SIAP:
+
+### Certification Funnel
+
+```text
+Lead
+ ↓
+Application
+ ↓
+Document Complete
+ ↓
+Preparation
+ ↓
+Ready
+ ↓
+Assessment
+ ↓
+Completed
+```
+
+### Preparation Funnel
+
+```text
+Enrolled
+ ↓
+Diagnostic
+ ↓
+Learning
+ ↓
+Practice
+ ↓
+Simulation
+ ↓
+Ready
+```
+
+### Workforce Funnel
+
+```text
+Personnel
+ ↓
+Mapped
+ ↓
+Certified
+ ↓
+Need Renewal
+ ↓
+Gap
+```
+
+---
+
+# XXXIX. KPI SIAP SKK
+
+Jangan hanya mengukur jumlah peserta.
+
+Gunakan:
+
+### SERVICE KPI
+
+* case completion;
+* document completion;
+* average processing time;
+* unresolved case;
+* customer response.
+
+### PREPARATION KPI
+
+* diagnostic completion;
+* learning completion;
+* simulation completion;
+* readiness improvement;
+* remedial rate.
+
+### QUALITY KPI
+
+* source traceability;
+* content review;
+* AI hallucination flag;
+* human intervention;
+* audit exceptions.
+
+### BUSINESS KPI
+
+* lead;
+* conversion;
+* package;
+* revenue;
+* repeat;
+* corporate customer.
+
+---
+
+# XL. METRIK KUNCI: READINESS DELTA
+
+Saya sarankan fitur yang sangat sederhana tetapi kuat:
+
+```text
+Initial Readiness
+       54%
+
+       ↓
+
+Preparation
+
+       ↓
+
+Final Readiness
+       82%
+
+Improvement
++28 points
+```
+
+Ini jauh lebih bermakna daripada hanya mengatakan:
+
+> "Anda mendapat nilai 82."
+
+---
+
+# XLI. READINESS HARUS MULTI-DIMENSIONAL
+
+Contoh:
+
+| Dimensi                  | Awal | Akhir |
+| ------------------------ | ---: | ----: |
+| Knowledge                |   61 |    84 |
+| Understanding            |   58 |    81 |
+| Application              |   52 |    77 |
+| Problem Solving          |   49 |    74 |
+| Professional Explanation |   57 |    80 |
+
+Kemudian:
+
+> **Preparation Readiness: 79**
+
+Dan disclaimer:
+
+> **Bukan hasil asesmen dan bukan jaminan kelulusan.**
+
+---
+
+# XLII. "READINESS REPORT"
+
+Peserta mendapatkan:
+
+# **SIAP Preparation Report**
+
+Isinya:
+
+### Profile
+
+### Target
+
+### Diagnostic
+
+### Learning Activity
+
+### Practice
+
+### Simulation
+
+### Improvement
+
+### Remaining Gap
+
+### Recommended Action
+
+### Readiness Indicator
+
+### Source/Version
+
+Ini dapat menjadi output premium SIAP.
+
+---
+
+# XLIII. UNTUK CORPORATE
+
+Perusahaan mendapatkan:
+
+# **Workforce Competency Report**
+
+Misalnya:
+
+> 25 personel.
+
+AI menyimpulkan:
+
+> 17 certified.
+
+> 4 renewal required.
+
+> 3 preparation.
+
+> 1 document issue.
+
+Dan:
+
+> **"Prioritas bulan ini: selesaikan 3 renewal dan 2 document gap."**
+
+---
+
+# XLIV. DENGAN DEMIKIAN SIAP TIDAK BERHENTI PADA "SKK"
+
+Jalur evolusinya:
+
+```text
+SKK
+ ↓
+Competency
+ ↓
+Workforce
+ ↓
+Training
+ ↓
+Career
+ ↓
+Project Deployment
+```
+
+Namun **MVP tidak perlu membangun semuanya**.
+
+---
+
+# XLV. MVP YANG SAYA REKOMENDASIKAN
+
+Karena Anda sebelumnya menekankan **UKM konstruksi dan jangan terlalu kompleks**, MVP cukup:
+
+## Gustafta Core yang sudah ada
+
+*
+
+## SIAP SKK:
+
+1. Personnel integration
+2. SKK profile
+3. Certification Case
+4. Document Checklist
+5. Document AI Check
+6. Eligibility screening
+7. MUK/competency knowledge
+8. Diagnostic
+9. Learning
+10. Simulation
+11. Readiness
+12. Certification monitoring
+13. AI Assistant
+14. Audit trail
+
+**Stop di sini dahulu.**
+
+Jangan langsung membangun:
+
+* marketplace;
+* career platform;
+* recruitment;
+* advanced HR;
+* complicated analytics;
+* massive automation.
+
+---
+
+# XLVI. PHASE 2
+
+Setelah MVP stabil:
+
+### Workforce Dashboard
+
+### Bulk Certification
+
+### Corporate Cohort
+
+### Renewal Automation
+
+### Project-to-Competency Mapping
+
+### Experience Evidence
+
+---
+
+# XLVII. PHASE 3
+
+Baru kemudian:
+
+### Advanced Agentic Workflow
+
+### Predictive Workforce Gap
+
+### Training Recommendation
+
+### Competency Development Plan
+
+### Corporate Workforce Intelligence
+
+---
+
+# XLVIII. SATU HAL YANG SANGAT PENTING
+
+**Jangan membangun AI terlebih dahulu.**
+
+Urutan pembangunan harus:
+
+```text
+DATA
+ ↓
+WORKFLOW
+ ↓
+KNOWLEDGE
+ ↓
+RULES
+ ↓
+PERMISSION
+ ↓
+AUDIT
+ ↓
+AGENT
+ ↓
+AUTOMATION
+```
+
+Bukan:
+
+```text
+AI
+ ↓
+AI
+ ↓
+AI
+ ↓
+database belakangan
+```
+
+Kalau data dan workflow tidak benar, MultiClaw/OpenClaw hanya akan membuat kekacauan menjadi otomatis.
+
+---
+
+# XLIX. BLUEPRINT FINAL
+
+Saya akan mengunci Gustafta + SIAP seperti ini:
+
+```text
+                           GUSTAFTA
+               CONSTRUCTION OPERATING SYSTEM
+                              │
+ ┌────────────────────────────┼────────────────────────────┐
+ │                            │                            │
+COMPANY OS                PROJECT OS                 WORKFORCE OS
+ │                            │                            │
+ │                            │                     ┌──────▼───────┐
+ │                            │                     │   SIAP SKK    │
+ │                            │                     │               │
+ │                            │                     │ CERTIFICATION │
+ │                            │                     │ PREPARATION   │
+ │                            │                     │ SIMULATION    │
+ │                            │                     │ READINESS     │
+ │                            │                     │ WORKFORCE     │
+ │                            │                     └──────┬────────┘
+ │                            │                            │
+ └───────────────┬────────────┴────────────────────────────┘
+                 │
+          DOCUMENT / EVIDENCE
+                 │
+          KNOWLEDGE ENGINE
+                 │
+          COMPLIANCE ENGINE
+                 │
+          AI COMMAND CENTER
+                 │
+       ┌─────────▼─────────┐
+       │  MULTICLAW /      │
+       │     OPENCLAW      │
+       └─────────┬─────────┘
+                 │
+       ┌─────────┼──────────┐
+       ▼         ▼          ▼
+    AGENTS     TOOLS     MEMORY/CONTEXT
+```
+
+---
+
+# L. KONSEP PALING TAJAMNYA
+
+Kalau seluruh diskusi kita sederhanakan menjadi satu kalimat:
+
+> **Gustafta mengelola pekerjaan dan perusahaan konstruksi; SIAP SKK memastikan orang-orang yang menjalankan pekerjaan tersebut memiliki jalur sertifikasi dan persiapan kompetensi yang terkelola dengan baik.**
+
+Dan AI Agentic menjadi:
+
+> **lapisan yang menghubungkan data, dokumen, workflow, knowledge, dan tindakan.**
+
+---
+
+# LI. POSISI SIAP SKK DALAM GUSTAFTA
+
+Saya akan tetapkan struktur finalnya:
+
+### **GUSTAFTA**
+
+**Platform induk**
+
+↓
+
+### **WORKFORCE OS**
+
+**Manajemen tenaga kerja dan kompetensi**
+
+↓
+
+### **SIAP SKK**
+
+**Certification & Competency Preparation**
+
+↓
+
+### **SIAP CERTIFY**
+
+Pengurusan dan pendampingan sertifikasi
+
+### **SIAP PREPARE**
+
+Bimbingan persiapan
+
+### **SIAP SIMULATE**
+
+Latihan/simulasi
+
+### **SIAP READINESS**
+
+Indikator kesiapan
+
+### **SIAP WORKFORCE**
+
+Manajemen SKK perusahaan
+
+---
+
+## Dan yang paling penting:
+
+**SIAP SKK tidak pernah menjadi LSP.**
+
+**SIAP SKK tidak pernah menggantikan Asesor.**
+
+**SIAP SKK tidak memberikan keputusan kompeten/belum kompeten.**
+
+**SIAP SKK tidak menjanjikan kelulusan.**
+
+SIAP melakukan sesuatu yang sangat jelas:
+
+> **membantu calon peserta dan BUJK menyiapkan administrasi, pengetahuan, pengalaman, latihan, simulasi, dan kesiapan sebelum memasuki proses asesmen resmi.**
+
+Dengan batas tersebut, SIAP SKK menjadi **lebih kredibel secara kelembagaan, lebih aman secara operasional, dan jauh lebih kuat sebagai produk komersial**.
+
+Dan untuk Gustafta, integrasi ini membuat **Workforce OS bukan sekadar database karyawan**, tetapi menjadi **Competency & Certification Intelligence Layer** yang terhubung langsung dengan **Company OS, Project OS, Document Center, Evidence, Compliance, dan AI Agentic Core**.
