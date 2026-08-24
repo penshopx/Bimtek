@@ -29,7 +29,10 @@ export default function QuizPage() {
   const [categories, setCategories] = useState<string[]>(['Semua']);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [jabatanFilterActive, setJabatanFilterActive] = useState(false);
-  const [randomMode, setRandomMode] = useState(false);
+  const [randomMode, setRandomMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('quiz-random-mode') === 'true';
+  });
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -154,6 +157,11 @@ export default function QuizPage() {
   const handleToggleJabatanFilter = () => {
     setJabatanFilterActive((prev) => !prev);
   };
+
+  // Persist randomMode preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('quiz-random-mode', String(randomMode));
+  }, [randomMode]);
 
   const handleToggleRandomMode = () => {
     setRandomMode((prev) => !prev);
