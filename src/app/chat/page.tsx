@@ -331,7 +331,7 @@ export default function ChatPage() {
                 )}
               </div>
 
-              {consecutiveAIErrors >= 2 && (
+              {consecutiveAIErrors >= 2 && !dismissedWarnings.has('ai-outage') && (
                 <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-amber-700 text-sm">
                   <span>⚠️</span>
                   <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
@@ -341,6 +341,13 @@ export default function ChatPage() {
                     className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     🔄 Coba Lagi
+                  </button>
+                  <button
+                    onClick={() => dismissWarning('ai-outage')}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-amber-500 hover:bg-amber-100 hover:text-amber-700 text-lg leading-none transition-colors"
+                    aria-label="Tutup peringatan"
+                  >
+                    ×
                   </button>
                 </div>
               )}

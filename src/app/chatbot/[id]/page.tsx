@@ -401,7 +401,7 @@ Apa yang ingin Anda konsultasikan?`;
           )}
 
           {/* Persistent AI outage banner */}
-          {consecutiveAIErrors >= 2 && (
+          {consecutiveAIErrors >= 2 && !dismissedWarnings.has('ai-outage') && (
             <div className="px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center gap-2 text-amber-400 text-sm">
               <span>⚠️</span>
               <span>AI sedang tidak tersedia. Respons saat ini menggunakan mode otomatis.</span>
@@ -411,6 +411,13 @@ Apa yang ingin Anda konsultasikan?`;
                 className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 🔄 Coba Lagi
+              </button>
+              <button
+                onClick={() => dismissWarning('ai-outage')}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-amber-300 hover:bg-amber-500/20 hover:text-amber-100 text-lg leading-none transition-colors"
+                aria-label="Tutup peringatan"
+              >
+                ×
               </button>
             </div>
           )}
