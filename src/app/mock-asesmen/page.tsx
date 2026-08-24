@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const domains = [
   { id: 'manpro', name: 'Manajemen Pelaksanaan', level: 'Ahli Madya', code: 'SKK-501', icon: '📋', color: 'blue' },
@@ -47,9 +47,11 @@ export default function MockAsesmenPage() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [targetUnit, setTargetUnit] = useState<string | null>(null);
 
-  const startAsesmen = async (domain: typeof domains[0]) => {
+  const startAsesmen = useCallback(async (domain: typeof domains[0], unit?: string | null) => {
     setSelectedDomain(domain);
+    setTargetUnit(unit ?? null);
     setPhase('loading');
     setError(null);
     setAnswers({});
@@ -60,7 +62,7 @@ export default function MockAsesmenPage() {
       const res = await fetch('/api/mock-asesmen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: domain.name, level: domain.level, domainCode: domain.code }),
+        body: JSON.stringify({ domain: domain.name, level: domain.level, domainCode: domain.code, unit }),
       });
       const data = await res.json();
       if (!res.ok || !data.questions?.length) throw new Error(data.error ?? 'Gagal memuat soal');
@@ -70,7 +72,15 @@ export default function MockAsesmenPage() {
       setError(e.message);
       setPhase('select');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const domainParam = params.get('domain');
+    const unitParam = params.get('unit');
+    const domain = domains.find(d => d.id === domainParam || d.code === domainParam);
+    if (domain) void startAsesmen(domain, unitParam);
+  }, [startAsesmen]);
 
   const selectAnswer = (qId: number, option: string) => {
     if (answers[qId]) return; // locked after answering
@@ -133,7 +143,9 @@ export default function MockAsesmenPage() {
           <div className="text-center py-24">
             <div className="text-5xl mb-4 animate-spin">⚙️</div>
             <p className="text-white font-semibold text-lg mb-2">Menyiapkan soal asesmen…</p>
-            <p className="text-slate-400 text-sm">AI menganalisis SKKNI untuk {selectedDomain?.name}</p>
+            <p className="text-slate-400 text-sm">
+              AI menganalisis SKKNI untuk {targetUnit ? `${targetUnit} · ${selectedDomain?.name}` : selectedDomain?.name}
+            </p>
           </div>
         )}
 
@@ -153,7 +165,10 @@ export default function MockAsesmenPage() {
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{selectedDomain?.icon}</span>
-                  <span className="text-slate-400 text-sm">{selectedDomain?.name}</span>
+                  <div>
+                    <span className="text-slate-400 text-sm">{selectedDomain?.name}</span>
+                    {targetUnit && <p className="text-amber-300 text-xs mt-0.5">{targetUnit}</p>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${

@@ -117,6 +117,51 @@ interface StudyItem {
   desc: string;
   jam: number;
   prio?: 'tinggi' | 'sedang' | 'rendah';
+  practiceHref?: string;
+}
+
+function getUkDomainId(uk: Pick<UnitKompetensi, 'kode' | 'judul'>) {
+  const title = uk.judul.toLowerCase();
+
+  if (/k3|keselamatan|bahaya|smk3/.test(title)) return 'k3';
+  if (/jalan|perkerasan|drainase/.test(title) || uk.kode.startsWith('F.421')) return 'jalan';
+  if (/volume|estimasi biaya|biaya/.test(title)) return 'qs';
+  if (/pengawasan|supervisi/.test(title)) return 'pengawas';
+  if (/pondasi|tanah|geoteknik/.test(title)) return 'geo';
+  if (/kontrak|pengadaan/.test(title)) return 'kontrak';
+  if (/proyek|waktu|risiko|sumber daya|mutu proyek|komunikasi/.test(title) || uk.kode.startsWith('M.711')) return 'proyek';
+
+  return 'gedung';
+}
+
+function buildPracticeHref(item: StudyItem, jabatan: JabatanData) {
+  if (item.type === 'uk') {
+    const params = new URLSearchParams({
+      domain: getUkDomainId({ kode: item.id, judul: item.label }),
+      unit: item.label,
+    });
+    return `/mock-asesmen?${params.toString()}`;
+  }
+
+  if (item.type === 'latihan') {
+    const params = new URLSearchParams({
+      jabatan: jabatan.nama,
+      materi: item.label,
+      context: item.desc,
+    });
+    return `/klinik-uji-kompetensi?${params.toString()}`;
+  }
+
+  if (item.type === 'review') {
+    const agent = /fr\.apl|dokumen|bukti|sertifikat/i.test(item.label) ? 'dokumen' : 'jabatan';
+    const params = new URLSearchParams({
+      agent,
+      context: `Saya sedang mengikuti rencana belajar untuk ${jabatan.nama}. Bantu saya dengan topik: ${item.label}. ${item.desc}`,
+    });
+    return `/skk-coach/chat?${params.toString()}`;
+  }
+
+  return '/hari-h';
 }
 
 function generatePlan(jabatan: JabatanData, daysLeft: number, jamPerHari: number): StudyWeek[] {
@@ -191,7 +236,13 @@ function generatePlan(jabatan: JabatanData, daysLeft: number, jamPerHari: number
     ],
   });
 
-  return weeks;
+  return weeks.map(week => ({
+    ...week,
+    items: week.items.map(item => ({
+      ...item,
+      practiceHref: buildPracticeHref(item, jabatan),
+    })),
+  }));
 }
 
 // ─── Constants & helpers ──────────────────────────────────────────────────────
@@ -651,7 +702,7 @@ function WeekCard({
       {open && (
         <div className="px-5 pb-5 space-y-2">
           {week.items.map(item => (
-            <label
+            <div
               key={item.id}
               className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-all ${
                 checked[item.id]
@@ -663,6 +714,7 @@ function WeekCard({
                 type="checkbox"
                 checked={!!checked[item.id]}
                 onChange={() => onToggle(item.id)}
+                aria-label={`Tandai ${item.label} sebagai selesai`}
                 className="w-4 h-4 rounded accent-purple-500 flex-shrink-0 mt-0.5"
               />
               <div className="flex-1 min-w-0">
@@ -684,7 +736,17 @@ function WeekCard({
                   <p className={`text-xs mt-0.5 transition-colors ${checked[item.id] ? 'text-slate-600' : 'text-slate-400'}`}>{item.desc}</p>
                 )}
               </div>
-            </label>
+              {item.practiceHref && (
+                <Link
+                  href={item.practiceHref}
+                  onClick={event => event.stopPropagation()}
+                  className="flex-shrink-0 self-center px-2.5 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-xs font-semibold transition-colors"
+                  aria-label={`${checked[item.id] ? 'Ulangi latihan' : 'Latihan sekarang'}: ${item.label}`}
+                >
+                  {checked[item.id] ? '↻ Ulangi' : '🎯 Latihan'}
+                </Link>
+              )}
+            </div>
           ))}
         </div>
       )}

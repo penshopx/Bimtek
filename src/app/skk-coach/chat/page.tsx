@@ -30,9 +30,10 @@ interface Msg { role: 'user' | 'assistant'; content: string; }
 function SKKCoachChatInner() {
   const searchParams = useSearchParams();
   const initialAgent = searchParams.get('agent') ?? 'kelayakan';
+  const initialContext = searchParams.get('context') ?? '';
   const [activeAgent, setActiveAgent] = useState(initialAgent);
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(initialContext);
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 

@@ -6,18 +6,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'AI tidak tersedia' }, { status: 503 });
   }
 
-  const { domain, level, domainCode } = await request.json();
+  const { domain, level, domainCode, unit } = await request.json();
+  const unitFocus = typeof unit === 'string' && unit.trim()
+    ? `- Unit kompetensi fokus: ${unit.trim()}`
+    : '';
 
   const prompt = `Kamu adalah asesor BNSP untuk uji kompetensi SKK bidang konstruksi Indonesia.
 
 Buat TEPAT 5 soal pilihan ganda untuk simulasi ujian kompetensi SKK:
 - Domain: ${domain}
 - Level: ${level} (${domainCode})
+${unitFocus}
 - 3 soal pengetahuan teknis (type: "knowledge")  
 - 2 soal skenario lapangan (type: "scenario") — deskripsi situasi nyata di proyek
 
 Setiap soal harus:
 - Relevan dengan SKKNI bidang ${domain}
+- Jika unit kompetensi fokus tersedia, seluruh soal harus spesifik menguji unit tersebut
 - Berbasis regulasi Indonesia (SNI, Permen PU, BNSP)
 - Opsi A/B/C/D yang masuk akal (bukan terlalu mudah/terlalu jelas)
 - Penjelasan singkat kenapa jawaban benar

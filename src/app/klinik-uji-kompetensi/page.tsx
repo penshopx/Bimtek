@@ -96,6 +96,17 @@ export default function KlinikPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMsgs]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetJabatan = params.get('jabatan');
+    const targetMateri = params.get('materi');
+    const targetContext = params.get('context');
+
+    if (targetJabatan) setJabatan(targetJabatan);
+    if (targetMateri) setMateriSulit(targetMateri);
+    if (targetContext) setCeritaProyek(targetContext);
+  }, []);
+
   const phaseIndex = { dialog: 0, 'loading-blueprint': 1, blueprint: 1, chatbot: 2, 'loading-ujian': 3, ujian: 3, keputusan: 4 }[phase] ?? 0;
 
   // Step 1 → 2: Submit dialog → get blueprint
