@@ -30,6 +30,7 @@ export default function AdminQuizPage() {
   const [reordering, setReordering] = useState(false);
   const [resetConfirmId, setResetConfirmId] = useState<number | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [sortBySuccessRate, setSortBySuccessRate] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -182,6 +183,16 @@ export default function AdminQuizPage() {
 
   const filtered = filterCategory === 'Semua' ? questions : questions.filter((q) => q.category === filterCategory);
 
+  const displayed = sortBySuccessRate
+    ? [...filtered].sort((a, b) => {
+        const statA = stats.get(a.id);
+        const statB = stats.get(b.id);
+        const rateA = statA && statA.totalAttempts > 0 ? statA.successRate : 101;
+        const rateB = statB && statB.totalAttempts > 0 ? statB.successRate : 101;
+        return rateA - rateB;
+      })
+    : filtered;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -204,8 +215,8 @@ export default function AdminQuizPage() {
           </div>
         </div>
 
-        {/* Category filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        {/* Category filter + sort toggle */}
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -219,10 +230,21 @@ export default function AdminQuizPage() {
               {cat}
             </button>
           ))}
+          <button
+            onClick={() => setSortBySuccessRate((v) => !v)}
+            className={`ml-auto px-3 py-1 rounded-full text-sm border transition-colors ${
+              sortBySuccessRate
+                ? 'bg-red-500 text-white border-red-500'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-red-400 hover:text-red-500'
+            }`}
+            title={sortBySuccessRate ? 'Kembali ke urutan tampilan' : 'Urutkan dari tingkat benar terendah'}
+          >
+            {sortBySuccessRate ? '⚠️ Urutan: Tersulit ↑' : 'Sort: Tersulit ↑'}
+          </button>
         </div>
 
-        {/* Reorder hint */}
-        {filtered.length > 1 && (
+        {/* Reorder hint — hidden while sort-by-success-rate is active */}
+        {filtered.length > 1 && !sortBySuccessRate && (
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             ↕ Gunakan tombol panah untuk mengubah urutan tampilan soal.
             {reordering && <span className="ml-2 text-amber-500">Menyimpan urutan...</span>}
@@ -361,7 +383,9 @@ export default function AdminQuizPage() {
               <table className="w-full">
                 <thead className="bg-slate-100 dark:bg-slate-700">
                   <tr>
-                    <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300 w-16">Urutan</th>
+                    {!sortBySuccessRate && (
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300 w-16">Urutan</th>
+                    )}
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-8">#</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Pertanyaan</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 w-28">Kategori</th>
@@ -374,14 +398,14 @@ export default function AdminQuizPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {filtered.length === 0 ? (
+                  {displayed.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan={sortBySuccessRate ? 6 : 7} className="px-4 py-8 text-center text-slate-500">
                         Belum ada soal di kategori ini.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((q, i) => {
+                    displayed.map((q, i) => {
                       const stat = stats.get(q.id);
                       const hasAttempts = stat && stat.totalAttempts > 0;
                       const isLowRate = hasAttempts && stat!.successRate < 40;
@@ -390,7 +414,8 @@ export default function AdminQuizPage() {
                           key={q.id}
                           className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 ${isLowRate ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
                         >
-                          {/* Up/Down buttons */}
+                          {/* Up/Down buttons — hidden in sort-by-success-rate mode */}
+                          {!sortBySuccessRate && (
                           <td className="px-2 py-3">
                             <div className="flex flex-col items-center gap-0.5">
                               <button
@@ -411,6 +436,7 @@ export default function AdminQuizPage() {
                               </button>
                             </div>
                           </td>
+                          )}
                           <td className="px-4 py-3 text-slate-400 text-sm">{i + 1}</td>
                           <td className="px-4 py-3">
                             <p className="text-sm font-medium text-slate-900 dark:text-white">{q.question}</p>
