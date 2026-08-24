@@ -426,8 +426,10 @@ export default function DokumenPage() {
   const [activeJabatan, setActiveJabatan] = useState<Jabatan | null>(null);
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({});
   const [naMap, setNaMap] = useState<Record<string, boolean>>({});
+  const [noteMap, setNoteMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
+  const [savingNote, setSavingNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const jabatanInBidang = JABATAN_LIST.filter((j) => j.bidang === activeBidang);
@@ -474,12 +476,15 @@ export default function DokumenPage() {
         const data = await res.json();
         const map: Record<string, boolean> = {};
         const naData: Record<string, boolean> = {};
-        (data.items as { documentId: string; checked: boolean; na: boolean }[]).forEach((item) => {
+        const noteData: Record<string, string> = {};
+        (data.items as { documentId: string; checked: boolean; na: boolean; note?: string | null }[]).forEach((item) => {
           map[item.documentId] = item.checked;
           if (item.na) naData[item.documentId] = true;
+          if (item.note) noteData[item.documentId] = item.note;
         });
         setCheckedMap(map);
         setNaMap(naData);
+        setNoteMap(noteData);
       }
       // Non-OK (e.g. 401 on first-ever load before device ID exists) → start with empty map
     } catch {
@@ -557,6 +562,28 @@ export default function DokumenPage() {
       setSaveError('Koneksi gagal. Perubahan tidak tersimpan.');
     } finally {
       setSaving(null);
+    }
+  };
+
+  const saveNote = async (docId: string, value: string) => {
+    if (!activeJabatan) return;
+    const trimmed = value.trim();
+    // Optimistic update already applied via noteMap state; just persist
+    setSavingNote(docId);
+    try {
+      await fetch('/api/dokumen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          jabatanId: activeJabatan.id,
+          documentId: docId,
+          note: trimmed || null,
+        }),
+      });
+    } catch {
+      // Silently ignore network errors for note saves; the field still shows what the user typed
+    } finally {
+      setSavingNote(null);
     }
   };
 
@@ -799,6 +826,31 @@ export default function DokumenPage() {
                                     ⬇️ Unduh Template
                                   </a>
                                 )}
+
+                                {/* User note / file location field */}
+                                <div
+                                  className="mt-2.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="text"
+                                    value={noteMap[doc.id] ?? ''}
+                                    onChange={(e) =>
+                                      setNoteMap((prev) => ({ ...prev, [doc.id]: e.target.value }))
+                                    }
+                                    onBlur={(e) => saveNote(doc.id, e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                    }}
+                                    placeholder="📎 Lokasi file atau catatan (opsional)…"
+                                    disabled={isNA}
+                                    className={`w-full text-xs rounded-lg px-2.5 py-1.5 border transition-colors outline-none ${
+                                      isNA
+                                        ? 'bg-slate-800/20 border-slate-700/30 text-slate-600 cursor-not-allowed'
+                                        : 'bg-slate-900/60 border-slate-600/50 text-slate-200 placeholder-slate-600 hover:border-slate-500 focus:border-amber-500/60 focus:bg-slate-900'
+                                    } ${savingNote === doc.id ? 'opacity-60' : ''}`}
+                                  />
+                                </div>
                               </div>
 
                               {/* N/A toggle button */}

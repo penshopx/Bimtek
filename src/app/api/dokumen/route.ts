@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { jabatanId, documentId, checked, na } = body;
+  const { jabatanId, documentId, checked, na, note } = body;
 
   if (!jabatanId || !documentId) {
     return NextResponse.json({ error: 'jabatanId and documentId required' }, { status: 400 });
@@ -110,8 +110,12 @@ export async function POST(request: NextRequest) {
   // so a single request is atomic and avoids insert races on new rows.
   // When only na is provided: setting na=true clears checked; clearing na leaves checked alone.
   // When only checked is provided: setting checked=true clears na.
+  // When only note is provided: update only the note field.
   let fields: Record<string, unknown>;
-  if (na !== undefined && checked !== undefined) {
+  if (note !== undefined && checked === undefined && na === undefined) {
+    // Note-only update: just persist the note text
+    fields = { note: note ?? null };
+  } else if (na !== undefined && checked !== undefined) {
     // Atomic reset: both fields explicitly provided
     fields = {
       checked: checked ?? false,
@@ -147,6 +151,7 @@ export async function POST(request: NextRequest) {
       checked: checked ?? false,
       checkedAt: checked ? now : null,
       na: na ?? false,
+      note: note ?? null,
       createdAt: now,
     });
   }
