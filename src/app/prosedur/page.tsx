@@ -236,33 +236,52 @@ interface StepCardProps {
   bookmarkUrl: string;
   isBookmarked: boolean;
   onToggleBookmark: (e: React.MouseEvent) => void;
+  isChecked: boolean;
+  onToggleCheck: (e: React.MouseEvent) => void;
 }
 
-function StepCard({ step, index, total, bookmarkId, bookmarkTitle, bookmarkUrl, isBookmarked, onToggleBookmark }: StepCardProps) {
+function StepCard({ step, index, total, bookmarkId, bookmarkTitle, bookmarkUrl, isBookmarked, onToggleBookmark, isChecked, onToggleCheck }: StepCardProps) {
   const [expanded, setExpanded] = useState(false);
   const c = colorMap[step.color];
 
   return (
     <div id={bookmarkId} className="flex flex-col items-center">
       {/* Card */}
-      <div className={`w-full rounded-2xl border ${c.border} ${c.bg} p-5 transition-all duration-200 hover:scale-[1.02] cursor-pointer`}
+      <div className={`w-full rounded-2xl border ${c.border} ${isChecked ? 'bg-green-500/8 border-green-500/30' : c.bg} p-5 transition-all duration-200 hover:scale-[1.02] cursor-pointer`}
            onClick={() => setExpanded(!expanded)}>
         <div className="flex items-start gap-4">
+          {/* Checkbox */}
+          <button
+            onClick={onToggleCheck}
+            title={isChecked ? 'Tandai belum selesai' : 'Tandai selesai'}
+            className={`mt-0.5 shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+              isChecked
+                ? 'bg-green-500 border-green-500 text-white'
+                : 'border-slate-600 hover:border-green-400 bg-transparent'
+            }`}
+          >
+            {isChecked && (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+
           {/* Step number + icon */}
           <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className={`w-10 h-10 rounded-full ${c.bg} border-2 ${c.border} flex items-center justify-center text-lg`}>
+            <div className={`w-10 h-10 rounded-full ${isChecked ? 'bg-green-500/15' : c.bg} border-2 ${isChecked ? 'border-green-500/40' : c.border} flex items-center justify-center text-lg ${isChecked ? 'opacity-60' : ''}`}>
               {step.icon}
             </div>
-            <span className={`text-xs font-bold ${c.text}`}>{index + 1}/{total}</span>
+            <span className={`text-xs font-bold ${isChecked ? 'text-green-400' : c.text}`}>{index + 1}/{total}</span>
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <h3 className={`font-bold text-base ${c.text}`}>{step.title}</h3>
+              <h3 className={`font-bold text-base ${isChecked ? 'text-green-400 line-through decoration-green-500/50' : c.text}`}>{step.title}</h3>
               <div className="flex items-center gap-2 shrink-0">
                 {step.duration && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${c.badge}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${isChecked ? 'bg-green-500/20 text-green-300' : c.badge}`}>
                     ⏱ {step.duration}
                   </span>
                 )}
@@ -288,10 +307,10 @@ function StepCard({ step, index, total, bookmarkId, bookmarkTitle, bookmarkUrl, 
                 </button>
               </div>
             </div>
-            <p className="text-slate-300 text-sm mt-1 leading-relaxed">{step.description}</p>
+            <p className={`text-sm mt-1 leading-relaxed ${isChecked ? 'text-slate-500' : 'text-slate-300'}`}>{step.description}</p>
 
             {/* Expand toggle */}
-            <button className={`mt-2 text-xs ${c.text} hover:underline flex items-center gap-1`}>
+            <button className={`mt-2 text-xs ${isChecked ? 'text-green-400' : c.text} hover:underline flex items-center gap-1`}>
               {expanded ? 'Sembunyikan detail ▲' : 'Lihat detail ▼'}
             </button>
 
@@ -299,8 +318,8 @@ function StepCard({ step, index, total, bookmarkId, bookmarkTitle, bookmarkUrl, 
             {expanded && (
               <ul className="mt-3 space-y-1.5">
                 {step.details.map((d, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                    <span className={`mt-0.5 ${c.text} shrink-0`}>•</span>
+                  <li key={i} className={`flex items-start gap-2 text-sm ${isChecked ? 'text-slate-500' : 'text-slate-300'}`}>
+                    <span className={`mt-0.5 ${isChecked ? 'text-green-500' : c.text} shrink-0`}>•</span>
                     {d}
                   </li>
                 ))}
@@ -344,10 +363,41 @@ const comparisons = [
 
 export default function ProsedurPage() {
   const [activeTab, setActiveTab] = useState<Method>('hardcopy');
+  const [checkedSteps, setCheckedSteps] = useState<boolean[]>([]);
   const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
   const didRestoreRef = useRef(false);
 
   const steps = stepsMap[activeTab];
+
+  // Load per-method checklist from localStorage whenever the active tab changes
+  useEffect(() => {
+    const stored = localStorage.getItem(`prosedur-checklist-${activeTab}`);
+    const methodSteps = stepsMap[activeTab];
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as boolean[];
+        setCheckedSteps(methodSteps.map((_, i) => parsed[i] ?? false));
+      } catch {
+        setCheckedSteps(new Array(methodSteps.length).fill(false));
+      }
+    } else {
+      setCheckedSteps(new Array(methodSteps.length).fill(false));
+    }
+  }, [activeTab]);
+
+  const handleToggleCheck = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCheckedSteps(prev => {
+      const next = [...prev];
+      next[index] = !next[index];
+      localStorage.setItem(`prosedur-checklist-${activeTab}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const completedCount = checkedSteps.filter(Boolean).length;
+  const totalCount = steps.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   // Restore tab + scroll to step from URL query params on first mount
   useEffect(() => {
@@ -462,8 +512,38 @@ export default function ProsedurPage() {
             </div>
           </div>
           <p className="text-slate-400 text-sm mt-3">
-            Klik pada setiap langkah untuk melihat detail. Tekan ⭐ untuk menyimpan langkah ke bookmark.
+            Klik pada setiap langkah untuk melihat detail. Centang ✓ untuk menandai langkah selesai. Tekan ⭐ untuk menyimpan langkah ke bookmark.
           </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-6 bg-slate-800/60 border border-slate-700 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-white">
+              {completedCount === totalCount && completedCount > 0
+                ? '🎉 Semua langkah selesai!'
+                : `${completedCount}/${totalCount} langkah selesai`}
+            </span>
+            <span className={`text-sm font-bold ${completedCount === totalCount && completedCount > 0 ? 'text-green-400' : 'text-slate-400'}`}>
+              {progressPct}%
+            </span>
+          </div>
+          <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div
+              className="h-2.5 rounded-full transition-all duration-500"
+              style={{
+                width: `${progressPct}%`,
+                background: completedCount === totalCount && completedCount > 0
+                  ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                  : 'linear-gradient(90deg, #f59e0b, #f97316)',
+              }}
+            />
+          </div>
+          {completedCount > 0 && completedCount < totalCount && (
+            <p className="text-xs text-slate-500 mt-2">
+              {totalCount - completedCount} langkah tersisa
+            </p>
+          )}
         </div>
 
         {/* Steps */}
@@ -481,6 +561,8 @@ export default function ProsedurPage() {
                 bookmarkUrl={`/prosedur?method=${activeTab}&step=${i}`}
                 isBookmarked={isBookmarked(bmId)}
                 onToggleBookmark={(e) => handleToggleBookmark(activeTab, i, step, e)}
+                isChecked={checkedSteps[i] ?? false}
+                onToggleCheck={(e) => handleToggleCheck(i, e)}
               />
             );
           })}
