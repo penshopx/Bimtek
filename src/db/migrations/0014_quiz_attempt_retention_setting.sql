@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO `settings` (`key`, `value`) VALUES ('quiz_attempt_retention_days', '90');

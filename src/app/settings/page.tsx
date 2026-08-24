@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useAuth } from '@/components/AuthProvider';
+import {
+  getQuizAttemptRetentionDays,
+  updateQuizAttemptRetentionDays,
+} from '@/app/actions/quiz';
 
 interface AppSettings {
   compactMode: boolean;
@@ -12,6 +17,7 @@ interface AppSettings {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [settings, setSettings] = useState<AppSettings>({
     compactMode: false,
     showAnimations: true,
@@ -20,6 +26,10 @@ export default function SettingsPage() {
   });
   const [mounted, setMounted] = useState(false);
   const [aiStatus, setAiStatus] = useState<'checking' | 'ready' | 'unconfigured'>('checking');
+  const [retentionDays, setRetentionDays] = useState('90');
+  const [retentionLoading, setRetentionLoading] = useState(false);
+  const [retentionSaving, setRetentionSaving] = useState(false);
+  const [retentionMessage, setRetentionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -28,6 +38,29 @@ export default function SettingsPage() {
       setSettings(JSON.parse(saved));
     }
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== 'admin') return;
+
+    let cancelled = false;
+    setRetentionLoading(true);
+    getQuizAttemptRetentionDays(localStorage.getItem('sessionId'))
+      .then((days) => {
+        if (!cancelled) setRetentionDays(String(days));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRetentionMessage({ text: 'Gagal memuat pengaturan retensi quiz.', type: 'error' });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRetentionLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (mounted) {
@@ -50,6 +83,27 @@ export default function SettingsPage() {
     if (confirm('Apakah Anda yakin ingin menghapus semua data? Ini tidak dapat dibatalkan.')) {
       localStorage.clear();
       window.location.reload();
+    }
+  };
+
+  const saveRetentionDays = async () => {
+    setRetentionMessage(null);
+    setRetentionSaving(true);
+    try {
+      const result = await updateQuizAttemptRetentionDays(
+        retentionDays,
+        localStorage.getItem('sessionId')
+      );
+      if (result.success) {
+        setRetentionDays(String(result.days));
+        setRetentionMessage({ text: 'Retensi riwayat quiz berhasil disimpan.', type: 'success' });
+      } else {
+        setRetentionMessage({ text: result.message || 'Gagal menyimpan pengaturan.', type: 'error' });
+      }
+    } catch {
+      setRetentionMessage({ text: 'Terjadi kesalahan saat menyimpan pengaturan.', type: 'error' });
+    } finally {
+      setRetentionSaving(false);
     }
   };
 
@@ -145,6 +199,49 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {user?.role === 'admin' && (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">🔐 Pengaturan Admin</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="quiz-retention-days" className="font-medium text-slate-800 dark:text-white">
+                    Retensi riwayat quiz (hari)
+                  </label>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Percobaan quiz yang lebih lama dari periode ini akan dihapus saat ada percobaan baru.
+                    Gunakan nilai antara 1 dan 3650 hari.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
+                  <input
+                    id="quiz-retention-days"
+                    type="number"
+                    min="1"
+                    max="3650"
+                    step="1"
+                    value={retentionDays}
+                    disabled={retentionLoading || retentionSaving}
+                    onChange={(event) => setRetentionDays(event.target.value)}
+                    className="w-full sm:w-40 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveRetentionDays}
+                    disabled={retentionLoading || retentionSaving}
+                    className="px-4 py-2 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 disabled:opacity-60"
+                  >
+                    {retentionSaving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                </div>
+                {retentionMessage && (
+                  <p className={`text-sm ${retentionMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                    {retentionMessage.text}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Data &amp; Progress</h2>

@@ -1,0 +1,4 @@
+export const QUIZ_ATTEMPT_RETENTION_SETTING_KEY = 'quiz_attempt_retention_days';
+export const DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS = 90;
+export const MIN_QUIZ_ATTEMPT_RETENTION_DAYS = 1;
+export const MAX_QUIZ_ATTEMPT_RETENTION_DAYS = 3650;

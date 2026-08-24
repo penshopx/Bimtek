@@ -8,6 +8,7 @@
 import { db } from './index';
 import * as schema from './schema';
 import { eq } from 'drizzle-orm';
+import { DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS, QUIZ_ATTEMPT_RETENTION_SETTING_KEY } from '@/lib/quizSettings';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -637,20 +638,23 @@ async function seedFavorites() {
 
 async function seedSettings() {
   const existing = await db.select().from(schema.settings);
-  if (existing.length > 0) {
-    console.log(`  ↳ settings: ${existing.length} rows already exist, skipping.`);
-    return;
-  }
-
-  const rows: (typeof schema.settings.$inferInsert)[] = [
+  const defaults: (typeof schema.settings.$inferInsert)[] = [
     { key: 'notifications_enabled', value: 'true' },
     { key: 'language', value: 'id' },
     { key: 'theme', value: 'light' },
     { key: 'seeded', value: 'true' },
+    { key: QUIZ_ATTEMPT_RETENTION_SETTING_KEY, value: String(DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS) },
   ];
+  const existingKeys = new Set(existing.map((setting) => setting.key));
+  const missing = defaults.filter((setting) => !existingKeys.has(setting.key));
 
-  await db.insert(schema.settings).values(rows);
-  console.log(`  ↳ settings: inserted ${rows.length} settings.`);
+  if (missing.length === 0) {
+    console.log(`  ↳ settings: ${existing.length} rows already exist, skipping.`);
+    return;
+  }
+
+  await db.insert(schema.settings).values(missing);
+  console.log(`  ↳ settings: inserted ${missing.length} settings.`);
 }
 
 // ---------------------------------------------------------------------------

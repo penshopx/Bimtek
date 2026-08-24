@@ -1,14 +1,30 @@
 'use server';
 
 import { db } from '@/db';
-import { quizQuestions, quizAttempts, sessions, users } from '@/db/schema';
+import { quizQuestions, quizAttempts, sessions, settings, users } from '@/db/schema';
 import { eq, asc, lt, sql } from 'drizzle-orm';
+import {
+  DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS,
+  MAX_QUIZ_ATTEMPT_RETENTION_DAYS,
+  MIN_QUIZ_ATTEMPT_RETENTION_DAYS,
+  QUIZ_ATTEMPT_RETENTION_SETTING_KEY,
+} from '@/lib/quizSettings';
 
 /**
  * Attempts older than this many days are purged on each insert.
  * Keeps the quiz_attempts table bounded regardless of activity volume.
  */
-const ATTEMPT_RETENTION_DAYS = 90;
+function parseRetentionDays(value: string | null | undefined): number {
+  const parsed = Number(value);
+  if (
+    Number.isInteger(parsed) &&
+    parsed >= MIN_QUIZ_ATTEMPT_RETENTION_DAYS &&
+    parsed <= MAX_QUIZ_ATTEMPT_RETENTION_DAYS
+  ) {
+    return parsed;
+  }
+  return DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS;
+}
 
 export interface QuizQuestion {
   id: number;
@@ -54,6 +70,55 @@ async function requireAdmin(sessionId: string | null | undefined): Promise<void>
   const userRows = await db.select().from(users).where(eq(users.id, session.userId));
   const user = userRows[0];
   if (!user || user.role !== 'admin') throw new Error('Forbidden');
+}
+
+async function readQuizAttemptRetentionDays(): Promise<number> {
+  const rows = await db
+    .select({ value: settings.value })
+    .from(settings)
+    .where(eq(settings.key, QUIZ_ATTEMPT_RETENTION_SETTING_KEY));
+  return parseRetentionDays(rows[0]?.value);
+}
+
+export async function getQuizAttemptRetentionDays(
+  sessionId: string | null | undefined
+): Promise<number> {
+  await requireAdmin(sessionId);
+  return readQuizAttemptRetentionDays();
+}
+
+export async function updateQuizAttemptRetentionDays(
+  value: unknown,
+  sessionId: string | null | undefined
+): Promise<{ success: boolean; message?: string; days?: number }> {
+  try {
+    await requireAdmin(sessionId);
+    const days = Number(value);
+    if (
+      !Number.isInteger(days) ||
+      days < MIN_QUIZ_ATTEMPT_RETENTION_DAYS ||
+      days > MAX_QUIZ_ATTEMPT_RETENTION_DAYS
+    ) {
+      throw new Error(
+        `Retensi harus berupa bilangan bulat antara ${MIN_QUIZ_ATTEMPT_RETENTION_DAYS} dan ${MAX_QUIZ_ATTEMPT_RETENTION_DAYS} hari`
+      );
+    }
+
+    await db
+      .insert(settings)
+      .values({ key: QUIZ_ATTEMPT_RETENTION_SETTING_KEY, value: String(days) })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(days) },
+      });
+
+    return { success: true, days };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -261,8 +326,9 @@ export async function recordQuizAttempt(
   } as never);
 
   // Trim attempts older than the retention window to keep the table bounded.
+  const retentionDays = await readQuizAttemptRetentionDays();
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - ATTEMPT_RETENTION_DAYS);
+  cutoff.setDate(cutoff.getDate() - retentionDays);
   await db.delete(quizAttempts).where(lt(quizAttempts.attemptedAt, cutoff.toISOString()));
 }
 

@@ -99,6 +99,13 @@
       "when": 1788102800000,
       "tag": "0013_quiz_attempts_attempted_at_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1788189200000,
+      "tag": "0014_quiz_attempt_retention_setting",
+      "breakpoints": true
     }
   ]
 }
