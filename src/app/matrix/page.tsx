@@ -339,6 +339,18 @@ function exportAllCSV(list: JabatanSKK[]) {
   URL.revokeObjectURL(url);
 }
 
+function printJabatan(jabatan: JabatanSKK) {
+  const previousTitle = document.title;
+  document.title = `Unit Kompetensi - ${jabatan.nama}`;
+
+  const restoreTitle = () => {
+    document.title = previousTitle;
+  };
+
+  window.addEventListener('afterprint', restoreTitle, { once: true });
+  window.print();
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function MatrixPage() {
   const { updateProfile } = useAuth();
@@ -444,7 +456,7 @@ export default function MatrixPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 print:hidden">
           <h1 className="text-4xl font-bold text-slate-800 mb-4">🔗 Matrix SKK</h1>
           <p className="text-lg text-slate-600">
             Visualisasi subklasifikasi & unit kompetensi per jabatan SKK
@@ -452,7 +464,7 @@ export default function MatrixPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 bg-white rounded-2xl shadow p-2 w-fit">
+        <div className="flex gap-2 mb-8 bg-white rounded-2xl shadow p-2 w-fit print:hidden">
           <button
             onClick={() => setActiveTab('matriks')}
             className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all ${
@@ -581,7 +593,8 @@ export default function MatrixPage() {
 
         {/* ── TAB 2: Unit Kompetensi ──────────────────────────────────────── */}
         {activeTab === 'unitkompetensi' && (
-          <div className="space-y-6">
+          <>
+          <div className="space-y-6 print:hidden">
 
             {/* Filters row */}
             <div className="bg-white rounded-2xl shadow-lg p-5">
@@ -722,6 +735,12 @@ export default function MatrixPage() {
                         >
                           ⬇️ CSV
                         </button>
+                        <button
+                          onClick={() => printJabatan(selectedJabatanData)}
+                          className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white text-slate-800 hover:bg-slate-100 rounded-xl text-sm font-medium transition-all border border-white"
+                        >
+                          🖨️ Cetak / PDF
+                        </button>
                       </div>
                       <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button
@@ -801,8 +820,93 @@ export default function MatrixPage() {
               Data berdasarkan SKKNI Bidang Sipil dan Manajemen Pelaksanaan — kode mengacu skema baku jabatan SKK LPJK
             </p>
           </div>
+
+          {selectedVisible && selectedJabatanData && (
+            <section
+              className="hidden print:block print-sheet text-slate-900"
+              aria-labelledby="print-jabatan-title"
+            >
+              <header className="border-b-2 border-slate-800 pb-4 mb-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">
+                  SIAP SKK · Daftar Unit Kompetensi
+                </p>
+                <h1 id="print-jabatan-title" className="text-2xl font-bold leading-tight">
+                  {selectedJabatanData.nama}
+                </h1>
+                <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3 text-sm text-slate-600">
+                  <span><strong className="text-slate-900">KKNI:</strong> Jenjang {selectedJabatanData.jenjang}</span>
+                  <span><strong className="text-slate-900">Kualifikasi:</strong> {selectedJabatanData.kualifikasi}</span>
+                  <span><strong className="text-slate-900">Bidang:</strong> {selectedJabatanData.bidang}</span>
+                </div>
+              </header>
+
+              <table className="w-full border-collapse text-sm" aria-label={`Unit kompetensi ${selectedJabatanData.nama}`}>
+                <thead>
+                  <tr className="bg-slate-100 border-y-2 border-slate-400 text-left">
+                    <th scope="col" className="w-[27%] px-3 py-2.5 font-semibold">Kode</th>
+                    <th scope="col" className="px-3 py-2.5 font-semibold">Judul</th>
+                    <th scope="col" className="w-[16%] px-3 py-2.5 font-semibold">Kelompok</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedJabatanData.unitKompetensi.map((unit) => (
+                    <tr key={unit.kode} className="border-b border-slate-300 align-top">
+                      <td className="px-3 py-2.5 font-mono text-xs">{unit.kode}</td>
+                      <td className="px-3 py-2.5">{unit.judul}</td>
+                      <td className="px-3 py-2.5">{unit.kelompok}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <p className="mt-5 text-xs text-slate-500">
+                Dicetak dari SIAP SKK · Data berdasarkan SKKNI Bidang Sipil dan Manajemen Pelaksanaan.
+              </p>
+            </section>
+          )}
+          </>
         )}
       </div>
+      <style jsx global>{`
+        @page {
+          size: A4;
+          margin: 14mm;
+        }
+
+        @media print {
+          html,
+          body {
+            background: #ffffff !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          .print-sheet,
+          .print-sheet * {
+            visibility: visible !important;
+          }
+
+          .print-sheet {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          .print-sheet thead {
+            display: table-header-group;
+          }
+
+          .print-sheet tr {
+            break-inside: avoid;
+          }
+        }
+      `}</style>
     </div>
   );
 }
