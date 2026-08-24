@@ -12,6 +12,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { DatabaseSeeder } from "@/components/DatabaseSeeder";
 import { SkkSelectionModal } from "@/components/SkkSelectionModal";
+import { GlosariumWidget } from "@/components/GlosariumWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
                       <SkkSelectionModal />
                       <Navbar />
                       <main>{children}</main>
+                      <GlosariumWidget />
                     </ActivityProvider>
                   </BookmarkProvider>
                 </OfflineEventProvider>

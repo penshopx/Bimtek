@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 type Kategori = 'Sertifikasi' | 'Dokumen & Form' | 'Regulasi' | 'Konstruksi' | 'Organisasi';
 
-interface Term {
+export interface Term {
   singkatan: string;
   kepanjangan: string;
   deskripsi: string;
@@ -15,7 +15,7 @@ interface Term {
   link?: string;
 }
 
-const terms: Term[] = [
+export const terms: Term[] = [
   // ── Sertifikasi ──────────────────────────────────────────────────────────────
   { singkatan: 'SKK', kepanjangan: 'Sertifikat Kompetensi Kerja', kategori: 'Sertifikasi', deskripsi: 'Bukti tertulis yang diterbitkan oleh LSP terakreditasi BNSP bahwa seseorang telah memenuhi standar kompetensi kerja di bidang konstruksi. Menggantikan SKA dan SKT sejak 2022.' },
   { singkatan: 'SKKNI', kepanjangan: 'Standar Kompetensi Kerja Nasional Indonesia', kategori: 'Sertifikasi', deskripsi: 'Rumusan kemampuan kerja yang mencakup aspek pengetahuan, keterampilan, dan sikap kerja yang relevan dalam pelaksanaan tugas dan syarat jabatan tertentu. Ditetapkan oleh Menteri.' },
