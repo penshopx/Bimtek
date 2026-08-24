@@ -35,6 +35,8 @@ export default function QuizPage() {
   const [showScore, setShowScore] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
+  const [wrongQuestions, setWrongQuestions] = useState<QuizQuestion[]>([]);
+  const [isRetrySession, setIsRetrySession] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -80,6 +82,8 @@ export default function QuizPage() {
     setShowScore(false);
     setSelectedAnswer(null);
     setAnswered(false);
+    setWrongQuestions([]);
+    setIsRetrySession(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions, randomMode, jabatanFilterActive]);
 
@@ -87,12 +91,19 @@ export default function QuizPage() {
     if (answered) return;
     setSelectedAnswer(answerIndex);
     setAnswered(true);
-    const isCorrect = answerIndex === displayQuestions[currentQuestion].correct;
+    const currentQ = displayQuestions[currentQuestion];
+    const isCorrect = answerIndex === currentQ.correct;
     if (isCorrect) {
       setScore(score + 1);
+    } else {
+      setWrongQuestions((prev) => {
+        // Avoid duplicates in case of retry-within-retry scenarios
+        if (prev.some((q) => q.id === currentQ.id)) return prev;
+        return [...prev, currentQ];
+      });
     }
     // Record per-question attempt for admin analytics (server derives correctness)
-    recordQuizAttempt(displayQuestions[currentQuestion].id, answerIndex).catch(() => {});
+    recordQuizAttempt(currentQ.id, answerIndex).catch(() => {});
   };
 
   const nextQuestion = () => {
@@ -116,8 +127,24 @@ export default function QuizPage() {
     setShowScore(false);
     setSelectedAnswer(null);
     setAnswered(false);
+    setWrongQuestions([]);
+    setIsRetrySession(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions, randomMode, jabatanFilterActive]);
+
+  const retryWrongQuestions = useCallback(() => {
+    // Sort wrong questions by sortOrder ASC (mirroring the default fetch order)
+    const sorted = [...wrongQuestions].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+    setDisplayQuestions(randomMode ? shuffleArray(sorted) : sorted);
+    setCurrentQuestion(0);
+    setScore(0);
+    setShowScore(false);
+    setSelectedAnswer(null);
+    setAnswered(false);
+    setWrongQuestions([]);
+    setIsRetrySession(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wrongQuestions, randomMode]);
 
   const handleCategoryChange = (cat: string) => {
     setJabatanFilterActive(false);
@@ -150,6 +177,7 @@ export default function QuizPage() {
 
   if (showScore) {
     const percentage = Math.round((score / displayQuestions.length) * 100);
+    const wrongCount = wrongQuestions.length;
     return (
       <div className="min-h-screen bg-slate-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
@@ -157,19 +185,36 @@ export default function QuizPage() {
             <div className="text-6xl mb-4">
               {percentage >= 80 ? '🏆' : percentage >= 60 ? '👍' : '📚'}
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Quiz Selesai!</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              {isRetrySession ? 'Sesi Ulang Selesai!' : 'Quiz Selesai!'}
+            </h2>
             <p className="text-slate-600 mb-6">
               Skor Anda: {score} dari {displayQuestions.length} ({percentage}%)
+              {isRetrySession && (
+                <span className="block text-sm text-slate-400 mt-1">
+                  (hanya soal yang sebelumnya salah)
+                </span>
+              )}
             </p>
             <div className={`text-4xl font-bold mb-6 ${percentage >= 60 ? 'text-green-600' : 'text-amber-600'}`}>
               {percentage >= 80 ? 'Excellent!' : percentage >= 60 ? 'Good Job!' : 'Keep Learning!'}
             </div>
-            <button
-              onClick={restartQuiz}
-              className="px-8 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600"
-            >
-              🔄 Coba Lagi
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {wrongCount > 0 && (
+                <button
+                  onClick={retryWrongQuestions}
+                  className="px-8 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600"
+                >
+                  ❌ Ulangi Soal yang Salah ({wrongCount})
+                </button>
+              )}
+              <button
+                onClick={restartQuiz}
+                className="px-8 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600"
+              >
+                🔄 Coba Lagi
+              </button>
+            </div>
           </div>
         </div>
       </div>
