@@ -11,7 +11,12 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { trimHistoryByTokenBudget, estimateTokens } from './token-utils';
+import {
+  estimateTokens,
+  isMessageTooLargeForBudget,
+  trimHistoryByTokenBudget,
+  truncateMessageToFit,
+} from './token-utils';
 
 // ---------------------------------------------------------------------------
 // Constants mirroring src/app/chat/page.tsx generateResponse.
@@ -244,5 +249,87 @@ describe('trimHistoryByTokenBudget', () => {
 
     // The full serialized payload must fit within the allowed context window.
     expect(totalApiTokens).toBeLessThanOrEqual(MAX_CONTEXT_TOKENS - RESERVE_FOR_RESPONSE);
+  });
+});
+
+describe('message size safeguards', () => {
+  it('identifies messages that exceed the available message budget', () => {
+    const systemPrompt = SYSTEM_PROMPT_EXPERT;
+    const reserveForResponse = 100;
+    const fittingMessage = 'Apa syarat sertifikasi kompetensi kerja?';
+    const messageBudget = estimateTokens(fittingMessage);
+    const maxContextTokens =
+      estimateTokens(systemPrompt) +
+      reserveForResponse +
+      PER_MESSAGE_OVERHEAD +
+      messageBudget;
+    const oversizedMessage = fittingMessage.repeat(20);
+
+    expect(
+      isMessageTooLargeForBudget(
+        fittingMessage,
+        systemPrompt,
+        maxContextTokens,
+        reserveForResponse,
+      ),
+    ).toBe(false);
+    expect(
+      isMessageTooLargeForBudget(
+        oversizedMessage,
+        systemPrompt,
+        maxContextTokens,
+        reserveForResponse,
+      ),
+    ).toBe(true);
+  });
+
+  it('truncates oversized messages to the context budget with a visible suffix', () => {
+    const systemPrompt = SYSTEM_PROMPT_EXPERT;
+    const reserveForResponse = 100;
+    const suffix = '… [pesan dipotong]';
+    const contentBudget = 120;
+    const maxContextTokens =
+      estimateTokens(systemPrompt) +
+      reserveForResponse +
+      PER_MESSAGE_OVERHEAD +
+      estimateTokens(suffix) +
+      contentBudget;
+    const message = contentWithApproxTokens(contentBudget * 4);
+
+    const result = truncateMessageToFit(
+      message,
+      systemPrompt,
+      maxContextTokens,
+      reserveForResponse,
+    );
+
+    expect(result).not.toBe(message);
+    expect(result.endsWith(suffix)).toBe(true);
+    expect(
+      estimateTokens(systemPrompt) +
+        estimateTokens(result) +
+        PER_MESSAGE_OVERHEAD,
+    ).toBeLessThanOrEqual(maxContextTokens - reserveForResponse);
+  });
+
+  it('leaves a message that already fits completely untouched', () => {
+    const systemPrompt = SYSTEM_PROMPT_NO_EXPERT;
+    const reserveForResponse = 100;
+    const message = 'Jelaskan proses perpanjangan SKK secara singkat.';
+    const maxContextTokens =
+      estimateTokens(systemPrompt) +
+      reserveForResponse +
+      PER_MESSAGE_OVERHEAD +
+      estimateTokens(message) +
+      estimateTokens('… [pesan dipotong]');
+
+    expect(
+      truncateMessageToFit(
+        message,
+        systemPrompt,
+        maxContextTokens,
+        reserveForResponse,
+      ),
+    ).toBe(message);
   });
 });

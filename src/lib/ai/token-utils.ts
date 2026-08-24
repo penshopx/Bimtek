@@ -114,6 +114,7 @@ export function truncateMessageToFit(
     maxContextTokens - systemTokens - reserveForResponse - perMessageOverhead - suffixTokens;
 
   if (availableForContent <= 0) return suffix;
+  if (estimateTokens(message) <= availableForContent) return message;
 
   // Binary-search the longest prefix that fits inside the token budget.
   let lo = 0;
