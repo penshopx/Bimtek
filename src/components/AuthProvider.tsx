@@ -69,9 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         if (data.user) {
           setUser(data.user);
+          // Keep the local cache in sync so offline fallback reflects
+          // the latest server state (including SKK fields set on other devices)
+          localStorage.setItem('user', JSON.stringify(data.user));
         }
       } else {
         localStorage.removeItem('sessionId');
+        localStorage.removeItem('user');
       }
     } catch (e) {
       const savedUser = localStorage.getItem('user');
