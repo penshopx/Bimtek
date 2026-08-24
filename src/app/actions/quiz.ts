@@ -119,16 +119,29 @@ export async function createQuizQuestion(
     const validated = validateQuestionInput(data);
     const now = new Date().toISOString();
 
-    // Assign sort_order = max existing + 1 so new questions go to the end
-    const existing = await db.select({ sortOrder: quizQuestions.sortOrder }).from(quizQuestions);
-    const maxOrder = existing.reduce((m, r) => Math.max(m, r.sortOrder ?? 0), 0);
+    // Prefer categoryMax + 1 so new questions append compactly within their
+    // category rather than inheriting an inflated global maximum. The delete path
+    // runs a global compaction (0..N-1) that can interleave sort_order values
+    // across categories, so a naïve category-local value might collide with a
+    // value already owned by a different category. If that happens, fall back to
+    // globalMax + 1, which is always unique.
+    const allRows = await db
+      .select({ sortOrder: quizQuestions.sortOrder, category: quizQuestions.category })
+      .from(quizQuestions);
+    const categoryMax = allRows
+      .filter((r) => r.category === validated.category)
+      .reduce((m, r) => Math.max(m, r.sortOrder ?? 0), 0);
+    const globalMax = allRows.reduce((m, r) => Math.max(m, r.sortOrder ?? 0), 0);
+    const proposed = categoryMax + 1;
+    const takenOrders = new Set(allRows.map((r) => r.sortOrder ?? 0));
+    const nextSortOrder = takenOrders.has(proposed) ? globalMax + 1 : proposed;
 
     await db.insert(quizQuestions).values({
       question: validated.question,
       category: validated.category,
       options: JSON.stringify(validated.options),
       correct: validated.correct,
-      sortOrder: maxOrder + 1,
+      sortOrder: nextSortOrder,
       createdAt: now,
       updatedAt: now,
     });
