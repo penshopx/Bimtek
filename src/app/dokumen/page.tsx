@@ -362,6 +362,22 @@ const JABATAN_LIST: Jabatan[] = [
   },
 ];
 
+// Explicit mapping from SKK_JABATAN profile IDs → JABATAN_LIST checklist IDs.
+// Only includes roles with a clear, validated correspondence. IDs not listed
+// here produce no pre-selection (empty state / user picks manually).
+const PROFILE_TO_CHECKLIST_MAP: Record<string, string> = {
+  // ── Manajemen Pelaksanaan ──────────────────────────────────────
+  MP001: 'pelaks-gedung',    // Pelaksana Lapangan Pekerjaan Gedung
+  MP002: 'pelaks-jalan',     // Pelaksana Lapangan Pekerjaan Jalan
+  MP003: 'site-engineer',    // Site Engineer / Ahli Teknik Pelaksana
+  MP004: 'manajer-lapangan', // Site Manager Pekerjaan Gedung
+  MP005: 'manajer-proyek',   // Project Manager Konstruksi
+  MP006: 'qc',               // Quality Control Engineer
+  MP007: 'qs',               // Quantity Surveyor / Cost Estimator
+  // ── Jalan (Sipil) ─────────────────────────────────────────────
+  F001:  'ahli-sipil-madya', // Ahli Madya Teknik Jalan → Ahli Teknik Jalan – Madya
+};
+
 // Group jabatan by bidang
 const BIDANG_LIST = ['Sipil', 'Manajemen Pelaksanaan'];
 
@@ -414,6 +430,35 @@ export default function DokumenPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const jabatanInBidang = JABATAN_LIST.filter((j) => j.bidang === activeBidang);
+
+  // On mount: pre-select jabatan from the authenticated user's profile
+  useEffect(() => {
+    async function preSelectFromProfile() {
+      try {
+        const res = await fetch('/api/auth?action=me', {
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const jabatanSkk: string | null | undefined = data?.jabatanSkk ?? data?.user?.jabatanSkk;
+        if (!jabatanSkk) return;
+
+        // Look up the checklist entry via the explicit profile-id → checklist-id map.
+        // Unrecognised profile IDs produce no pre-selection (empty state).
+        const checklistId = PROFILE_TO_CHECKLIST_MAP[jabatanSkk.trim()];
+        if (!checklistId) return;
+
+        const match = JABATAN_LIST.find((j) => j.id === checklistId);
+        if (match) {
+          setActiveBidang(match.bidang);
+          setActiveJabatan(match);
+        }
+      } catch {
+        // Network error or unauthenticated — silently fall through to empty state
+      }
+    }
+    preSelectFromProfile();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load saved state when jabatan changes
   const loadChecklist = useCallback(async (jabatan: Jabatan) => {
