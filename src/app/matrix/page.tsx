@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useAuth } from '@/components/AuthProvider';
+import { getJabatanById } from '@/lib/skkData';
+import { getSavedJabatanTarget, saveJabatanTarget } from '@/lib/jabatanPreference';
 
 // ── Subklasifikasi matrix data ────────────────────────────────────────────────
 const subklasifikasi = [
@@ -290,6 +293,13 @@ const jabatanSKKData: JabatanSKK[] = [
   },
 ];
 
+// Matrix roles use a more detailed SKKNI dataset than the profile selector.
+// Only exact, one-to-one matches can safely update the shared profile value.
+const MATRIX_TO_PROFILE_JABATAN: Record<string, string> = {
+  'SKK-001': 'MP002',
+  'SKK-003': 'MP001',
+};
+
 const kualifikasiOptions = ['Semua', 'Teknisi/Analis', 'Ahli'];
 const bidangOptions = ['Semua', 'Sipil', 'Manajemen Pelaksanaan'];
 const kelompokColors: Record<UnitKompetensi['kelompok'], string> = {
@@ -331,6 +341,7 @@ function exportAllCSV(list: JabatanSKK[]) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function MatrixPage() {
+  const { updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'matriks' | 'unitkompetensi'>('matriks');
 
   // Matriks tab state
@@ -342,6 +353,54 @@ export default function MatrixPage() {
   const [filterKualifikasi, setFilterKualifikasi] = useState('Semua');
   const [selectedJabatan, setSelectedJabatan] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [savedJabatanTarget, setSavedJabatanTarget] = useState<string | null>(null);
+  const [targetSaved, setTargetSaved] = useState(false);
+  const unitDetailRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToTargetRef = useRef(false);
+
+  // The matrix target remains authoritative because its detailed SKKNI roles
+  // do not always have a one-to-one entry in the broader profile selector.
+  useEffect(() => {
+    const savedTarget = getSavedJabatanTarget();
+    if (!savedTarget || !jabatanSKKData.some(j => j.id === savedTarget)) return;
+
+    setSavedJabatanTarget(savedTarget);
+    setSelectedJabatan(savedTarget);
+    setActiveTab('unitkompetensi');
+    shouldScrollToTargetRef.current = true;
+  }, []);
+
+  // The detail panel is rendered only after selectedJabatan is restored.
+  useEffect(() => {
+    if (!shouldScrollToTargetRef.current || !selectedJabatan) return;
+
+    shouldScrollToTargetRef.current = false;
+    requestAnimationFrame(() => {
+      unitDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [selectedJabatan]);
+
+  const handleSaveTarget = async () => {
+    if (!selectedJabatanData) return;
+
+    const savedLocally = saveJabatanTarget(selectedJabatanData.id);
+    if (!savedLocally) return;
+
+    setSavedJabatanTarget(selectedJabatanData.id);
+    setTargetSaved(true);
+
+    const profileJabatanId = MATRIX_TO_PROFILE_JABATAN[selectedJabatanData.id];
+    const profileJabatan = profileJabatanId ? getJabatanById(profileJabatanId) : null;
+    if (profileJabatan) {
+      await updateProfile({
+        jabatanSkk: profileJabatanId,
+        bidang: profileJabatan.bidang,
+        kualifikasiSkk: selectedJabatanData.kualifikasi === 'Teknisi/Analis'
+          ? 'Teknisi / Analis'
+          : 'Ahli',
+      });
+    }
+  };
 
   const connectedPositions = selectedSub
     ? jobPositions.filter(jp => jp.subklasifikasi.includes(selectedSub))
@@ -371,14 +430,14 @@ export default function MatrixPage() {
   // When filters change, clear selection if it's no longer in results
   const selectedVisible = filteredJabatan.some(j => j.id === selectedJabatan);
 
-  const displayedUnits = useMemo(() => {
-    if (!selectedJabatanData) return [];
-    if (!search) return selectedJabatanData.unitKompetensi;
-    const q = search.toLowerCase();
-    return selectedJabatanData.unitKompetensi.filter(
-      u => u.kode.toLowerCase().includes(q) || u.judul.toLowerCase().includes(q),
-    );
-  }, [selectedJabatanData, search]);
+  const displayedUnits = !selectedJabatanData
+    ? []
+    : !search
+      ? selectedJabatanData.unitKompetensi
+      : selectedJabatanData.unitKompetensi.filter((u) => {
+          const q = search.toLowerCase();
+          return u.kode.toLowerCase().includes(q) || u.judul.toLowerCase().includes(q);
+        });
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -629,7 +688,7 @@ export default function MatrixPage() {
               </div>
 
               {/* Unit Kompetensi detail — right column */}
-              <div className="lg:col-span-3">
+              <div ref={unitDetailRef} className="lg:col-span-3">
                 {!selectedVisible || !selectedJabatanData ? (
                   <div className="bg-white rounded-2xl shadow-lg h-full flex items-center justify-center p-12 text-center min-h-[300px]">
                     <div>
@@ -663,6 +722,23 @@ export default function MatrixPage() {
                         >
                           ⬇️ CSV
                         </button>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button
+                          onClick={handleSaveTarget}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                            savedJabatanTarget === selectedJabatanData.id
+                              ? 'bg-amber-400 text-slate-900 border-amber-300 hover:bg-amber-300'
+                              : 'bg-white text-slate-800 border-white hover:bg-slate-100'
+                          }`}
+                        >
+                          {savedJabatanTarget === selectedJabatanData.id ? '✓ Target SKK Saya' : '🎯 Jadikan Target SKK Saya'}
+                        </button>
+                        {targetSaved && savedJabatanTarget === selectedJabatanData.id && (
+                          <span className="text-xs text-amber-100" role="status">
+                            Target tersimpan dan akan dipakai di halaman terkait.
+                          </span>
+                        )}
                       </div>
                       {/* Summary counts */}
                       <div className="flex gap-4 mt-4 text-xs">
