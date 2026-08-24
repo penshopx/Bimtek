@@ -240,6 +240,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── 3 Pilihan Utama ── */}
+      <section className="py-12 bg-slate-800 text-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <p className="text-slate-400 text-sm uppercase tracking-widest font-medium mb-2">Apa yang Anda butuhkan?</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Mulai dari Mana Saja</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                icon: '🏛️',
+                title: 'Saya ingin mengurus SKK',
+                desc: 'Bantu saya dari cek kelayakan, persiapan dokumen, hingga proses pengajuan ke LSP.',
+                cta: 'Ke SIAP Certify →',
+                href: '/siap-certify',
+                color: 'border-blue-500/50 hover:border-blue-400',
+                iconBg: 'bg-blue-500/20',
+                ctaColor: 'bg-blue-600 hover:bg-blue-500',
+              },
+              {
+                icon: '📚',
+                title: 'Saya ingin mempersiapkan uji kompetensi',
+                desc: 'Bantu saya belajar materi, latihan soal, dan simulasi sebelum menghadapi asesor.',
+                cta: 'Mulai Persiapan →',
+                href: '/klinik-uji-kompetensi',
+                color: 'border-amber-500/50 hover:border-amber-400',
+                iconBg: 'bg-amber-500/20',
+                ctaColor: 'bg-amber-600 hover:bg-amber-500',
+              },
+              {
+                icon: '♻️',
+                title: 'Saya sudah punya SKK',
+                desc: 'Bantu saya memantau masa berlaku, perpanjangan, upgrade jenjang, atau SKK berikutnya.',
+                cta: 'Pantau & Perpanjang →',
+                href: '/skk-coach/chat?agent=perpanjangan',
+                color: 'border-emerald-500/50 hover:border-emerald-400',
+                iconBg: 'bg-emerald-500/20',
+                ctaColor: 'bg-emerald-600 hover:bg-emerald-500',
+              },
+            ].map(item => (
+              <div key={item.title} className={`flex flex-col p-6 bg-slate-900/60 border-2 ${item.color} rounded-2xl transition-all`}>
+                <div className={`w-12 h-12 ${item.iconBg} rounded-xl flex items-center justify-center text-2xl mb-4`}>{item.icon}</div>
+                <h3 className="text-white font-bold text-base mb-2">{item.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed flex-1 mb-5">{item.desc}</p>
+                <a href={item.href} className={`block text-center py-2.5 px-4 rounded-xl text-sm font-bold text-white transition-colors ${item.ctaColor}`}>
+                  {item.cta}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Perjalanan SKK ── */}
       <section className="py-16 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
