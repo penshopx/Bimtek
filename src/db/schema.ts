@@ -194,6 +194,7 @@ export const documentChecklist = sqliteTable("document_checklist", {
   documentId: text("document_id").notNull(),
   checked: integer("checked", { mode: "boolean" }).default(false),
   checkedAt: text("checked_at"),
+  na: integer("na", { mode: "boolean" }).default(false),
   createdAt: text("created_at").notNull(),
 });
 

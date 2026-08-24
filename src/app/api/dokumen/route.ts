@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { jabatanId, documentId, checked } = body;
+  const { jabatanId, documentId, checked, na } = body;
 
   if (!jabatanId || !documentId) {
     return NextResponse.json({ error: 'jabatanId and documentId required' }, { status: 400 });
@@ -105,10 +105,38 @@ export async function POST(request: NextRequest) {
 
   const now = new Date().toISOString();
 
+  // Build the field update set.
+  // When both checked and na are provided (e.g. a full reset), update both together
+  // so a single request is atomic and avoids insert races on new rows.
+  // When only na is provided: setting na=true clears checked; clearing na leaves checked alone.
+  // When only checked is provided: setting checked=true clears na.
+  let fields: Record<string, unknown>;
+  if (na !== undefined && checked !== undefined) {
+    // Atomic reset: both fields explicitly provided
+    fields = {
+      checked: checked ?? false,
+      checkedAt: checked ? now : null,
+      na: na ?? false,
+    };
+  } else if (na !== undefined) {
+    // N/A toggle: setting na clears checked; clearing na leaves checked alone
+    fields = {
+      na: na ?? false,
+      ...(na ? { checked: false, checkedAt: null } : {}),
+    };
+  } else {
+    // Checked toggle: setting checked clears na
+    fields = {
+      checked: checked ?? false,
+      checkedAt: checked ? now : null,
+      ...(checked ? { na: false } : {}),
+    };
+  }
+
   if (existing.length > 0) {
     await db
       .update(schema.documentChecklist)
-      .set({ checked: checked ?? false, checkedAt: checked ? now : null })
+      .set(fields)
       .where(eq(schema.documentChecklist.id, id));
   } else {
     await db.insert(schema.documentChecklist).values({
@@ -118,6 +146,7 @@ export async function POST(request: NextRequest) {
       documentId,
       checked: checked ?? false,
       checkedAt: checked ? now : null,
+      na: na ?? false,
       createdAt: now,
     });
   }

@@ -425,6 +425,7 @@ export default function DokumenPage() {
   const [activeBidang, setActiveBidang] = useState<string>('Sipil');
   const [activeJabatan, setActiveJabatan] = useState<Jabatan | null>(null);
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({});
+  const [naMap, setNaMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -472,10 +473,13 @@ export default function DokumenPage() {
       if (res.ok) {
         const data = await res.json();
         const map: Record<string, boolean> = {};
-        (data.items as { documentId: string; checked: boolean }[]).forEach((item) => {
+        const naData: Record<string, boolean> = {};
+        (data.items as { documentId: string; checked: boolean; na: boolean }[]).forEach((item) => {
           map[item.documentId] = item.checked;
+          if (item.na) naData[item.documentId] = true;
         });
         setCheckedMap(map);
+        setNaMap(naData);
       }
       // Non-OK (e.g. 401 on first-ever load before device ID exists) → start with empty map
     } catch {
@@ -522,10 +526,45 @@ export default function DokumenPage() {
     }
   };
 
-  const checkedCount = activeJabatan
-    ? activeJabatan.docs.filter((d) => checkedMap[d.id]).length
-    : 0;
-  const totalCount = activeJabatan?.docs.length ?? 0;
+  const toggleNA = async (docId: string, currentNA: boolean) => {
+    if (!activeJabatan) return;
+    const newNA = !currentNA;
+    // Capture prior checked value before optimistic update so we can restore it on failure
+    const priorChecked = !!checkedMap[docId];
+    // Optimistic update: marking N/A also clears checked state locally
+    setNaMap((prev) => ({ ...prev, [docId]: newNA }));
+    if (newNA) setCheckedMap((prev) => ({ ...prev, [docId]: false }));
+    setSaving(docId);
+    setSaveError(null);
+    try {
+      const res = await fetch('/api/dokumen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          jabatanId: activeJabatan.id,
+          documentId: docId,
+          na: newNA,
+        }),
+      });
+      if (!res.ok) {
+        setNaMap((prev) => ({ ...prev, [docId]: currentNA }));
+        if (newNA) setCheckedMap((prev) => ({ ...prev, [docId]: priorChecked }));
+        setSaveError('Gagal menyimpan. Silakan coba lagi.');
+      }
+    } catch {
+      setNaMap((prev) => ({ ...prev, [docId]: currentNA }));
+      if (newNA) setCheckedMap((prev) => ({ ...prev, [docId]: priorChecked }));
+      setSaveError('Koneksi gagal. Perubahan tidak tersimpan.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const applicableDocs = activeJabatan
+    ? activeJabatan.docs.filter((d) => !naMap[d.id])
+    : [];
+  const checkedCount = applicableDocs.filter((d) => checkedMap[d.id]).length;
+  const totalCount = applicableDocs.length;
   const progressPct = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
 
   // Group docs by category
@@ -693,15 +732,18 @@ export default function DokumenPage() {
                       <div className="space-y-2">
                         {docs.map((doc) => {
                           const isChecked = !!checkedMap[doc.id];
+                          const isNA = !!naMap[doc.id];
                           const isSaving = saving === doc.id;
                           return (
                             <div
                               key={doc.id}
-                              onClick={() => !isSaving && toggleDoc(doc.id, isChecked)}
-                              className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                                isChecked
-                                  ? 'bg-green-500/10 border-green-500/30'
-                                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'
+                              onClick={() => !isSaving && !isNA && toggleDoc(doc.id, isChecked)}
+                              className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${
+                                isNA
+                                  ? 'bg-slate-700/20 border-slate-600/30 cursor-default opacity-60'
+                                  : isChecked
+                                  ? 'bg-green-500/10 border-green-500/30 cursor-pointer'
+                                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 cursor-pointer'
                               }`}
                             >
                               {/* Checkbox */}
@@ -711,12 +753,14 @@ export default function DokumenPage() {
                                 ) : (
                                   <div
                                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                                      isChecked
+                                      isNA
+                                        ? 'border-slate-600 bg-slate-700/50'
+                                        : isChecked
                                         ? 'bg-green-500 border-green-500'
                                         : 'border-slate-600'
                                     }`}
                                   >
-                                    {isChecked && (
+                                    {isChecked && !isNA && (
                                       <svg className="w-3 h-3 text-white" viewBox="0 0 12 10" fill="none">
                                         <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                       </svg>
@@ -727,18 +771,24 @@ export default function DokumenPage() {
 
                               {/* Content */}
                               <div className="flex-1 min-w-0">
-                                <div className={`font-semibold text-sm ${isChecked ? 'text-green-300 line-through decoration-green-500/50' : 'text-white'}`}>
+                                <div className={`font-semibold text-sm ${
+                                  isNA
+                                    ? 'text-slate-500 line-through'
+                                    : isChecked
+                                    ? 'text-green-300 line-through decoration-green-500/50'
+                                    : 'text-white'
+                                }`}>
                                   {doc.name}
                                 </div>
-                                <div className="text-slate-400 text-xs mt-1 leading-relaxed">
+                                <div className={`text-xs mt-1 leading-relaxed ${isNA ? 'text-slate-600' : 'text-slate-400'}`}>
                                   {doc.description}
                                 </div>
-                                {doc.note && (
+                                {doc.note && !isNA && (
                                   <div className="text-amber-400/80 text-xs mt-1.5 italic">
                                     💡 {doc.note}
                                   </div>
                                 )}
-                                {doc.templateUrl && (
+                                {doc.templateUrl && !isNA && (
                                   <a
                                     href={doc.templateUrl}
                                     target="_blank"
@@ -750,6 +800,22 @@ export default function DokumenPage() {
                                   </a>
                                 )}
                               </div>
+
+                              {/* N/A toggle button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isSaving) toggleNA(doc.id, isNA);
+                                }}
+                                title={isNA ? 'Batalkan N/A — dokumen ini berlaku' : 'Tandai sebagai Tidak Berlaku (N/A)'}
+                                className={`flex-shrink-0 self-center text-xs font-semibold px-2 py-1 rounded-md border transition-all ${
+                                  isNA
+                                    ? 'bg-slate-600 border-slate-500 text-slate-200 hover:bg-slate-500'
+                                    : 'border-slate-600 text-slate-500 hover:border-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+                                }`}
+                              >
+                                N/A
+                              </button>
                             </div>
                           );
                         })}
@@ -777,10 +843,14 @@ export default function DokumenPage() {
                   <button
                     onClick={async () => {
                       if (!activeJabatan) return;
-                      const prevMap = { ...checkedMap };
+                      const prevCheckedMap = { ...checkedMap };
+                      const prevNaMap = { ...naMap };
                       setCheckedMap({});
+                      setNaMap({});
                       setSaveError(null);
                       try {
+                        // Single request per document resets both checked and na atomically,
+                        // avoiding an insert race when two concurrent POSTs share the same row ID.
                         const results = await Promise.all(
                           activeJabatan.docs.map((d) =>
                             fetch('/api/dokumen', {
@@ -790,17 +860,20 @@ export default function DokumenPage() {
                                 jabatanId: activeJabatan.id,
                                 documentId: d.id,
                                 checked: false,
+                                na: false,
                               }),
                             }),
                           ),
                         );
                         const anyFailed = results.some((r) => !r.ok);
                         if (anyFailed) {
-                          setCheckedMap(prevMap);
+                          setCheckedMap(prevCheckedMap);
+                          setNaMap(prevNaMap);
                           setSaveError('Gagal mereset sebagian dokumen. Silakan coba lagi.');
                         }
                       } catch {
-                        setCheckedMap(prevMap);
+                        setCheckedMap(prevCheckedMap);
+                        setNaMap(prevNaMap);
                         setSaveError('Koneksi gagal saat mereset. Perubahan tidak tersimpan.');
                       }
                     }}
