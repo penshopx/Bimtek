@@ -28,6 +28,7 @@ const tools: Record<string, { icon: string; name: string; desc: string; href: st
     { icon: '🗺️', name: 'Timeline Proses SKK', desc: 'Peta perjalanan 8 tahap dari persiapan hingga terima sertifikat + dokumen & biaya per fase', href: '/timeline-skk' },
     { icon: '🎯', name: 'Peta Karir KKNI', desc: 'Jenjang Level 1–9 konstruksi: jabatan, gaji, skala proyek, dan langkah naik level berikutnya', href: '/karir-skk' },
     { icon: '🏛️', name: 'Direktori LSP', desc: '17+ LSP konstruksi terverifikasi BNSP — filter wilayah, bidang & jabatan, plus tips memilih LSP', href: '/direktori-lsp' },
+    { icon: '🤝', name: 'Komunitas & Asosiasi', desc: '14 asosiasi profesi konstruksi diakui LPJK — manfaat keanggotaan, LSP afiliasi & CPE perpanjangan SKK', href: '/komunitas-skk' },
     { icon: '🎯', name: 'Mock Asesmen SKK', desc: 'Simulasi 5 soal AI berbasis SKKNI per domain', href: '/mock-asesmen' },
     { icon: '🏥', name: 'Klinik Uji Kompetensi', desc: 'Jalur lengkap: Dialog → Blueprint → Chatbot → Ujian', href: '/klinik-uji-kompetensi' },
     { icon: '💬', name: 'SKK Coach AI', desc: '5 agen spesialis: kelayakan, dokumen, jabatan, perpanjangan, SBU', href: '/skk-coach' },

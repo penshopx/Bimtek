@@ -32,6 +32,7 @@ const navItems = [
   { href: '/timeline-skk', label: 'Timeline SKK', icon: '🗺️' },
   { href: '/karir-skk', label: 'Karir SKK', icon: '🎯' },
   { href: '/direktori-lsp', label: 'Direktori LSP', icon: '🏛️' },
+  { href: '/komunitas-skk', label: 'Komunitas SKK', icon: '🤝' },
   { href: '/skk-coach', label: 'SKK Coach', icon: '💼' },
   { href: '/klinik-uji-kompetensi', label: 'Klinik SKK', icon: '🏥' },
   { href: '/mock-asesmen', label: 'Mock Asesmen', icon: '🎯' },
