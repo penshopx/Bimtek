@@ -234,6 +234,8 @@ export default function SIAPCertifyPage() {
                 <button
                   key={j.id}
                   onClick={() => setActiveStep(j.id)}
+                  aria-pressed={isActive}
+                  aria-label={`Lihat detail tahap ${j.title}`}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
                     isActive ? `${c.border} ${c.badge} border-2` : 'border-slate-700 text-slate-500 hover:text-slate-300'
                   }`}
@@ -247,7 +249,12 @@ export default function SIAPCertifyPage() {
           </div>
 
           {/* Active step detail */}
-          <div className={`bg-gradient-to-br ${ac.bg} to-slate-800/60 border ${ac.border} rounded-2xl p-6 transition-all`}>
+          <div
+            role="region"
+            aria-live="polite"
+            aria-label={`Detail tahap ${activeJourney.title}`}
+            className={`bg-gradient-to-br ${ac.bg} to-slate-800/60 border ${ac.border} rounded-2xl p-6 transition-all`}
+          >
             <div className="flex items-start gap-4 mb-5">
               <div className={`w-14 h-14 rounded-xl bg-slate-800 border ${ac.border} flex items-center justify-center text-3xl shrink-0`}>
                 {activeJourney.icon}
@@ -442,13 +449,15 @@ export default function SIAPCertifyPage() {
               <div key={i} className="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  aria-expanded={openFaq === i}
+                  aria-controls={`faq-answer-${i}`}
                   className="w-full flex items-center justify-between p-4 text-left gap-4"
                 >
                   <span className="text-white text-sm font-medium">{faq.q}</span>
                   <span className={`text-slate-400 shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`}>▼</span>
                 </button>
                 {openFaq === i && (
-                  <div className="px-4 pb-4 text-slate-400 text-sm leading-relaxed border-t border-slate-700/50 pt-3">
+                  <div id={`faq-answer-${i}`} className="px-4 pb-4 text-slate-400 text-sm leading-relaxed border-t border-slate-700/50 pt-3">
                     {faq.a}
                   </div>
                 )}

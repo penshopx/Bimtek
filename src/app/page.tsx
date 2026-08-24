@@ -284,9 +284,9 @@ export default function Home() {
                 <div className={`w-12 h-12 ${item.iconBg} rounded-xl flex items-center justify-center text-2xl mb-4`}>{item.icon}</div>
                 <h3 className="text-white font-bold text-base mb-2">{item.title}</h3>
                 <p className="text-slate-400 text-sm leading-relaxed flex-1 mb-5">{item.desc}</p>
-                <a href={item.href} className={`block text-center py-2.5 px-4 rounded-xl text-sm font-bold text-white transition-colors ${item.ctaColor}`}>
+                <Link href={item.href} className={`block text-center py-2.5 px-4 rounded-xl text-sm font-bold text-white transition-colors ${item.ctaColor}`}>
                   {item.cta}
-                </a>
+                </Link>
               </div>
             ))}
           </div>
