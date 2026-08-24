@@ -32,7 +32,13 @@ export default function AdminQuizPage() {
   const [resetting, setResetting] = useState(false);
   const [sortBySuccessRate, setSortBySuccessRate] = useState(false);
   const [clearAttempts, setClearAttempts] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [, startTransition] = useTransition();
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => {
     if (user?.role === 'admin') loadData();
@@ -123,10 +129,15 @@ export default function AdminQuizPage() {
     if (!confirm('Yakin hapus soal ini?')) return;
     try {
       const sessionId = localStorage.getItem('sessionId');
-      await deleteQuizQuestion(id, sessionId);
+      const result = await deleteQuizQuestion(id, sessionId);
       loadData();
+      if (result?.success === false) {
+        showToast(result.message || 'Gagal menghapus soal.', 'error');
+      } else {
+        showToast('✅ Soal berhasil dihapus.');
+      }
     } catch {
-      // ignore
+      showToast('Terjadi kesalahan saat menghapus soal.', 'error');
     }
   };
 
@@ -135,11 +146,17 @@ export default function AdminQuizPage() {
     setResetting(true);
     try {
       const sessionId = localStorage.getItem('sessionId');
-      await resetQuizAttempts(resetConfirmId, sessionId);
+      const result = await resetQuizAttempts(resetConfirmId, sessionId);
       setResetConfirmId(null);
       loadData();
+      if (result.success) {
+        showToast('✅ Statistik soal berhasil direset.');
+      } else {
+        showToast(result.message || 'Gagal mereset statistik.', 'error');
+      }
     } catch {
-      // ignore
+      setResetConfirmId(null);
+      showToast('Terjadi kesalahan saat mereset statistik.', 'error');
     } finally {
       setResetting(false);
     }
@@ -212,6 +229,26 @@ export default function AdminQuizPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-[100] flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-xs transition-all
+            ${toast.type === 'success'
+              ? 'bg-green-600 text-white'
+              : 'bg-red-600 text-white'
+            }`}
+        >
+          <span className="flex-1">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 text-white/80 hover:text-white shrink-0 text-base leading-none"
+            aria-label="Tutup notifikasi"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
