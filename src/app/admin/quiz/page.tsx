@@ -31,6 +31,7 @@ export default function AdminQuizPage() {
   const [resetConfirmId, setResetConfirmId] = useState<number | null>(null);
   const [resetting, setResetting] = useState(false);
   const [sortBySuccessRate, setSortBySuccessRate] = useState(false);
+  const [clearAttempts, setClearAttempts] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function AdminQuizPage() {
   const openCreate = () => {
     setEditingId(null);
     setForm({ question: '', category: '', options: ['', '', '', ''], correct: 0 });
+    setClearAttempts(false);
     setShowForm(true);
     setMessage('');
   };
@@ -68,6 +70,7 @@ export default function AdminQuizPage() {
   const openEdit = (q: QuizQuestion) => {
     setEditingId(q.id);
     setForm({ question: q.question, category: q.category, options: [...q.options], correct: q.correct });
+    setClearAttempts(false);
     setShowForm(true);
     setMessage('');
   };
@@ -75,6 +78,7 @@ export default function AdminQuizPage() {
   const closeForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setClearAttempts(false);
   };
 
   const handleSave = async () => {
@@ -90,6 +94,19 @@ export default function AdminQuizPage() {
         : await createQuizQuestion(form, sessionId);
 
       if (result.success) {
+        if (clearAttempts && editingId !== null) {
+          const resetResult = await resetQuizAttempts(editingId, sessionId);
+          if (!resetResult.success) {
+            // The question was saved but the attempt reset failed — keep the
+            // form open so the admin can retry or dismiss deliberately.
+            setSaving(false);
+            setMessage(
+              `Soal berhasil diperbarui, tetapi gagal menghapus riwayat percobaan: ${resetResult.message || 'Terjadi kesalahan.'}`
+            );
+            loadData();
+            return;
+          }
+        }
         setMessage(editingId !== null ? 'Soal berhasil diperbarui.' : 'Soal berhasil ditambahkan.');
         loadData();
         closeForm();
@@ -354,6 +371,25 @@ export default function AdminQuizPage() {
                   <p className="text-xs text-slate-500 mt-1">Pilih radio button di kiri untuk menandai jawaban benar.</p>
                 </div>
               </div>
+
+              {/* Clear attempts checkbox — only shown when editing a question that already has attempts */}
+              {editingId !== null && stats.get(editingId) && (stats.get(editingId)!.totalAttempts > 0) && (
+                <div className="mt-5 flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                  <input
+                    id="clear-attempts-checkbox"
+                    type="checkbox"
+                    checked={clearAttempts}
+                    onChange={(e) => setClearAttempts(e.target.checked)}
+                    className="mt-0.5 accent-red-500 shrink-0"
+                  />
+                  <label htmlFor="clear-attempts-checkbox" className="text-sm text-red-700 dark:text-red-400 cursor-pointer leading-snug">
+                    Hapus juga riwayat percobaan untuk soal ini saat menyimpan
+                    <span className="block text-xs text-red-500 dark:text-red-500 mt-0.5">
+                      {stats.get(editingId)!.totalAttempts} percobaan akan dihapus permanen
+                    </span>
+                  </label>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-6 justify-end">
                 <button
