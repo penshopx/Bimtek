@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useBookmarks } from '@/components/BookmarkProvider';
 
 type Method = 'hardcopy' | 'paperless' | 'ajj';
 
@@ -226,12 +227,23 @@ const colorMap: Record<string, { bg: string; border: string; text: string; badge
   rose:   { bg: 'bg-rose-500/10',   border: 'border-rose-500/30',   text: 'text-rose-400',   badge: 'bg-rose-500/20 text-rose-300' },
 };
 
-function StepCard({ step, index, total }: { step: Step; index: number; total: number }) {
+interface StepCardProps {
+  step: Step;
+  index: number;
+  total: number;
+  bookmarkId: string;
+  bookmarkTitle: string;
+  bookmarkUrl: string;
+  isBookmarked: boolean;
+  onToggleBookmark: (e: React.MouseEvent) => void;
+}
+
+function StepCard({ step, index, total, bookmarkId, bookmarkTitle, bookmarkUrl, isBookmarked, onToggleBookmark }: StepCardProps) {
   const [expanded, setExpanded] = useState(false);
   const c = colorMap[step.color];
 
   return (
-    <div className="flex flex-col items-center">
+    <div id={bookmarkId} className="flex flex-col items-center">
       {/* Card */}
       <div className={`w-full rounded-2xl border ${c.border} ${c.bg} p-5 transition-all duration-200 hover:scale-[1.02] cursor-pointer`}
            onClick={() => setExpanded(!expanded)}>
@@ -248,11 +260,33 @@ function StepCard({ step, index, total }: { step: Step; index: number; total: nu
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <h3 className={`font-bold text-base ${c.text}`}>{step.title}</h3>
-              {step.duration && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${c.badge} shrink-0`}>
-                  ⏱ {step.duration}
-                </span>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {step.duration && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${c.badge}`}>
+                    ⏱ {step.duration}
+                  </span>
+                )}
+                {/* Bookmark button */}
+                <button
+                  onClick={onToggleBookmark}
+                  title={isBookmarked ? 'Hapus bookmark langkah ini' : 'Bookmark langkah ini'}
+                  className={`p-1.5 rounded-lg transition-all duration-150 ${
+                    isBookmarked
+                      ? 'text-amber-400 bg-amber-500/20 hover:bg-amber-500/30'
+                      : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10'
+                  }`}
+                >
+                  {isBookmarked ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M10 2a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L10 14.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L2.819 8.124a.75.75 0 01.416-1.28l4.21-.611L9.327 2.418A.75.75 0 0110 2z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <p className="text-slate-300 text-sm mt-1 leading-relaxed">{step.description}</p>
 
@@ -310,7 +344,54 @@ const comparisons = [
 
 export default function ProsedurPage() {
   const [activeTab, setActiveTab] = useState<Method>('hardcopy');
+  const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
+  const didRestoreRef = useRef(false);
+
   const steps = stepsMap[activeTab];
+
+  // Restore tab + scroll to step from URL query params on first mount
+  useEffect(() => {
+    if (didRestoreRef.current) return;
+    didRestoreRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const method = params.get('method') as Method | null;
+    const stepParam = params.get('step');
+
+    if (method && (method === 'hardcopy' || method === 'paperless' || method === 'ajj')) {
+      setActiveTab(method);
+      if (stepParam !== null) {
+        const stepIndex = parseInt(stepParam, 10);
+        if (!isNaN(stepIndex)) {
+          // Wait a tick for tab state to propagate then scroll
+          setTimeout(() => {
+            const el = document.getElementById(`prosedur-${method}-${stepIndex}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        }
+      }
+    }
+  }, []);
+
+  const makeBookmarkId = (method: Method, index: number) => `prosedur-${method}-${index}`;
+
+  const handleToggleBookmark = (method: Method, index: number, step: Step, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const id = makeBookmarkId(method, index);
+    if (isBookmarked(id)) {
+      removeBookmark(id);
+    } else {
+      const methodLabel = tabs.find(t => t.id === method)!.label;
+      addBookmark({
+        id,
+        type: 'prosedur',
+        title: `Langkah ${index + 1}: ${step.title} (${methodLabel})`,
+        url: `/prosedur?method=${method}&step=${index}`,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -381,15 +462,28 @@ export default function ProsedurPage() {
             </div>
           </div>
           <p className="text-slate-400 text-sm mt-3">
-            Klik pada setiap langkah untuk melihat detail kegiatan yang harus dilakukan.
+            Klik pada setiap langkah untuk melihat detail. Tekan ⭐ untuk menyimpan langkah ke bookmark.
           </p>
         </div>
 
         {/* Steps */}
         <div className="flex flex-col mb-14">
-          {steps.map((step, i) => (
-            <StepCard key={i} step={step} index={i} total={steps.length} />
-          ))}
+          {steps.map((step, i) => {
+            const bmId = makeBookmarkId(activeTab, i);
+            return (
+              <StepCard
+                key={`${activeTab}-${i}`}
+                step={step}
+                index={i}
+                total={steps.length}
+                bookmarkId={bmId}
+                bookmarkTitle={`Langkah ${i + 1}: ${step.title} (${tabs.find(t => t.id === activeTab)!.label})`}
+                bookmarkUrl={`/prosedur?method=${activeTab}&step=${i}`}
+                isBookmarked={isBookmarked(bmId)}
+                onToggleBookmark={(e) => handleToggleBookmark(activeTab, i, step, e)}
+              />
+            );
+          })}
         </div>
 
         {/* AJJ specific note */}

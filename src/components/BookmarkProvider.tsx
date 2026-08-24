@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export interface BookmarkItem {
   id: string;
-  type: 'module' | 'quiz' | 'article' | 'tool' | 'position' | 'solver';
+  type: 'module' | 'quiz' | 'article' | 'tool' | 'position' | 'solver' | 'prosedur';
   title: string;
   url: string;
   addedAt: string;
