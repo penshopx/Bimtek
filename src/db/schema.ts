@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
 export const bimtekProgress = sqliteTable("bimtek_progress", {
   moduleId: text("module_id").primaryKey(),
@@ -191,7 +191,9 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
    * the option indices may now refer to different option text.
    */
   invalidatedAt: text("invalidated_at"),
-});
+}, (t) => ({
+  attemptedAtIdx: index("quiz_attempts_attempted_at_idx").on(t.attemptedAt),
+}));
 
 export const documentChecklist = sqliteTable("document_checklist", {
   id: text("id").primaryKey(),

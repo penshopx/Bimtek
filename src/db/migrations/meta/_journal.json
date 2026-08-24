@@ -85,6 +85,20 @@
       "when": 1787930000000,
       "tag": "0011_document_checklist_note",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788016400000,
+      "tag": "0012_quiz_attempts_invalidated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1788102800000,
+      "tag": "0013_quiz_attempts_attempted_at_idx",
+      "breakpoints": true
     }
   ]
 }
