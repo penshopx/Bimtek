@@ -164,13 +164,22 @@ export async function updateQuizQuestion(
     await requireAdmin(sessionId);
     if (!Number.isInteger(id) || id <= 0) throw new Error('Invalid question id');
     const validated = validateQuestionInput(data);
+    const now = new Date().toISOString();
     await db.update(quizQuestions).set({
       question: validated.question,
       category: validated.category,
       options: JSON.stringify(validated.options),
       correct: validated.correct,
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
     }).where(eq(quizQuestions.id, id));
+
+    // Soft-invalidate any recorded attempts for this question so that
+    // historical per-option indices are not silently compared against the
+    // (possibly reordered or replaced) new option list.
+    await db.update(quizAttempts)
+      .set({ invalidatedAt: now } as never)
+      .where(eq(quizAttempts.questionId, id));
+
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -262,8 +271,14 @@ export interface QuizAttemptStat {
   totalAttempts: number;
   correctAttempts: number;
   successRate: number; // 0-100
-  /** optionCounts[i] = number of times option index i was selected */
+  /** optionCounts[i] = number of times option index i was selected (only from non-invalidated attempts) */
   optionCounts: number[];
+  /**
+   * True when one or more attempts were invalidated because the question was
+   * edited after those attempts were recorded. The per-option breakdown is
+   * hidden for invalidated attempts to avoid misleading stats.
+   */
+  hasStaleAttempts: boolean;
 }
 
 /**
@@ -276,17 +291,21 @@ export async function getQuizAttemptStats(
 ): Promise<QuizAttemptStat[]> {
   await requireAdmin(sessionId);
 
-  // Aggregate total/correct per question
+  // Aggregate total/correct per question (all attempts, including invalidated ones).
+  // The `correct` boolean was derived server-side at attempt time and remains
+  // meaningful even after a question edit.
   const summaryRows = await db
     .select({
       questionId: quizAttempts.questionId,
       totalAttempts: sql<number>`count(*)`,
       correctAttempts: sql<number>`sum(${quizAttempts.correct})`,
+      staleAttempts: sql<number>`sum(case when ${quizAttempts.invalidatedAt} is not null then 1 else 0 end)`,
     })
     .from(quizAttempts)
     .groupBy(quizAttempts.questionId);
 
-  // Aggregate per-option counts (only rows that have selected_option recorded)
+  // Aggregate per-option counts only for non-invalidated attempts so the
+  // breakdown remains accurate against the current option list.
   const optionRows = await db
     .select({
       questionId: quizAttempts.questionId,
@@ -294,7 +313,7 @@ export async function getQuizAttemptStats(
       count: sql<number>`count(*)`,
     })
     .from(quizAttempts)
-    .where(sql`${quizAttempts.selectedOption} IS NOT NULL`)
+    .where(sql`${quizAttempts.selectedOption} IS NOT NULL AND ${quizAttempts.invalidatedAt} IS NULL`)
     .groupBy(quizAttempts.questionId, quizAttempts.selectedOption);
 
   // Build a map: questionId -> { optionIndex -> count }
@@ -323,6 +342,7 @@ export async function getQuizAttemptStats(
   return summaryRows.map((r) => {
     const total = Number(r.totalAttempts) || 0;
     const correct = Number(r.correctAttempts) || 0;
+    const stale = Number(r.staleAttempts) || 0;
     const numOptions = optionCountMap.get(r.questionId) ?? 4;
     const byOption = optionMap.get(r.questionId) ?? new Map();
     const optionCounts = Array.from({ length: numOptions }, (_, i) => byOption.get(i) ?? 0);
@@ -332,6 +352,7 @@ export async function getQuizAttemptStats(
       correctAttempts: correct,
       successRate: total > 0 ? Math.round((correct / total) * 100) : 0,
       optionCounts,
+      hasStaleAttempts: stale > 0,
     };
   });
 }

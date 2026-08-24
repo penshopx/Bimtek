@@ -483,7 +483,14 @@ export default function AdminQuizPage() {
                                 </div>
                                 <p className="text-xs text-slate-400">{stat!.totalAttempts} percobaan</p>
                                 {/* Per-option breakdown */}
-                                {stat!.optionCounts.length > 0 && stat!.optionCounts.some((c) => c > 0) && (
+                                {stat!.hasStaleAttempts ? (
+                                  <div className="mt-1 flex items-start gap-1.5 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-2 py-1.5">
+                                    <span className="text-amber-500 text-xs mt-0.5 shrink-0">⚠️</span>
+                                    <p className="text-xs text-amber-700 dark:text-amber-400 leading-snug">
+                                      Soal diubah setelah percobaan tercatat. Rincian per-opsi disembunyikan agar tidak menyesatkan.
+                                    </p>
+                                  </div>
+                                ) : stat!.optionCounts.length > 0 && stat!.optionCounts.some((c) => c > 0) && (
                                   <div className="mt-1 space-y-0.5">
                                     {stat!.optionCounts.map((count, optIdx) => {
                                       const pct = stat!.totalAttempts > 0

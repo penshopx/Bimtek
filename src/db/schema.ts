@@ -185,6 +185,12 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   correct: integer("correct", { mode: "boolean" }).notNull(),
   selectedOption: integer("selected_option"),
   attemptedAt: text("attempted_at").notNull(),
+  /**
+   * Set when the parent question is edited after this attempt was recorded.
+   * Invalidated attempts are excluded from per-option breakdown charts since
+   * the option indices may now refer to different option text.
+   */
+  invalidatedAt: text("invalidated_at"),
 });
 
 export const documentChecklist = sqliteTable("document_checklist", {
