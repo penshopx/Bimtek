@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useTransition, useCallback } from 'react';
+import { useState, useEffect, useTransition, useCallback, useMemo } from 'react';
 import { getQuizQuestions, getQuizCategories, recordQuizAttempt } from '@/app/actions/quiz';
 import type { QuizQuestion } from '@/app/actions/quiz';
+import { useAuth } from '@/components/AuthProvider';
+import { getRelatedQuizCategories, getJabatanById } from '@/lib/skkData';
 
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -14,10 +16,19 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 export default function QuizPage() {
+  const { user } = useAuth();
+  const jabatanSkk = user?.jabatanSkk ?? null;
+  const jabatanInfo = useMemo(() => (jabatanSkk ? getJabatanById(jabatanSkk) : null), [jabatanSkk]);
+  const relatedCategories = useMemo(
+    () => (jabatanSkk ? getRelatedQuizCategories(jabatanSkk) : []),
+    [jabatanSkk],
+  );
+
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [displayQuestions, setDisplayQuestions] = useState<QuizQuestion[]>([]);
   const [categories, setCategories] = useState<string[]>(['Semua']);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [jabatanFilterActive, setJabatanFilterActive] = useState(false);
   const [randomMode, setRandomMode] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -40,13 +51,14 @@ export default function QuizPage() {
     });
   }, []);
 
-  // Fetch questions whenever category changes
+  // Fetch questions — when jabatan filter is active always fetch all so we can filter client-side
   useEffect(() => {
+    const fetchCategory = jabatanFilterActive ? 'Semua' : selectedCategory;
     setLoading(true);
     setError(null);
     startTransition(async () => {
       try {
-        const qs = await getQuizQuestions(selectedCategory);
+        const qs = await getQuizQuestions(fetchCategory);
         setQuestions(qs);
       } catch {
         setError('Gagal memuat soal.');
@@ -54,17 +66,22 @@ export default function QuizPage() {
         setLoading(false);
       }
     });
-  }, [selectedCategory]);
+  }, [selectedCategory, jabatanFilterActive]);
 
-  // Apply order mode whenever questions or randomMode changes
+  // Apply order mode and jabatan filter whenever questions / mode / filter changes
   useEffect(() => {
-    setDisplayQuestions(randomMode ? shuffleArray(questions) : questions);
+    let baseQs = questions;
+    if (jabatanFilterActive && relatedCategories.length > 0) {
+      baseQs = questions.filter((q) => relatedCategories.includes(q.category));
+    }
+    setDisplayQuestions(randomMode ? shuffleArray(baseQs) : baseQs);
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
     setSelectedAnswer(null);
     setAnswered(false);
-  }, [questions, randomMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, randomMode, jabatanFilterActive]);
 
   const handleAnswer = (answerIndex: number) => {
     if (answered) return;
@@ -89,16 +106,26 @@ export default function QuizPage() {
   };
 
   const restartQuiz = useCallback(() => {
-    setDisplayQuestions(randomMode ? shuffleArray(questions) : questions);
+    let baseQs = questions;
+    if (jabatanFilterActive && relatedCategories.length > 0) {
+      baseQs = questions.filter((q) => relatedCategories.includes(q.category));
+    }
+    setDisplayQuestions(randomMode ? shuffleArray(baseQs) : baseQs);
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
     setSelectedAnswer(null);
     setAnswered(false);
-  }, [questions, randomMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, randomMode, jabatanFilterActive]);
 
   const handleCategoryChange = (cat: string) => {
+    setJabatanFilterActive(false);
     setSelectedCategory(cat);
+  };
+
+  const handleToggleJabatanFilter = () => {
+    setJabatanFilterActive((prev) => !prev);
   };
 
   const handleToggleRandomMode = () => {
@@ -155,13 +182,26 @@ export default function QuizPage() {
         <div className="max-w-2xl mx-auto px-4 text-center">
           <div className="text-6xl mb-4">📭</div>
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Belum ada soal</h2>
-          <p className="text-slate-600">Kategori ini belum memiliki soal. Silakan pilih kategori lain.</p>
+          <p className="text-slate-600">
+            {jabatanFilterActive
+              ? 'Belum ada soal untuk jabatan Anda. Silakan pilih kategori lain.'
+              : 'Kategori ini belum memiliki soal. Silakan pilih kategori lain.'}
+          </p>
+          {jabatanFilterActive && (
+            <button
+              onClick={() => setJabatanFilterActive(false)}
+              className="mt-4 px-5 py-2 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600"
+            >
+              Tampilkan Semua Soal
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
   const question = displayQuestions[currentQuestion];
+  const isQuestionRelevant = relatedCategories.includes(question.category);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -173,14 +213,43 @@ export default function QuizPage() {
           </p>
         </div>
 
+        {/* Jabatan quick-filter — only shown when user has a jabatan set */}
+        {jabatanInfo && relatedCategories.length > 0 && (
+          <div className="flex justify-center mb-3">
+            <button
+              onClick={handleToggleJabatanFilter}
+              title={
+                jabatanFilterActive
+                  ? 'Menampilkan soal relevan untuk jabatan Anda — klik untuk semua soal'
+                  : `Tampilkan soal relevan untuk ${jabatanInfo.name}`
+              }
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                jabatanFilterActive
+                  ? 'bg-amber-500 border-amber-500 text-white shadow-md'
+                  : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50'
+              }`}
+            >
+              <span>🎯</span>
+              <span>
+                {jabatanFilterActive
+                  ? `Relevan: ${jabatanInfo.name}`
+                  : `Relevan untuk jabatan Anda`}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Category pills */}
         <div className="flex flex-wrap justify-center gap-2 mb-4">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}
               className={`px-3 py-1 rounded-full text-sm transition-all ${
-                selectedCategory === cat
+                !jabatanFilterActive && selectedCategory === cat
                   ? 'bg-amber-500 text-white'
+                  : jabatanFilterActive
+                  ? 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
@@ -206,9 +275,17 @@ export default function QuizPage() {
 
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-4">
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-              {question.category}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                {question.category}
+              </span>
+              {/* Highlight badge when this question's category matches the user's jabatan */}
+              {jabatanInfo && isQuestionRelevant && (
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                  🎯 Relevan
+                </span>
+              )}
+            </div>
             <span className="text-slate-500">
               {currentQuestion + 1} / {displayQuestions.length}
             </span>

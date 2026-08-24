@@ -99,3 +99,41 @@ export function getRelatedCategories(jabatanId: string): string[] {
   if (!jabatan) return [];
   return jabatan.relatedCategories;
 }
+
+/**
+ * Mapping from the abstract SKK domain categories used in relatedCategories
+ * to the actual category strings in the quiz bank (quiz_questions table).
+ * Keeps both domains in sync when quiz categories are added or renamed.
+ */
+export const QUIZ_CATEGORY_MAP: Record<string, string[]> = {
+  // Direct matches
+  'Jalan':      ['Jalan'],
+  'K3':         ['K3'],
+  'Lingkungan': ['Lingkungan'],
+  'Mekanikal':  ['Mekanikal', 'Hydraulic', 'Alat'],
+  'Elektrikal': ['Elektrikal'],
+  'Manajemen':  ['Manajemen', 'Perencanaan', 'Kontrak'],
+  // Semantic equivalents
+  'Sipil Gedung': ['Sipil', 'Struktur', 'Material'],
+  'Quality':      ['Pengujian', 'Standar'],
+  'RAB':          ['Manajemen', 'Kontrak'],
+  'Safety':       ['K3', 'Regulasi'],
+  'Digital':      ['Perencanaan'],
+};
+
+/**
+ * Given a jabatan id, return the deduplicated list of quiz-bank category
+ * strings that are relevant for that jabatan. Use this on the quiz page
+ * instead of getRelatedCategories(), which returns BIMTEK domain labels.
+ */
+export function getRelatedQuizCategories(jabatanId: string): string[] {
+  const jabatan = getJabatanById(jabatanId);
+  if (!jabatan) return [];
+  const seen = new Set<string>();
+  for (const domain of jabatan.relatedCategories) {
+    for (const quizCat of (QUIZ_CATEGORY_MAP[domain] ?? [])) {
+      seen.add(quizCat);
+    }
+  }
+  return Array.from(seen);
+}
