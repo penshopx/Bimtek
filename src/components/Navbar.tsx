@@ -27,6 +27,7 @@ const navItems = [
   { href: '/faq-skk', label: 'FAQ SKK', icon: '❓' },
   { href: '/tips-lolos', label: 'Tips Lolos', icon: '🏆' },
   { href: '/panduan-ajj', label: 'Panduan AJJ', icon: '📡' },
+  { href: '/panduan-rpl', label: 'Panduan RPL', icon: 'RPL' },
   { href: '/menjadi-asesor', label: 'Menjadi Asesor', icon: '🎖️' },
   { href: '/siap-index', label: 'SIAP Index', icon: '🧭' },
   { href: '/timeline-skk', label: 'Timeline SKK', icon: '🗺️' },

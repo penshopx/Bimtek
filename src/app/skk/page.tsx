@@ -23,6 +23,7 @@ const tools: Record<string, { icon: string; name: string; desc: string; href: st
     { icon: '❓', name: 'FAQ SKK', desc: '36 pertanyaan paling umum tentang persyaratan, pendaftaran, asesmen & biaya', href: '/faq-skk' },
     { icon: '🏆', name: 'Tips Lolos Asesmen', desc: 'Strategi per bagian asesmen: portofolio, wawancara, tes tertulis, hari-H & mental', href: '/tips-lolos' },
     { icon: '📡', name: 'Panduan AJJ', desc: 'Setup teknis, dokumen digital, protokol hari-H, troubleshooting & aturan AJJ', href: '/panduan-ajj' },
+    { icon: 'RPL', name: 'Panduan RPL', desc: 'Jalur pengakuan pengalaman untuk mengajukan SKK tanpa bergantung pada ijazah formal', href: '/panduan-rpl' },
     { icon: '🎖️', name: 'Menjadi Asesor Kompetensi', desc: 'Langkah, syarat, peran & FAQ untuk pemegang SKK yang ingin jadi asesor BNSP', href: '/menjadi-asesor' },
     { icon: '🧭', name: 'SIAP Index', desc: 'Self-assessment 8 dimensi kesiapan → SIAP Index 0–100 + rekomendasi prioritas', href: '/siap-index' },
     { icon: '🗺️', name: 'Timeline Proses SKK', desc: 'Peta perjalanan 8 tahap dari persiapan hingga terima sertifikat + dokumen & biaya per fase', href: '/timeline-skk' },
