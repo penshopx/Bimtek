@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 const experts = [
@@ -104,8 +104,23 @@ export default function ChatPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
-  const [consecutiveAIErrors, setConsecutiveAIErrors] = useState(0);
   const [oversizedMessage, setOversizedMessage] = useState<string | null>(null);
+
+  // Derive outage state from the visible conversation so a successful AI reply
+  // clears the banner immediately, even if it came through a new response path.
+  const consecutiveAIErrors = useMemo(() => {
+    let count = 0;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role === 'user') continue;
+      if (message.isAIError && !message.isMessageTooLarge) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [messages]);
 
   const dismissWarning = (id: string) => {
     setDismissedWarnings(prev => new Set(prev).add(id));
@@ -198,11 +213,6 @@ export default function ChatPage() {
       setOversizedMessage(null);
     }
 
-    if (isAIError && !isMessageTooLarge) {
-      setConsecutiveAIErrors(prev => prev + 1);
-    } else {
-      setConsecutiveAIErrors(0);
-    }
     setIsProcessing(false);
   };
 
@@ -247,11 +257,6 @@ export default function ChatPage() {
     };
     setMessages(prev => [...prev, assistantMsg]);
 
-    if (isAIError) {
-      setConsecutiveAIErrors(prev => prev + 1);
-    } else {
-      setConsecutiveAIErrors(0);
-    }
     setIsProcessing(false);
   };
 
@@ -280,11 +285,6 @@ export default function ChatPage() {
       isMessageTooLarge,
     };
     setMessages(prev => [...prev, assistantMsg]);
-    if (assistantMsg.isAIError && !assistantMsg.isMessageTooLarge) {
-      setConsecutiveAIErrors(prev => prev + 1);
-    } else {
-      setConsecutiveAIErrors(0);
-    }
     setIsProcessing(false);
   };
 
