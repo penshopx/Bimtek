@@ -12,7 +12,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/', label: 'Beranda', icon: '🏠' },
   { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
-  { href: '/agentic-chat', label: 'Agentic AI', icon: '🤖' },
+  { href: '/agentic-chat', label: 'AI SIAP SKK', icon: '🤖' },
   { href: '/chatbot-builder', label: 'Chatbot Builder', icon: '🛠️' },
   { href: '/offline', label: 'Bimtek Offline', icon: '📍' },
   { href: '/knowledge-base', label: 'Knowledge Base', icon: '📚' },

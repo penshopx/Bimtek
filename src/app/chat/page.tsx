@@ -90,14 +90,14 @@ function generateRuleBasedResponse(userInput: string, selectedExpert: string | n
   } else {
     return expert
       ? `Terima kasih atas pertanyaan Anda! Sebagai ${expert.name}, saya akan membantu dengan ${expert.description}. ${toolboxes[expert.id] ? 'Anda juga bisa menggunakan toolbox yang tersedia.' : ''} Silakan jelaskan lebih detail.`
-      : 'Terima kasih! Saya AI Assistant SIAP SKK. Silakan pilih expert di atas untuk mendapat bantuan yang lebih spesifik, atau tanya langsung tentang:\n\n• Proses sertifikasi\n• Modul BIMTEK\n• Persyaratan SKK\n• Kalkulator teknis';
+      : 'Terima kasih! Saya AI SIAP SKK. Silakan pilih expert di atas untuk mendapat bantuan yang lebih spesifik, atau tanya langsung tentang:\n\n• Proses sertifikasi\n• Modul BIMTEK\n• Persyaratan SKK\n• Kalkulator teknis';
   }
 }
 
 export default function ChatPage() {
   const [selectedExpert, setSelectedExpert] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: 'Halo! Saya AI Assistant SIAP SKK. Saya siap membantu Anda dengan:' }
+    { id: '1', role: 'assistant', content: 'Halo! Saya AI SIAP SKK. Saya siap membantu Anda dengan:' }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [showFAQ, setShowFAQ] = useState(true);
@@ -135,8 +135,8 @@ export default function ChatPage() {
       const expertContext = currentExpert ? experts.find(e => e.id === currentExpert) : null;
 
       const systemPrompt = expertContext
-        ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description}. Jawab dalam Bahasa Indonesia.`
-        : 'Anda adalah AI Assistant SIAP SKK, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
+        ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description} untuk AI SIAP SKK — Pusat Pengetahuan Uji Kompetensi. Jawab dalam Bahasa Indonesia.`
+        : 'Anda adalah AI SIAP SKK — Pusat Pengetahuan Uji Kompetensi, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
 
       // Guard: warn the user if their message alone exceeds the context window.
       const { isMessageTooLargeForBudget } = await import('@/lib/ai/token-utils');
@@ -222,8 +222,8 @@ export default function ChatPage() {
 
     const expertContext = selectedExpert ? experts.find(e => e.id === selectedExpert) : null;
     const systemPrompt = expertContext
-      ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description}. Jawab dalam Bahasa Indonesia.`
-      : 'Anda adalah AI Assistant SIAP SKK, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
+      ? `Anda adalah ${expertContext.name}, expert dalam ${expertContext.description} untuk AI SIAP SKK — Pusat Pengetahuan Uji Kompetensi. Jawab dalam Bahasa Indonesia.`
+      : 'Anda adalah AI SIAP SKK — Pusat Pengetahuan Uji Kompetensi, membantu profesional konstruksi Indonesia. Jawab dalam Bahasa Indonesia.';
 
     const { truncateMessageToFit } = await import('@/lib/ai/token-utils');
     const truncated = truncateMessageToFit(oversizedMessage, systemPrompt, 8000, 1000);
@@ -300,9 +300,9 @@ export default function ChatPage() {
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-4">💬 AI Chat</h1>
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">💬 AI SIAP SKK</h1>
           <p className="text-lg text-slate-600">
-            AI Assistant dengan 8 expert agents & toolbox lengkap
+            Pusat Pengetahuan Uji Kompetensi
           </p>
         </div>
 
@@ -314,10 +314,10 @@ export default function ChatPage() {
                   <span className="text-2xl">🤖</span>
                   <div>
                     <h3 className="font-semibold text-white">
-                      {selectedExpert ? experts.find(e => e.id === selectedExpert)?.name : 'AI Orchestrator'}
+                      {selectedExpert ? experts.find(e => e.id === selectedExpert)?.name : 'AI SIAP SKK'}
                     </h3>
                     <p className="text-xs text-slate-400">
-                      {selectedExpert ? experts.find(e => e.id === selectedExpert)?.description : 'Pilih expert untuk dimulai'}
+                      {selectedExpert ? experts.find(e => e.id === selectedExpert)?.description : 'Pusat Pengetahuan Uji Kompetensi'}
                     </p>
                   </div>
                 </div>

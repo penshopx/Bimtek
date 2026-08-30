@@ -63,7 +63,7 @@ export default function SKKCoachPage() {
         {/* Hero */}
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium mb-5">
-            5 Agen Spesialis · Permen PUPR 9/2023 & SK Dirjen 114
+            SKK Coach — Bagian dari AI SIAP SKK
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight">
             Panduan SKK.<br/>
