@@ -1,1 +1,2 @@
 - [Next.js development route cache](nextjs-development-route-cache.md) — jika route API terdaftar tetapi dev server mengembalikan 404, segarkan cache `.next` sebelum mengubah kode route.
+- [Drizzle migration ordering](drizzle-migration-ordering.md) — inspect generated SQL and journal timestamps; future-dated entries can silently skip a new migration.

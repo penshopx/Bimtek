@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
         bidang: user.bidang,
         jabatanSkk: user.jabatanSkk,
         kualifikasiSkk: user.kualifikasiSkk,
+        skkCertificateLevel: user.skkCertificateLevel,
+        skkIssuedAt: user.skkIssuedAt,
         createdAt: user.createdAt,
       }
     });
@@ -168,6 +170,8 @@ export async function POST(request: NextRequest) {
           bidang: user.bidang,
           jabatanSkk: user.jabatanSkk,
           kualifikasiSkk: user.kualifikasiSkk,
+          skkCertificateLevel: user.skkCertificateLevel,
+          skkIssuedAt: user.skkIssuedAt,
           createdAt: user.createdAt,
         },
         sessionId,
@@ -211,6 +215,8 @@ export async function POST(request: NextRequest) {
           bidang: user.bidang,
           jabatanSkk: user.jabatanSkk,
           kualifikasiSkk: user.kualifikasiSkk,
+          skkCertificateLevel: user.skkCertificateLevel,
+          skkIssuedAt: user.skkIssuedAt,
           createdAt: user.createdAt,
         },
       });

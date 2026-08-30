@@ -136,6 +136,8 @@ export const users = sqliteTable("users", {
   bidang: text("bidang"),
   jabatanSkk: text("jabatan_skk"),
   kualifikasiSkk: text("kualifikasi_skk"),
+  skkCertificateLevel: text("skk_certificate_level"),
+  skkIssuedAt: text("skk_issued_at"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

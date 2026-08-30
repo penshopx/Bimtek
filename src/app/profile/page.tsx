@@ -59,6 +59,10 @@ export default function ProfilePage() {
   const [skkKualifikasi, setSkkKualifikasi] = useState<Kualifikasi | ''>('');
   const [savingSkk, setSavingSkk] = useState(false);
   const [skkSaved, setSkkSaved] = useState(false);
+  const [certificateLevel, setCertificateLevel] = useState('');
+  const [certificateIssuedAt, setCertificateIssuedAt] = useState('');
+  const [savingCertificate, setSavingCertificate] = useState(false);
+  const [certificateSaved, setCertificateSaved] = useState(false);
 
   useEffect(() => {
     const savedCompleted = localStorage.getItem('bimtekCompleted');
@@ -77,6 +81,11 @@ export default function ProfilePage() {
     setProgress({ bimtekCompleted: completed, quizBestScores: quizScores, totalPKB: pkb, favoriteModules: favorites });
   }, []);
 
+  useEffect(() => {
+    setCertificateLevel(user?.skkCertificateLevel || '');
+    setCertificateIssuedAt(user?.skkIssuedAt || '');
+  }, [user?.skkCertificateLevel, user?.skkIssuedAt]);
+
   // Populate SKK fields from user profile when editing starts
   const startEditSkk = () => {
     setSkkBidang((user?.bidang as Bidang) || '');
@@ -93,6 +102,18 @@ export default function ProfilePage() {
     setSavingSkk(false);
     setEditingSkk(false);
     setSkkSaved(true);
+  };
+
+  const saveCertificate = async () => {
+    if (!certificateLevel || !certificateIssuedAt) return;
+    setSavingCertificate(true);
+    setCertificateSaved(false);
+    await updateProfile({
+      skkCertificateLevel: certificateLevel,
+      skkIssuedAt: certificateIssuedAt,
+    });
+    setSavingCertificate(false);
+    setCertificateSaved(true);
   };
 
   const toggleFavorite = (moduleId: string) => {
@@ -379,6 +400,72 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 )}
+
+                <div className="mt-8 border-t border-slate-200 pt-6 dark:border-slate-700">
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-slate-800 dark:text-white">🏅 SKK Aktif yang Anda Miliki</h4>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Data ini disimpan di profil akun untuk mempersonalisasi pengingat masa berlaku dan rekomendasi jalur karier.
+                    </p>
+                  </div>
+
+                  {certificateSaved && (
+                    <div className="mb-4 rounded-xl border border-green-200 bg-green-100 p-3 text-sm text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      ✅ Data SKK aktif berhasil disimpan.
+                    </div>
+                  )}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="certificate-level" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                        Jenjang SKK
+                      </label>
+                      <select
+                        id="certificate-level"
+                        value={certificateLevel}
+                        onChange={(event) => {
+                          setCertificateLevel(event.target.value);
+                          setCertificateSaved(false);
+                        }}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-800 outline-none focus:border-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      >
+                        <option value="">Pilih jenjang</option>
+                        {[1, 2, 3, 4, 5, 6, 7].map(level => (
+                          <option key={level} value={String(level)}>Level {level}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="certificate-issued-at" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                        Tanggal terbit
+                      </label>
+                      <input
+                        id="certificate-issued-at"
+                        type="date"
+                        max={new Date().toISOString().split('T')[0]}
+                        value={certificateIssuedAt}
+                        onChange={(event) => {
+                          setCertificateIssuedAt(event.target.value);
+                          setCertificateSaved(false);
+                        }}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-800 outline-none focus:border-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Jalur asesor umumnya mensyaratkan SKK aktif Level 6+ dan pengalaman kerja relevan minimal 5 tahun.
+                    </p>
+                    <button
+                      onClick={saveCertificate}
+                      disabled={!user || !certificateLevel || !certificateIssuedAt || savingCertificate}
+                      className="shrink-0 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {savingCertificate ? '⏳ Menyimpan...' : 'Simpan Data SKK'}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 

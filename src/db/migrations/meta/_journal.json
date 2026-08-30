@@ -113,6 +113,13 @@
       "when": 1788275600000,
       "tag": "0015_seed_quiz_question_bank",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1788362000000,
+      "tag": "0016_fearless_kabuki",
+      "breakpoints": true
     }
   ]
 }

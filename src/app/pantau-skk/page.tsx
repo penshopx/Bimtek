@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface SKKEntry {
   id: string;
@@ -31,6 +32,31 @@ function daysFromNow(target: Date): number {
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function isActiveSkk(expiry: Date): boolean {
+  // Keep the recommendation aligned with the status badge: an SKK expiring
+  // today is still considered active until the day has passed.
+  return daysFromNow(expiry) >= 0;
+}
+
+function fullYearsSince(dateString: string): number {
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return 0;
+
+  const now = new Date();
+  let years = now.getFullYear() - year;
+  const anniversaryPassed =
+    now.getMonth() + 1 > month ||
+    (now.getMonth() + 1 === month && now.getDate() >= day);
+
+  if (!anniversaryPassed) years -= 1;
+  return Math.max(0, years);
+}
+
+function isLevelSixOrAbove(jenjang: string): boolean {
+  const level = jenjang.match(/\(L(\d+)\)/)?.[1];
+  return level ? Number(level) >= 6 : false;
 }
 
 function statusBadge(days: number, label: string) {
@@ -159,6 +185,7 @@ function SKKCard({ entry, onDelete }: { entry: SKKEntry; onDelete: () => void })
 export default function PantauSKKPage() {
   const [entries, setEntries] = useState<SKKEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [assessorSuggestionDismissed, setAssessorSuggestionDismissed] = useState(false);
   const [jabatan, setJabatan] = useState('');
   const [jenjang, setJenjang] = useState('');
   const [nomorSKK, setNomorSKK] = useState('');
@@ -168,6 +195,9 @@ export default function PantauSKKPage() {
     try {
       const saved = localStorage.getItem('siapskk-pantau-skk');
       if (saved) setEntries(JSON.parse(saved));
+      setAssessorSuggestionDismissed(
+        localStorage.getItem('siapskk-assessor-suggestion-dismissed') === 'true'
+      );
     } catch {}
   }, []);
 
@@ -200,6 +230,19 @@ export default function PantauSKKPage() {
     const d = daysFromNow(exp);
     return d >= 0 && d <= 90;
   }).length;
+  const activeExperiencedSkk = entries
+    .filter(entry => {
+      const expiry = addMonths(new Date(entry.tanggalTerbit), 60);
+      return isActiveSkk(expiry) && isLevelSixOrAbove(entry.jenjang);
+    })
+    .map(entry => ({ entry, years: fullYearsSince(entry.tanggalTerbit) }))
+    .filter(({ years }) => years >= 2)
+    .sort((a, b) => b.years - a.years)[0];
+
+  const dismissAssessorSuggestion = () => {
+    setAssessorSuggestionDismissed(true);
+    localStorage.setItem('siapskk-assessor-suggestion-dismissed', 'true');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4">
@@ -289,6 +332,48 @@ export default function PantauSKKPage() {
                 className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-medium text-sm transition-colors">
                 Simpan SKK
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Career suggestion for experienced active SKK holders */}
+        {activeExperiencedSkk && !assessorSuggestionDismissed && (
+          <div className="relative mb-6 overflow-hidden rounded-2xl border border-purple-500/35 bg-gradient-to-br from-purple-950/70 via-slate-800/80 to-blue-950/60 p-5 sm:p-6">
+            <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl" />
+            <button
+              onClick={dismissAssessorSuggestion}
+              className="absolute right-4 top-4 text-slate-500 transition-colors hover:text-white"
+              title="Tutup saran"
+              aria-label="Tutup saran menjadi asesor"
+            >
+              ✕
+            </button>
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-purple-300">
+                  <span className="text-lg">🎖️</span>
+                  Langkah Selanjutnya
+                </div>
+                <h2 className="text-xl font-bold text-white sm:text-2xl">
+                  Pengalaman Anda bisa membuka jalur baru
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                  Dengan pengalaman {activeExperiencedSkk.years} tahun memegang SKK aktif
+                  Level 6+, Anda sudah memenuhi salah satu syarat dasar untuk mulai
+                  mengeksplorasi jalur Asesor Kompetensi.
+                </p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Pastikan juga pengalaman kerja relevan minimal 5 tahun dan pelajari persyaratan
+                  LSP, pelatihan ASKOM, serta langkah sertifikasinya.
+                </p>
+              </div>
+              <Link
+                href="/menjadi-asesor"
+                className="relative inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-purple-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                Lihat Jalur Asesor
+                <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
         )}

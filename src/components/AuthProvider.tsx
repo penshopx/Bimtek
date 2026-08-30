@@ -14,6 +14,8 @@ export interface User {
   bidang?: string;
   jabatanSkk?: string;
   kualifikasiSkk?: string;
+  skkCertificateLevel?: string;
+  skkIssuedAt?: string;
   createdAt: string;
 }
 

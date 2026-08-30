@@ -40,6 +40,29 @@ interface WeeklyData {
   activities: number;
 }
 
+function fullYearsSince(dateString: string): number {
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return 0;
+
+  const now = new Date();
+  let years = now.getFullYear() - year;
+  const anniversaryPassed =
+    now.getMonth() + 1 > month ||
+    (now.getMonth() + 1 === month && now.getDate() >= day);
+
+  if (!anniversaryPassed) years -= 1;
+  return Math.max(0, years);
+}
+
+function isCertificateActive(dateString: string): boolean {
+  const issuedAt = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(issuedAt.getTime())) return false;
+
+  const expiresAt = new Date(issuedAt);
+  expiresAt.setMonth(expiresAt.getMonth() + 60);
+  return Math.ceil((expiresAt.getTime() - Date.now()) / 86400000) >= 0;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -59,14 +82,38 @@ export default function DashboardPage() {
   const [recentQuizzes, setRecentQuizzes] = useState<QuizScore[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [assessorDismissal, setAssessorDismissal] = useState({ key: '', dismissed: false });
 
   // Derived jabatan info
   const jabatan = user?.jabatanSkk ? getJabatanById(user.jabatanSkk) : null;
   const relatedCategories = user?.jabatanSkk ? getRelatedCategories(user.jabatanSkk) : [];
+  const skkExperienceYears = user?.skkIssuedAt ? fullYearsSince(user.skkIssuedAt) : 0;
+  const assessorDismissalKey = user?.skkIssuedAt && user.skkCertificateLevel
+    ? `siapskk-assessor-suggestion-dismissed:${user.id}:${user.skkCertificateLevel}:${user.skkIssuedAt}`
+    : '';
+  const showAssessorSuggestion =
+    !!user?.skkIssuedAt &&
+    Number(user.skkCertificateLevel) >= 6 &&
+    skkExperienceYears >= 2 &&
+    isCertificateActive(user.skkIssuedAt) &&
+    assessorDismissal.key === assessorDismissalKey &&
+    !assessorDismissal.dismissed;
 
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (!assessorDismissalKey) {
+      setAssessorDismissal({ key: '', dismissed: false });
+      return;
+    }
+
+    setAssessorDismissal({
+      key: assessorDismissalKey,
+      dismissed: localStorage.getItem(assessorDismissalKey) === 'true',
+    });
+  }, [assessorDismissalKey]);
 
   const loadDashboardData = async () => {
     try {
@@ -194,6 +241,12 @@ export default function DashboardPage() {
 
   const progressPercentage = Math.round((stats.completedModules / stats.totalModules) * 100);
 
+  const dismissAssessorSuggestion = () => {
+    if (!assessorDismissalKey) return;
+    localStorage.setItem(assessorDismissalKey, 'true');
+    setAssessorDismissal({ key: assessorDismissalKey, dismissed: true });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -256,6 +309,46 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                 )}
+              </div>
+            )}
+
+            {showAssessorSuggestion && (
+              <div className="relative mb-6 overflow-hidden rounded-2xl border border-purple-500/35 bg-gradient-to-br from-purple-950/70 via-slate-800/80 to-blue-950/60 p-5 sm:p-6">
+                <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl" />
+                <button
+                  onClick={dismissAssessorSuggestion}
+                  className="absolute right-4 top-4 text-slate-500 transition-colors hover:text-white"
+                  title="Tutup saran"
+                  aria-label="Tutup saran menjadi asesor"
+                >
+                  ✕
+                </button>
+                <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="max-w-3xl">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-purple-300">
+                      <span className="text-lg">🎖️</span>
+                      Langkah Selanjutnya
+                    </div>
+                    <h2 className="text-xl font-bold text-white sm:text-2xl">
+                      Pengalaman Anda bisa membuka jalur baru
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                      Dengan pengalaman {skkExperienceYears} tahun memegang SKK aktif Level {user.skkCertificateLevel},
+                      Anda sudah memenuhi salah satu syarat dasar untuk mulai mengeksplorasi jalur Asesor Kompetensi.
+                    </p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      Pastikan juga pengalaman kerja relevan minimal 5 tahun dan pelajari persyaratan LSP,
+                      pelatihan ASKOM, serta langkah sertifikasinya.
+                    </p>
+                  </div>
+                  <Link
+                    href="/menjadi-asesor"
+                    className="relative inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-purple-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+                  >
+                    Lihat Jalur Asesor
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
               </div>
             )}
 
