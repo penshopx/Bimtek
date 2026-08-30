@@ -103,7 +103,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { db: database, schema: sch } = await getDb();
-    const { eq } = await import('drizzle-orm');
+    const { eq, and } = await import('drizzle-orm');
     
     const body = await request.json();
     const { action, ...data } = body;
@@ -115,12 +115,16 @@ export async function POST(request: Request) {
           return NextResponse.json({ success: false, message: 'Event full or not found' }, { status: 400 });
         }
         
-        // Prevent the same email from registering for any event (cross-event duplicate protection).
+        // Prevent duplicate registration for the same event while allowing a
+        // participant to register for multiple different events.
         const existingByEmail = await database.select().from(sch.eventParticipants).where(
-          eq(sch.eventParticipants.email, data.participant.email.trim().toLowerCase())
+          and(
+            eq(sch.eventParticipants.eventId, data.eventId),
+            eq(sch.eventParticipants.email, data.participant.email.trim().toLowerCase()),
+          )
         );
         if (existingByEmail.length > 0) {
-          return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk salah satu event' }, { status: 400 });
+          return NextResponse.json({ success: false, message: 'Email ini sudah terdaftar untuk event ini' }, { status: 400 });
         }
 
         // If the requester is authenticated with a valid, non-expired session,

@@ -21,6 +21,68 @@ const statusLabels = {
   cancelled: 'Dibatalkan',
 };
 
+const REGISTERED_EVENTS_KEY = 'registeredEvents';
+const REGISTERED_PARTICIPANTS_KEY = 'registeredEventParticipants';
+
+type RegisteredEventIds = Record<string, string[]>;
+type RegisteredParticipantDetails = Record<string, Record<string, EventParticipant>>;
+
+interface StoredRegistrations {
+  eventIdsByEmail: RegisteredEventIds;
+  participantsByEmail: RegisteredParticipantDetails;
+}
+
+function readStoredRegistrations(): StoredRegistrations {
+  const eventIdsByEmail: RegisteredEventIds = {};
+  const participantsByEmail: RegisteredParticipantDetails = {};
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(REGISTERED_EVENTS_KEY) ?? '{}') as Record<string, unknown>;
+    for (const [key, value] of Object.entries(stored)) {
+      if (Array.isArray(value)) {
+        const email = key.trim().toLowerCase();
+        const eventIds = value.filter((eventId): eventId is string => typeof eventId === 'string');
+        if (email && eventIds.length > 0) {
+          eventIdsByEmail[email] = Array.from(new Set(eventIds));
+        }
+        continue;
+      }
+
+      // Migrate the previous eventId -> participant record format.
+      if (value && typeof value === 'object' && 'email' in value) {
+        const participant = value as EventParticipant;
+        const email = typeof participant.email === 'string' ? participant.email.trim().toLowerCase() : '';
+        if (!email) continue;
+        eventIdsByEmail[email] = Array.from(new Set([...(eventIdsByEmail[email] ?? []), key]));
+        participantsByEmail[email] = {
+          ...(participantsByEmail[email] ?? {}),
+          [key]: { ...participant, email },
+        };
+      }
+    }
+  } catch {
+    // Ignore malformed localStorage and let the page render without a banner.
+  }
+
+  try {
+    const storedParticipants = JSON.parse(
+      localStorage.getItem(REGISTERED_PARTICIPANTS_KEY) ?? '{}'
+    ) as RegisteredParticipantDetails;
+    for (const [email, participants] of Object.entries(storedParticipants)) {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!participants || typeof participants !== 'object') continue;
+      participantsByEmail[normalizedEmail] = {
+        ...(participantsByEmail[normalizedEmail] ?? {}),
+        ...participants,
+      };
+    }
+  } catch {
+    // Ignore malformed localStorage and keep any registrations recovered above.
+  }
+
+  return { eventIdsByEmail, participantsByEmail };
+}
+
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -36,9 +98,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   // Check whether the user is already registered for this event.
   //
-  // Strategy: at registration time we write the submitted form data into
-  // localStorage under the key `registeredEvents` (a map of eventId → record).
-  // On page load we read that map — no API call, no server-side PII exposure.
+  // Strategy: at registration time we write the event IDs into localStorage
+  // under the submitting email (a map of email → event IDs). This keeps
+  // registrations for earlier events when the user registers for another one.
   //
   // Fallback: in offline/localStorage mode `event.participants` is populated
   // in memory, so we also check there in case the entry is missing from the map
@@ -50,22 +112,32 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     setExistingParticipant(null);
     if (!isHydrated || !event) return;
 
-    // Primary path: per-event localStorage record (works in DB and offline modes)
-    const registeredEvents: Record<string, EventParticipant> = JSON.parse(
-      localStorage.getItem('registeredEvents') ?? '{}'
-    );
-    if (registeredEvents[event.id]) {
-      setExistingParticipant(registeredEvents[event.id]);
-      return;
+    const { eventIdsByEmail, participantsByEmail } = readStoredRegistrations();
+    const registeredEmail = Object.entries(eventIdsByEmail).find(([, eventIds]) =>
+      eventIds.includes(event.id)
+    )?.[0];
+
+    if (registeredEmail) {
+      // Database responses may not include participants for public visitors, so
+      // prefer the event data when available and use our own local details as a
+      // fallback for the banner.
+      const participant = event.participants.find(
+        p => p.email.trim().toLowerCase() === registeredEmail
+      ) ?? participantsByEmail[registeredEmail]?.[event.id];
+      if (participant) {
+        setExistingParticipant(participant);
+        return;
+      }
     }
 
-    // Fallback: in-memory participants list (populated in offline/localStorage mode)
+    // Backward-compatible fallback for registrations created before the map
+    // was introduced.
     const storedEmail = localStorage.getItem('userEmail');
     if (!storedEmail) return;
     const normalized = storedEmail.trim().toLowerCase();
     const match = event.participants.find(p => p.email.toLowerCase() === normalized);
     if (match) setExistingParticipant(match);
-  }, [isHydrated, event?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isHydrated, event]);
 
   if (!event) {
     return (
@@ -87,22 +159,27 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     setSubmitting(false);
     if (error === null) {
       // Persist the registration so future visits show the "already registered" banner.
-      // We store the submitted data (which the user already knows) keyed by eventId —
-      // no server-side lookup needed and no other participants' PII is exposed.
       const normalizedEmail = form.email.trim().toLowerCase();
-      const registeredEvents: Record<string, EventParticipant> = JSON.parse(
-        localStorage.getItem('registeredEvents') ?? '{}'
-      );
-      registeredEvents[event.id] = {
-        id: `local-${Date.now()}`,
-        name: form.name,
-        email: normalizedEmail,
-        phone: form.phone,
-        company: form.company,
-        registeredAt: new Date().toISOString(),
-        status: 'registered',
+      const { eventIdsByEmail, participantsByEmail } = readStoredRegistrations();
+      eventIdsByEmail[normalizedEmail] = Array.from(new Set([
+        ...(eventIdsByEmail[normalizedEmail] ?? []),
+        event.id,
+      ]));
+      participantsByEmail[normalizedEmail] = {
+        ...(participantsByEmail[normalizedEmail] ?? {}),
+        [event.id]: {
+          id: `local-${Date.now()}`,
+          name: form.name,
+          email: normalizedEmail,
+          phone: form.phone,
+          company: form.company,
+          registeredAt: new Date().toISOString(),
+          status: 'registered',
+        },
       };
-      localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
+      localStorage.setItem(REGISTERED_EVENTS_KEY, JSON.stringify(eventIdsByEmail));
+      localStorage.setItem(REGISTERED_PARTICIPANTS_KEY, JSON.stringify(participantsByEmail));
+      // Keep the legacy key for older pages and previously stored sessions.
       localStorage.setItem('userEmail', normalizedEmail);
       setRegistered(true);
     } else {
