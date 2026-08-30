@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
@@ -101,6 +101,33 @@ const steps = [
   },
 ];
 
+const ASKOM_PROGRESS_STORAGE_KEY = 'siapskk_askom_progress';
+
+type AskomProgressRecord = {
+  completed: Record<number, boolean>;
+  notes: Record<number, string>;
+};
+
+function readProgressRecord<T>(
+  value: unknown,
+  isValid: (item: unknown) => item is T,
+): Record<number, T> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+  return Object.entries(value).reduce<Record<number, T>>((result, [key, item]) => {
+    const stepIndex = Number(key);
+    if (
+      Number.isInteger(stepIndex) &&
+      stepIndex >= 0 &&
+      stepIndex < steps.length &&
+      isValid(item)
+    ) {
+      result[stepIndex] = item;
+    }
+    return result;
+  }, {});
+}
+
 const peranAsesor = [
   {
     icon: '📋',
@@ -156,6 +183,52 @@ export default function MenjadiAsesorPage() {
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'syarat' | 'langkah' | 'peran' | 'faq'>('langkah');
+  const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
+  const [stepNotes, setStepNotes] = useState<Record<number, string>>({});
+  const [progressLoaded, setProgressLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(ASKOM_PROGRESS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<AskomProgressRecord>;
+        setCompletedSteps(readProgressRecord(parsed.completed, (item): item is boolean => typeof item === 'boolean'));
+        setStepNotes(readProgressRecord(parsed.notes, (item): item is string => typeof item === 'string'));
+      }
+    } catch {
+      // Ignore malformed or unavailable localStorage data and use a fresh tracker.
+    } finally {
+      setProgressLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!progressLoaded) return;
+
+    try {
+      localStorage.setItem(
+        ASKOM_PROGRESS_STORAGE_KEY,
+        JSON.stringify({ completed: completedSteps, notes: stepNotes }),
+      );
+    } catch {
+      // Progress remains available for the current session if storage is unavailable.
+    }
+  }, [completedSteps, progressLoaded, stepNotes]);
+
+  const completedCount = steps.filter((_, index) => completedSteps[index]).length;
+
+  const toggleStep = (index: number) => {
+    setCompletedSteps(previous => ({ ...previous, [index]: !previous[index] }));
+  };
+
+  const updateStepNote = (index: number, note: string) => {
+    setStepNotes(previous => ({ ...previous, [index]: note }));
+  };
+
+  const resetProgress = () => {
+    setCompletedSteps({});
+    setStepNotes({});
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
@@ -215,6 +288,36 @@ export default function MenjadiAsesorPage() {
         {/* Tab: Langkah */}
         {activeTab === 'langkah' && (
           <div className="space-y-3">
+            <div className="rounded-xl bg-slate-800/60 border border-slate-700/60 p-4 space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-white text-sm font-semibold">Progress Perjalanan ASKOM</p>
+                  <p className="text-slate-400 text-sm mt-0.5">
+                    {completedCount} dari {steps.length} langkah selesai
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetProgress}
+                  className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-600 text-slate-400 hover:text-white hover:border-slate-500 text-xs font-medium transition-colors"
+                >
+                  Reset progress
+                </button>
+              </div>
+              <div
+                className="h-2 bg-slate-700 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-label="Progress perjalanan ASKOM"
+                aria-valuemin={0}
+                aria-valuemax={steps.length}
+                aria-valuenow={completedCount}
+              >
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-500"
+                  style={{ width: `${(completedCount / steps.length) * 100}%` }}
+                />
+              </div>
+            </div>
             <p className="text-slate-400 text-sm">Klik setiap langkah untuk detail lengkap.</p>
             {steps.map((s, i) => (
               <div
@@ -223,23 +326,57 @@ export default function MenjadiAsesorPage() {
                   activeStep === i ? `${s.bgColor} ${s.borderColor}` : 'bg-slate-800/40 border-slate-700/40'
                 }`}
               >
-                <button
-                  className="w-full text-left px-4 py-4 flex items-center gap-4"
-                  onClick={() => setActiveStep(activeStep === i ? null : i)}
-                >
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${s.bgColor} border ${s.borderColor} flex items-center justify-center`}>
-                    <span className={`text-sm font-bold ${s.color}`}>{s.no}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${activeStep === i ? s.color : 'text-white'}`}>{s.judul}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">⏱ {s.durasi}</p>
-                  </div>
-                  <span className={`text-slate-500 transition-transform text-sm ${activeStep === i ? 'rotate-90' : ''}`}>▶</span>
-                </button>
+                <div className="flex items-center gap-3 px-4 py-4">
+                  <button
+                    type="button"
+                    className="flex-1 min-w-0 text-left flex items-center gap-4"
+                    onClick={() => setActiveStep(activeStep === i ? null : i)}
+                    aria-expanded={activeStep === i}
+                  >
+                    <div className={`relative flex-shrink-0 w-10 h-10 rounded-xl ${completedSteps[i] ? 'bg-green-500/15 border-green-500/40' : `${s.bgColor} ${s.borderColor}`} border flex items-center justify-center`}>
+                      <span className={`text-sm font-bold ${completedSteps[i] ? 'text-green-400 line-through' : s.color}`}>
+                        {s.no}
+                      </span>
+                      {completedSteps[i] && (
+                        <span className="absolute -right-1.5 -top-1.5 w-5 h-5 rounded-full bg-green-500 text-slate-950 text-xs font-bold flex items-center justify-center" aria-label="Selesai">
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${completedSteps[i] ? 'text-green-300' : activeStep === i ? s.color : 'text-white'}`}>{s.judul}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">⏱ {s.durasi}</p>
+                    </div>
+                    <span className={`text-slate-500 transition-transform text-sm ${activeStep === i ? 'rotate-90' : ''}`}>▶</span>
+                  </button>
+                  <label className="flex flex-shrink-0 items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(completedSteps[i])}
+                      onChange={() => toggleStep(i)}
+                      className="w-4 h-4 accent-green-500"
+                    />
+                    <span>Tandai Selesai</span>
+                  </label>
+                </div>
                 {activeStep === i && (
                   <div className="px-5 pb-5">
                     <div className="h-px bg-slate-700/50 mb-4" />
                     <p className="text-slate-300 text-sm leading-relaxed">{s.detail}</p>
+                    <div className="mt-4">
+                      <label htmlFor={`askom-note-${i}`} className="block text-xs font-medium text-slate-400 mb-1.5">
+                        Catatan langkah <span className="text-slate-600">(opsional)</span>
+                      </label>
+                      <textarea
+                        id={`askom-note-${i}`}
+                        value={stepNotes[i] ?? ''}
+                        onChange={event => updateStepNote(i, event.target.value)}
+                        maxLength={500}
+                        rows={2}
+                        placeholder="Contoh: Daftar ASKOM di LSP X tanggal Y"
+                        className="w-full resize-y rounded-lg bg-slate-900/60 border border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
