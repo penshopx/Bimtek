@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 // ─── Types & Data ──────────────────────────────────────────────────────────────
 
 type Section = 'persiapan' | 'teknis' | 'hariH' | 'troubleshoot' | 'rules';
+type ChecklistCategory = 'dokumen' | 'teknis' | 'dryRun' | 'hariH';
 
 interface SectionData {
   id: Section;
@@ -188,11 +189,241 @@ const content: Record<Section, {
   },
 };
 
+interface ReadinessItem {
+  id: string;
+  label: string;
+  note?: string;
+  required: boolean;
+}
+
+interface ReadinessCategory {
+  id: ChecklistCategory;
+  label: string;
+  icon: string;
+  color: string;
+  bg: string;
+  border: string;
+  items: ReadinessItem[];
+}
+
+const readinessCategories: ReadinessCategory[] = [
+  {
+    id: 'dokumen',
+    label: 'Dokumen Digital',
+    icon: '📄',
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30',
+    items: [
+      { id: 'ktp', label: 'KTP sudah dipindai dengan jelas (depan dan belakang)', required: true },
+      { id: 'apl01', label: 'FR.APL.01 sudah lengkap dan ditandatangani', required: true },
+      { id: 'apl02', label: 'FR.APL.02 sudah lengkap untuk setiap unit kompetensi', required: true },
+      { id: 'portofolio', label: 'Portofolio dan bukti pengalaman sudah disusun per unit kompetensi', required: true },
+      { id: 'folder', label: 'Folder dokumen digital sudah rapi dan mudah dinavigasi', required: true },
+      { id: 'dokumenBackup', label: 'Salinan dokumen tersedia di perangkat atau HP sebagai cadangan', required: false },
+    ],
+  },
+  {
+    id: 'teknis',
+    label: 'Setup Teknis',
+    icon: '💻',
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/30',
+    items: [
+      { id: 'internet', label: 'Kecepatan dan kestabilan internet sudah diuji', note: 'Disarankan upload 5 Mbps, download 10 Mbps, latensi di bawah 100 ms.', required: true },
+      { id: 'platform', label: 'Platform video conference sudah terpasang dan bisa digunakan', required: true },
+      { id: 'kameraMic', label: 'Kamera, mikrofon, dan earphone/headset sudah diuji', required: true },
+      { id: 'ruangan', label: 'Ruangan tenang, pencahayaan cukup, dan latar belakang rapi', required: true },
+      { id: 'charger', label: 'Laptop terhubung ke charger dan daya listrik dipastikan aman', required: true },
+      { id: 'hotspot', label: 'Hotspot HP siap digunakan sebagai koneksi cadangan', required: false },
+    ],
+  },
+  {
+    id: 'dryRun',
+    label: 'H-1 Dry Run',
+    icon: '🧪',
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/30',
+    items: [
+      { id: 'dryRunLengkap', label: 'Simulasi lengkap dari masuk meeting sampai membuka dokumen sudah dilakukan', required: true },
+      { id: 'screenShare', label: 'Screen share sudah diuji dan dokumen terlihat jelas', required: true },
+      { id: 'aksesDokumen', label: 'Semua link dan file dokumen sudah dicoba dari perangkat yang akan dipakai', required: true },
+      { id: 'kontakDarurat', label: 'Nomor asesor dan admin LSP sudah disimpan di HP', required: true },
+      { id: 'notifikasi', label: 'Aplikasi yang mengganggu dan notifikasi sudah diidentifikasi untuk ditutup', required: false },
+    ],
+  },
+  {
+    id: 'hariH',
+    label: 'Hari-H',
+    icon: '📡',
+    color: 'text-green-400',
+    bg: 'bg-green-500/10',
+    border: 'border-green-500/30',
+    items: [
+      { id: 'masukRoom', label: 'Link meeting sudah siap dan akan dibuka 15 menit sebelum jadwal', required: true },
+      { id: 'ktpHariH', label: 'KTP asli siap ditunjukkan saat verifikasi identitas', required: true },
+      { id: 'tutupAplikasi', label: 'Aplikasi yang tidak diperlukan akan ditutup dan mode Jangan Ganggu diaktifkan', required: true },
+      { id: 'sendiri', label: 'Sudah memastikan hanya ada satu orang di ruangan selama asesmen', required: true },
+      { id: 'minum', label: 'Air minum dan kebutuhan selama sesi 4–8 jam sudah disiapkan', required: false },
+    ],
+  },
+];
+
+const AJJ_CHECKLIST_STORAGE_KEY = 'siapskk_ajj_checklist';
+
+function ReadinessChecklist() {
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(AJJ_CHECKLIST_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setChecked(parsed);
+        }
+      }
+    } catch {
+      // localStorage may be unavailable in private browsing; checklist still works in memory.
+    }
+  }, []);
+
+  const toggle = (id: string) => {
+    const next = { ...checked, [id]: !checked[id] };
+    setChecked(next);
+    try {
+      localStorage.setItem(AJJ_CHECKLIST_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Keep the in-memory state when persistence is unavailable.
+    }
+  };
+
+  const resetChecklist = () => {
+    setChecked({});
+    try {
+      localStorage.removeItem(AJJ_CHECKLIST_STORAGE_KEY);
+    } catch {
+      // Keep the reset usable when persistence is unavailable.
+    }
+  };
+
+  const allItems = readinessCategories.flatMap(category => category.items);
+  const totalDone = allItems.filter(item => checked[item.id]).length;
+  const mandatoryItems = allItems.filter(item => item.required);
+  const mandatoryDone = mandatoryItems.filter(item => checked[item.id]).length;
+  const mandatoryReady = mandatoryDone === mandatoryItems.length;
+  const overallPercent = allItems.length ? Math.round((totalDone / allItems.length) * 100) : 0;
+
+  return (
+    <div className="space-y-5">
+      <div className={`rounded-2xl border p-5 transition-colors ${
+        mandatoryReady
+          ? 'border-green-500/50 bg-green-500/10'
+          : 'border-blue-500/30 bg-blue-500/10'
+      }`}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{mandatoryReady ? '🎉' : '🧭'}</span>
+              <h2 className={`text-lg font-semibold ${mandatoryReady ? 'text-green-300' : 'text-white'}`}>
+                {mandatoryReady ? 'Siap AJJ!' : 'Cek kesiapan sebelum hari H'}
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-300">
+              {mandatoryReady
+                ? 'Semua persiapan wajib sudah ditandai. Simpan checklist ini dan tetap ikuti arahan LSP.'
+                : `${mandatoryDone}/${mandatoryItems.length} persiapan wajib sudah selesai. Tandai setiap langkah setelah benar-benar siap.`}
+            </p>
+          </div>
+          <div className="flex-shrink-0 text-left sm:text-right">
+            <p className="text-2xl font-bold text-white">{totalDone}<span className="text-base font-normal text-slate-400">/{allItems.length}</span></p>
+            <p className="text-xs text-slate-400">total langkah selesai</p>
+          </div>
+        </div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-700/80" aria-label={`Progress total ${overallPercent}%`}>
+          <div
+            className={`h-full rounded-full transition-all ${mandatoryReady ? 'bg-green-400' : 'bg-blue-400'}`}
+            style={{ width: `${overallPercent}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {readinessCategories.map(category => {
+          const done = category.items.filter(item => checked[item.id]).length;
+          const percent = Math.round((done / category.items.length) * 100);
+          return (
+            <section key={category.id} className={`overflow-hidden rounded-2xl border ${category.border} bg-slate-800/50`}>
+              <div className={`border-b ${category.border} ${category.bg} p-4`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">{category.icon}</span>
+                    <h3 className={`font-semibold ${category.color}`}>{category.label}</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-900/40 px-2.5 py-1 text-xs font-medium text-slate-300">
+                    {done}/{category.items.length} selesai
+                  </span>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-700/70" aria-label={`Progress ${category.label} ${percent}%`}>
+                  <div className={`h-full rounded-full ${category.color.replace('text-', 'bg-')} transition-all`} style={{ width: `${percent}%` }} />
+                </div>
+              </div>
+              <div className="divide-y divide-slate-700/50">
+                {category.items.map(item => (
+                  <label
+                    key={item.id}
+                    className={`flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-slate-700/20 ${
+                      checked[item.id] ? 'bg-slate-900/20' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(checked[item.id])}
+                      onChange={() => toggle(item.id)}
+                      className="mt-0.5 h-5 w-5 flex-shrink-0 cursor-pointer accent-blue-500"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-sm leading-relaxed ${
+                        checked[item.id] ? 'text-slate-500 line-through' : 'text-white'
+                      }`}>
+                        {item.label}
+                        {item.required && <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-blue-400">Wajib</span>}
+                      </span>
+                      {item.note && <span className="mt-1 block text-xs leading-relaxed text-slate-500">{item.note}</span>}
+                    </span>
+                    {checked[item.id] && <span className="text-green-400" aria-label="Selesai">✓</span>}
+                  </label>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col items-start justify-between gap-3 border-t border-slate-700/60 pt-2 sm:flex-row sm:items-center">
+        <p className="text-xs leading-relaxed text-slate-500">
+          Checklist tersimpan otomatis di perangkat ini dengan key <span className="text-slate-400">siapskk_ajj_checklist</span>.
+        </p>
+        <button
+          type="button"
+          onClick={resetChecklist}
+          className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-red-500/50 hover:text-red-300"
+        >
+          Reset checklist
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function PanduanAJJPage() {
   const [activeSection, setActiveSection] = useState<Section>('persiapan');
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'guide' | 'checklist'>('guide');
 
   const sec = sections.find(s => s.id === activeSection)!;
   const data = content[activeSection];
@@ -230,106 +461,134 @@ export default function PanduanAJJPage() {
           ))}
         </div>
 
-        {/* Section tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {sections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => { setActiveSection(s.id); setExpanded(null); }}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
-                activeSection === s.id
-                  ? `${s.bg} ${s.color} ${s.border}`
-                  : 'bg-slate-800/60 text-slate-400 border-slate-700/40 hover:border-slate-600'
-              }`}
-            >
-              <span>{s.icon}</span>
-              {s.label}
-            </button>
-          ))}
+        {/* Page tabs */}
+        <div className="flex gap-2 rounded-2xl border border-slate-700/60 bg-slate-800/60 p-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('guide')}
+            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+              activeTab === 'guide' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            📚 Panduan Lengkap
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('checklist')}
+            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+              activeTab === 'checklist' ? 'bg-green-500 text-white shadow-lg shadow-green-500/10' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            ✅ Checklist Kesiapan
+          </button>
         </div>
 
-        {/* Section intro */}
-        <div className={`rounded-2xl p-4 border ${sec.bg} ${sec.border}`}>
-          <p className="text-slate-300 text-sm leading-relaxed">{data.intro}</p>
-        </div>
+        {activeTab === 'checklist' ? (
+          <ReadinessChecklist />
+        ) : (
+          <>
+            {/* Section tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {sections.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => { setActiveSection(s.id); setExpanded(null); }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                    activeSection === s.id
+                      ? `${s.bg} ${s.color} ${s.border}`
+                      : 'bg-slate-800/60 text-slate-400 border-slate-700/40 hover:border-slate-600'
+                  }`}
+                >
+                  <span>{s.icon}</span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
 
-        {/* Items */}
-        <div className="space-y-3">
-          {data.items.map((item, i) => (
-            <div
-              key={i}
-              className={`rounded-xl border transition-all overflow-hidden ${
-                expanded === i ? `${sec.bg} ${sec.border}` : 'bg-slate-800/40 border-slate-700/40'
-              }`}
-            >
-              <button
-                className="w-full text-left px-4 py-3.5 flex items-center gap-3"
-                onClick={() => setExpanded(expanded === i ? null : i)}
-              >
-                <span className={`text-lg flex-shrink-0 transition-transform ${expanded === i ? 'rotate-90' : ''}`}>▶</span>
-                <span className={`text-sm font-semibold ${expanded === i ? sec.color : 'text-white'}`}>{item.title}</span>
-              </button>
+            {/* Section intro */}
+            <div className={`rounded-2xl p-4 border ${sec.bg} ${sec.border}`}>
+              <p className="text-slate-300 text-sm leading-relaxed">{data.intro}</p>
+            </div>
 
-              {expanded === i && (
-                <div className="px-5 pb-5 space-y-3">
-                  <div className="h-px bg-slate-700/50" />
-                  <p className="text-slate-300 text-sm leading-relaxed">{item.detail}</p>
-                  {item.tip && (
-                    <div className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                      <span className="text-blue-400 flex-shrink-0">💡</span>
-                      <p className="text-blue-300 text-xs leading-relaxed">{item.tip}</p>
+            {/* Items */}
+            <div className="space-y-3">
+              {data.items.map((item, i) => (
+                <div
+                  key={i}
+                  className={`rounded-xl border transition-all overflow-hidden ${
+                    expanded === i ? `${sec.bg} ${sec.border}` : 'bg-slate-800/40 border-slate-700/40'
+                  }`}
+                >
+                  <button
+                    className="w-full text-left px-4 py-3.5 flex items-center gap-3"
+                    onClick={() => setExpanded(expanded === i ? null : i)}
+                  >
+                    <span className={`text-lg flex-shrink-0 transition-transform ${expanded === i ? 'rotate-90' : ''}`}>▶</span>
+                    <span className={`text-sm font-semibold ${expanded === i ? sec.color : 'text-white'}`}>{item.title}</span>
+                  </button>
+
+                  {expanded === i && (
+                    <div className="px-5 pb-5 space-y-3">
+                      <div className="h-px bg-slate-700/50" />
+                      <p className="text-slate-300 text-sm leading-relaxed">{item.detail}</p>
+                      {item.tip && (
+                        <div className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                          <span className="text-blue-400 flex-shrink-0">💡</span>
+                          <p className="text-blue-300 text-xs leading-relaxed">{item.tip}</p>
+                        </div>
+                      )}
+                      {item.warning && (
+                        <div className="flex items-start gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                          <span className="text-red-400 flex-shrink-0">⚠️</span>
+                          <p className="text-red-300 text-xs leading-relaxed">{item.warning}</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {item.warning && (
-                    <div className="flex items-start gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                      <span className="text-red-400 flex-shrink-0">⚠️</span>
-                      <p className="text-red-300 text-xs leading-relaxed">{item.warning}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Emergency Contacts Box */}
-        {activeSection === 'troubleshoot' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🆘</span>
-              <p className="text-red-400 font-semibold">Siapkan Kontak Darurat Sebelum Hari H</p>
-            </div>
-            <p className="text-slate-400 text-sm">Simpan di HP (bukan hanya di komputer):</p>
-            <div className="grid sm:grid-cols-2 gap-2 text-sm">
-              {[
-                { label: 'No. HP Asesor', note: 'Minta saat konfirmasi jadwal' },
-                { label: 'No. Admin LSP', note: 'Untuk eskalasi darurat' },
-                { label: 'Link Meeting', note: 'Copy ke catatan HP' },
-                { label: 'Link Dokumen', note: 'Google Drive / backup link' },
-              ].map(c => (
-                <div key={c.label} className="flex items-center gap-2 p-2.5 bg-slate-800/50 rounded-lg">
-                  <span className="text-slate-500 text-xs">📌</span>
-                  <div>
-                    <p className="text-white font-medium text-xs">{c.label}</p>
-                    <p className="text-slate-500 text-xs">{c.note}</p>
-                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Bottom links */}
-        <div className="grid sm:grid-cols-2 gap-3">
-          <Link href="/hari-h" className="flex items-center gap-3 p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl hover:border-blue-500/40 transition-colors">
-            <span className="text-2xl">📅</span>
-            <div><p className="text-white text-sm font-medium">Panduan Hari-H (Semua Metode)</p><p className="text-slate-500 text-xs">Hardcopy, Paperless, dan AJJ side-by-side</p></div>
-          </Link>
-          <Link href="/tips-lolos" className="flex items-center gap-3 p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl hover:border-green-500/40 transition-colors">
-            <span className="text-2xl">🏆</span>
-            <div><p className="text-white text-sm font-medium">Tips Lolos Asesmen</p><p className="text-slate-500 text-xs">Strategi portofolio, wawancara & mental</p></div>
-          </Link>
-        </div>
+            {/* Emergency Contacts Box */}
+            {activeSection === 'troubleshoot' && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🆘</span>
+                  <p className="text-red-400 font-semibold">Siapkan Kontak Darurat Sebelum Hari H</p>
+                </div>
+                <p className="text-slate-400 text-sm">Simpan di HP (bukan hanya di komputer):</p>
+                <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                  {[
+                    { label: 'No. HP Asesor', note: 'Minta saat konfirmasi jadwal' },
+                    { label: 'No. Admin LSP', note: 'Untuk eskalasi darurat' },
+                    { label: 'Link Meeting', note: 'Copy ke catatan HP' },
+                    { label: 'Link Dokumen', note: 'Google Drive / backup link' },
+                  ].map(c => (
+                    <div key={c.label} className="flex items-center gap-2 p-2.5 bg-slate-800/50 rounded-lg">
+                      <span className="text-slate-500 text-xs">📌</span>
+                      <div>
+                        <p className="text-white font-medium text-xs">{c.label}</p>
+                        <p className="text-slate-500 text-xs">{c.note}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bottom links */}
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Link href="/hari-h" className="flex items-center gap-3 p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl hover:border-blue-500/40 transition-colors">
+                <span className="text-2xl">📅</span>
+                <div><p className="text-white text-sm font-medium">Panduan Hari-H (Semua Metode)</p><p className="text-slate-500 text-xs">Hardcopy, Paperless, dan AJJ side-by-side</p></div>
+              </Link>
+              <Link href="/tips-lolos" className="flex items-center gap-3 p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl hover:border-green-500/40 transition-colors">
+                <span className="text-2xl">🏆</span>
+                <div><p className="text-white text-sm font-medium">Tips Lolos Asesmen</p><p className="text-slate-500 text-xs">Strategi portofolio, wawancara & mental</p></div>
+              </Link>
+            </div>
+          </>
+        )}
 
       </div>
     </div>
