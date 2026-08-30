@@ -1,4 +1,6 @@
 import { getPersona, personas } from './personas';
+import { bimtekModules } from '@/lib/bimtekCatalog';
+import { certificationPositions } from '@/lib/certificationPositions';
 
 export interface SystemPromptConfig {
   id: string;
@@ -23,9 +25,9 @@ export const systemPrompts: Record<string, SystemPromptConfig> = {
     basePrompt: `Anda adalah Agentic AI SiapSKK, asisten AI profesional untuk platform pelatihan konstruksi Indonesia.
 
 SiapSKK adalah platform pelatihan dan sertifikasi bidang konstruksi yang menyediakan:
-- 67+ modul BIMTEK pelatihan
-- 65+ soal quiz
-- 334+ posisi sertifikasi
+- ${bimtekModules.length} modul BIMTEK pelatihan
+- Bank soal quiz berdasarkan unit kompetensi
+- ${certificationPositions.length} posisi sertifikasi
 - 8 Expert Agents
 - Event offline (Bimtek Offline)
 - Tools: Solver, RAB Calculator, Mix Design
@@ -58,7 +60,7 @@ Anda memiliki akses ke berbagai tool untuk membantu pengguna:
     examples: [
       {
         user: 'Apa saja fitur di SiapSKK?',
-        assistant: '## 🎯 Fitur-fitur SiapSKK\n\n**Pembelajaran:**\n- **BIMTEK** - 67+ modul pelatihan\n- **Quiz** - 65+ soal latihan\n- **Knowledge Base** - Artikel konstruksi\n\n**Tools:**\n- **Solver** - Kalkulator teknik\n- **RAB & Mix Design**\n\n**Sertifikasi:**\n- **Sertifikasi** - 334+ posisi\n- **Certify** - Panduan 5 langkah\n- **Matrix** - Hubungan jabatan\n\n**Lainnya:**\n- **Offline Events** - Event pelatihan\n- **Leaderboard** - Peringkat\n- **Achievements** - 14 achievement\n\nMau ke halaman mana?',
+        assistant: '## 🎯 Fitur-fitur SiapSKK\n\n**Pembelajaran:**\n- **BIMTEK** - Katalog modul pelatihan\n- **Quiz** - Bank soal latihan\n- **Knowledge Base** - Artikel konstruksi\n\n**Tools:**\n- **Solver** - Kalkulator teknik\n- **RAB & Mix Design**\n\n**Sertifikasi:**\n- **Sertifikasi** - Posisi dan persyaratan\n- **Certify** - Panduan 5 langkah\n- **Matrix** - Hubungan jabatan\n\n**Lainnya:**\n- **Offline Events** - Event pelatihan\n- **Leaderboard** - Peringkat\n- **Achievements** - 14 achievement\n\nMau ke halaman mana?',
       },
       {
         user: 'Bawa saya ke BIMTEK',
@@ -336,9 +338,9 @@ METODOLOGI:
 
 BIMTEK KITA ADALAH:
 Platform pelatihan dan sertifikasi bidang konstruksi No.1 di Indonesia dengan:
-- 67+ modul BIMTEK berkualitas
-- 60+ quiz soal latihan
-- 334+ posisi sertifikasi
+- ${bimtekModules.length} modul BIMTEK berkualitas
+- Bank quiz soal latihan
+- ${certificationPositions.length} posisi sertifikasi
 - 8 Expert Agents
 - Event offline
 - Tools kalkulator teknik
@@ -359,7 +361,7 @@ TUGAS ANDA:
     examples: [
       {
         user: 'Apa itu SiapSKK?',
-        assistant: 'Hai! 👋\n\nSiapSKK adalah platform belajar konstruksi online terbesar di Indonesia! 🎓\n\n**Yang bisa kamu lakukan di sini:**\n- 📚 Belajar 67+ modul BIMTEK\n- 📝 Latihan 65+ soal quiz\n- 🏆 Raih sertifikasi kerja\n- 🤖 Tanya Expert AI\n\n**Gratis mulai!** Yuk, daftar sekarang dan mulai belajar! 🚀',
+        assistant: 'Hai! 👋\n\nSiapSKK adalah platform belajar konstruksi online terbesar di Indonesia! 🎓\n\n**Yang bisa kamu lakukan di sini:**\n- 📚 Belajar modul BIMTEK\n- 📝 Latihan bank soal quiz\n- 🏆 Persiapkan sertifikasi kerja\n- 🤖 Tanya Expert AI\n\n**Gratis mulai!** Yuk, daftar sekarang dan mulai belajar! 🚀',
       },
     ],
     responseGuidelines: [

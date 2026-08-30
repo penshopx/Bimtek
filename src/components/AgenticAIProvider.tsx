@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { bimtekModules } from '@/lib/bimtekCatalog';
+import { certificationPositions } from '@/lib/certificationPositions';
 
 export interface AppFeature {
   id: string;
@@ -67,12 +69,12 @@ interface AgenticAIContextType {
 const appFeatures: AppFeature[] = [
   { id: 'dashboard', name: 'Dashboard', description: 'Ringkasan progress belajar dan statistik', path: '/dashboard', icon: '📊', category: 'profile' },
   { id: 'knowledge-base', name: 'Knowledge Base', description: 'Artikel dan panduan konstruksi', path: '/knowledge-base', icon: '📚', category: 'learning' },
-  { id: 'bimtek', name: 'BIMTEK', description: '67+ modul pelatihan dengan AI Learning Companion', path: '/bimtek', icon: '🎓', category: 'learning' },
-  { id: 'quiz', name: 'Quiz', description: '65+ soal latihan berbagai kategori', path: '/quiz', icon: '✍️', category: 'learning' },
+  { id: 'bimtek', name: 'BIMTEK', description: `${bimtekModules.length} modul pelatihan dengan AI Learning Companion`, path: '/bimtek', icon: '🎓', category: 'learning' },
+  { id: 'quiz', name: 'Quiz', description: 'Bank soal latihan berbagai kategori', path: '/quiz', icon: '✍️', category: 'learning' },
   { id: 'solver', name: 'Solver', description: 'Kalkulator teknik (balok, kolom, fondasi, dll)', path: '/solver', icon: '🧮', category: 'tools' },
   { id: 'tools', name: 'Tools', description: 'RAB Calculator & Mix Design Calculator', path: '/tools', icon: '🔧', category: 'tools' },
   { id: 'matrix', name: 'Matrix', description: 'Peta hubungan subklasifikasi dan jabatan', path: '/matrix', icon: '🔗', category: 'certification' },
-  { id: 'sertifikasi', name: 'Sertifikasi', description: '334+ posisi pekerjaan dan persyaratan SKK', path: '/sertifikasi', icon: '📋', category: 'certification' },
+  { id: 'sertifikasi', name: 'Sertifikasi', description: `${certificationPositions.length} posisi pekerjaan dan persyaratan SKK`, path: '/sertifikasi', icon: '📋', category: 'certification' },
   { id: 'certify', name: 'Certify', description: 'Panduan 5 langkah mendapatkan sertifikasi', path: '/certify', icon: '✅', category: 'certification' },
   { id: 'offline', name: 'Bimtek Offline', description: 'Event pelatihan offline terdekat', path: '/offline', icon: '📍', category: 'community' },
   { id: 'chat', name: 'AI Chat', description: '8 Expert Agents untuk konsultasi', path: '/chat', icon: '💬', category: 'learning' },
@@ -94,9 +96,9 @@ function buildSystemPrompt(): string {
 
 TENTANG SIAPSKK:
 - Platform persiapan uji kompetensi SKK bidang Sipil & Manajemen Pelaksanaan
-- 67+ modul BIMTEK pelatihan (Struktur, K3, Manajemen, Elektrikal, Plumbing)
-- 65+ soal latihan berdasarkan unit kompetensi SKKNI
-- 334+ posisi jabatan SKK (Operator, Teknisi/Analis, Ahli)
+- ${bimtekModules.length} modul BIMTEK pelatihan (Struktur, K3, Manajemen, Elektrikal, Plumbing)
+- Bank soal latihan berdasarkan unit kompetensi SKKNI
+- ${certificationPositions.length} posisi jabatan SKK (Operator, Teknisi/Analis, Ahli)
 - 8 Expert Agents: Struktur, K3, Manajemen, Elektrikal, Plumbing, RAB, Fondasi, QC
 - Event offline Bimtek tatap muka di berbagai kota
 - Tools: Solver teknis, RAB Calculator, Mix Design
@@ -105,7 +107,7 @@ FITUR APLIKASI:
 - /dashboard - Ringkasan progress persiapan SKK
 - /bimtek - Modul pelatihan per unit kompetensi
 - /quiz - Simulasi asesmen & latihan soal
-- /sertifikasi - 334+ jabatan SKK & persyaratan
+- /sertifikasi - ${certificationPositions.length} jabatan SKK & persyaratan
 - /certify - Panduan 5 langkah proses sertifikasi
 - /matrix - Peta unit kompetensi per jabatan
 - /offline - Event Bimtek tatap muka

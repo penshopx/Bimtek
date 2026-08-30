@@ -1,4 +1,9 @@
 import Link from 'next/link';
+import { count } from 'drizzle-orm';
+import { db } from '@/db';
+import { quizQuestions } from '@/db/schema';
+import { bimtekModules } from '@/lib/bimtekCatalog';
+import { certificationPositions } from '@/lib/certificationPositions';
 
 const journeySteps = [
   {
@@ -52,7 +57,7 @@ const quickTools = [
   { icon: '🏗️', name: 'SKK Hub', desc: 'Semua alat SKK dalam satu portal', href: '/skk' },
 ];
 
-const features = [
+const getFeatures = (bimtekCount: number, quizCount: number) => [
   {
     icon: '📋',
     title: 'Persiapan Dokumen',
@@ -63,14 +68,14 @@ const features = [
   {
     icon: '🎓',
     title: 'BIMTEK & Materi',
-    description: '65+ modul pelatihan teknis & manajerial sesuai unit kompetensi SKKNI bidang Sipil & Manajemen',
+    description: `${bimtekCount} modul pelatihan teknis & manajerial sesuai unit kompetensi SKKNI bidang Sipil & Manajemen`,
     href: '/bimtek',
     color: 'from-amber-500 to-orange-600',
   },
   {
     icon: '✍️',
     title: 'Simulasi Asesmen',
-    description: '60+ soal latihan berdasarkan unit kompetensi — persiapkan diri sebelum menghadapi asesor',
+    description: `${quizCount} soal latihan berdasarkan unit kompetensi — persiapkan diri sebelum menghadapi asesor`,
     href: '/quiz',
     color: 'from-green-500 to-emerald-600',
   },
@@ -116,13 +121,6 @@ const features = [
     href: '/knowledge-base',
     color: 'from-indigo-500 to-blue-600',
   },
-];
-
-const stats = [
-  { value: '65+', label: 'Modul BIMTEK' },
-  { value: '60+', label: 'Soal Latihan' },
-  { value: '334', label: 'Posisi SKK' },
-  { value: '8', label: 'AI Experts' },
 ];
 
 const challenges = [
@@ -182,7 +180,22 @@ const aiExperts = [
   { icon: '💬', name: 'Expert AI Chat', desc: 'Konsultasi teknis bebas dengan AI konstruksi', href: '/chat' },
 ];
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const [quizCountRow] = await db
+    .select({ count: count() })
+    .from(quizQuestions);
+  const bimtekCount = bimtekModules.length;
+  const quizCount = Number(quizCountRow?.count ?? 0);
+  const stats = [
+    { value: String(bimtekCount), label: 'Modul BIMTEK' },
+    { value: String(quizCount), label: 'Soal Latihan' },
+    { value: String(certificationPositions.length), label: 'Posisi SKK' },
+    { value: '8', label: 'AI Experts' },
+  ];
+  const features = getFeatures(bimtekCount, quizCount);
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
