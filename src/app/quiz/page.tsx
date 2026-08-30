@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from 'react';
+import { Suspense, useState, useEffect, useTransition, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { getQuizQuestions, getQuizCategories, recordQuizAttempt } from '@/app/actions/quiz';
 import type { QuizQuestion } from '@/app/actions/quiz';
 import { useAuth } from '@/components/AuthProvider';
@@ -15,7 +17,10 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
-export default function QuizPage() {
+function QuizContent() {
+  const searchParams = useSearchParams();
+  const requestedCategory = searchParams.get('category') || 'Semua';
+  const unitContext = searchParams.get('unit');
   const { user } = useAuth();
   const jabatanSkk = user?.jabatanSkk ?? null;
   const jabatanInfo = useMemo(() => (jabatanSkk ? getJabatanById(jabatanSkk) : null), [jabatanSkk]);
@@ -27,7 +32,7 @@ export default function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [displayQuestions, setDisplayQuestions] = useState<QuizQuestion[]>([]);
   const [categories, setCategories] = useState<string[]>(['Semua']);
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [selectedCategory, setSelectedCategory] = useState(requestedCategory);
   const [jabatanFilterActive, setJabatanFilterActive] = useState(false);
   const [randomMode, setRandomMode] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -50,11 +55,14 @@ export default function QuizPage() {
       try {
         const cats = await getQuizCategories();
         setCategories(cats);
+        if (requestedCategory !== 'Semua' && !cats.includes(requestedCategory)) {
+          setSelectedCategory('Semua');
+        }
       } catch {
         // keep default
       }
     });
-  }, []);
+  }, [requestedCategory]);
 
   // Fetch questions — when jabatan filter is active always fetch all so we can filter client-side
   useEffect(() => {
@@ -87,8 +95,7 @@ export default function QuizPage() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions, randomMode, jabatanFilterActive]);
+  }, [questions, randomMode, jabatanFilterActive, relatedCategories]);
 
   const handleAnswer = (answerIndex: number) => {
     if (answered) return;
@@ -132,8 +139,7 @@ export default function QuizPage() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions, randomMode, jabatanFilterActive]);
+  }, [questions, randomMode, jabatanFilterActive, relatedCategories]);
 
   const retryWrongQuestions = useCallback(() => {
     // Sort wrong questions by sortOrder ASC (mirroring the default fetch order)
@@ -146,7 +152,6 @@ export default function QuizPage() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wrongQuestions, randomMode]);
 
   const handleCategoryChange = (cat: string) => {
@@ -235,6 +240,12 @@ export default function QuizPage() {
         <div className="max-w-2xl mx-auto px-4 text-center">
           <div className="text-6xl mb-4">📭</div>
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Belum ada soal</h2>
+          {unitContext && (
+            <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-left text-sm text-blue-900">
+              <p className="font-semibold">Latihan rekomendasi dari Matrix SIAP SKK</p>
+              <p className="mt-1 text-blue-700">{unitContext}</p>
+            </div>
+          )}
           <p className="text-slate-600">
             {jabatanFilterActive
               ? 'Belum ada soal untuk jabatan Anda. Silakan pilih kategori lain.'
@@ -248,6 +259,12 @@ export default function QuizPage() {
               Tampilkan Semua Soal
             </button>
           )}
+          <Link
+            href="/matrix"
+            className="mt-5 inline-block font-medium text-blue-700 hover:underline"
+          >
+            ← Kembali ke Matrix
+          </Link>
         </div>
       </div>
     );
@@ -265,6 +282,16 @@ export default function QuizPage() {
             {displayQuestions.length} soal persiapan ujian sertifikasi
           </p>
         </div>
+
+        {unitContext && (
+          <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            <p className="font-semibold">Latihan rekomendasi dari Matrix SIAP SKK</p>
+            <p className="mt-1 text-blue-700">{unitContext}</p>
+            <Link href="/matrix" className="mt-2 inline-block font-medium text-blue-800 hover:underline">
+              ← Kembali ke Matrix
+            </Link>
+          </div>
+        )}
 
         {/* Jabatan quick-filter — only shown when user has a jabatan set */}
         {jabatanInfo && relatedCategories.length > 0 && (
@@ -397,5 +424,19 @@ export default function QuizPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <p className="text-slate-600">Memuat latihan soal...</p>
+        </div>
+      }
+    >
+      <QuizContent />
+    </Suspense>
   );
 }

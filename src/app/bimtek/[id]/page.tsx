@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getBimtekModule, type BimtekModule } from '@/lib/bimtekCatalog';
 
-const bimtekModules: Record<string, { title: string; category: string; pkb: number; duration: string; level: string; content: string; mentor: string }> = {
+const bimtekModuleDetails: Record<string, { title: string; category: string; pkb: number; duration: string; level: string; content: string; mentor: string }> = {
   // === ORIGINAL MODULES ===
   'sipil-gedung-1': { title: 'Teknik Fondasi Gedung', category: 'Sipil Gedung', pkb: 10, duration: '4 jam', level: 'Ahli', content: 'Pelajari teknik fondasi gedung mulai dari shallow foundation hingga deep foundation. Mencakup pile cap design, bearing capacity, dan settlement analysis.', mentor: 'Ahli Teknik Bangunan Gedung' },
   'sipil-gedung-2': { title: 'Struktur Beton Bertulang', category: 'Sipil Gedung', pkb: 12, duration: '6 jam', level: 'Ahli', content: 'Desain dan analisis struktur beton bertulang sesuai SNI 2847:2019. Mencakup flexural design, shear design, dan detailing.', mentor: 'Ahli Teknik Bangunan Gedung' },
@@ -121,7 +122,40 @@ const bimtekModules: Record<string, { title: string; category: string; pkb: numb
   'iso14001-8': { title: 'Audit Eksternal ISO 14001 (Sertifikasi)', category: 'ISO Management', pkb: 15, duration: '8 jam', level: 'Ahli', content: 'Persiapan sertifikasi ISO 14001 oleh lembaga sertifikasi.', mentor: 'Ahli Auditor Lingkungan' },
 };
 
-const defaultModule = { title: 'Modul BIMTEK', category: 'Umum', pkb: 10, duration: '4 jam', level: 'Ahli', content: 'Pelajari materi konstruksi lengkap dengan bimbingan AI mentor kami.', mentor: 'Ahli Teknik Bangunan Gedung' };
+const categoryFocus: Record<string, string> = {
+  'Sipil Gedung': 'perencanaan dan pelaksanaan pekerjaan struktur serta elemen bangunan gedung',
+  K3: 'pencegahan risiko dan penerapan keselamatan kerja di lingkungan konstruksi',
+  Jalan: 'perencanaan, pelaksanaan, dan pengendalian pekerjaan jalan',
+  Elektrikal: 'perencanaan dan pengoperasian sistem elektrikal bangunan',
+  Mekanikal: 'perencanaan dan pemeliharaan sistem mekanikal bangunan',
+  Manajemen: 'pengelolaan ruang lingkup, waktu, biaya, mutu, dan risiko proyek',
+  RAB: 'perhitungan volume, harga satuan, dan pengendalian biaya konstruksi',
+  Quality: 'pengujian, inspeksi, dan pengendalian mutu pekerjaan konstruksi',
+  Lingkungan: 'pengelolaan dampak lingkungan dan praktik konstruksi berkelanjutan',
+  Safety: 'sistem manajemen keselamatan dan respons terhadap keadaan darurat',
+  Digital: 'pemanfaatan perangkat lunak dan alur kerja digital untuk konstruksi',
+  Sertifikasi: 'pemahaman proses persiapan dan dokumentasi sertifikasi kompetensi',
+  'Personil Managerial': 'peran, tanggung jawab, dan tata kelola personil managerial',
+  'Pengadaan & Tender': 'perencanaan, pemilihan penyedia, evaluasi, dan administrasi pengadaan',
+  LKUT: 'penyusunan dan pelaporan kegiatan usaha tahunan',
+  Regulasi: 'pemahaman regulasi dan kepatuhan yang berkaitan dengan jasa konstruksi',
+  'ISO Management': 'penerapan sistem manajemen dan perbaikan berkelanjutan',
+};
+
+const categoryMentor: Record<string, string> = {
+  'K3': 'Ahli K3 Konstruksi',
+  Safety: 'Ahli K3 Konstruksi',
+  'Pengadaan & Tender': 'Ahli Pengadaan',
+  'Personil Managerial': 'Ahli Manajemen Konstruksi',
+  'ISO Management': 'Ahli Sistem Manajemen',
+  Regulasi: 'Ahli Regulasi Konstruksi',
+  LKUT: 'Ahli Administrasi Konstruksi',
+};
+
+type BimtekModuleView = BimtekModule & {
+  content: string;
+  mentor: string;
+};
 
 interface Message {
   id: string;
@@ -129,14 +163,39 @@ interface Message {
   content: string;
 }
 
-function getModule(id: string) {
-  return bimtekModules[id] || defaultModule;
+function getModule(id: string): BimtekModuleView {
+  const catalogModule = getBimtekModule(id);
+  if (!catalogModule) {
+    return {
+      id,
+      title: 'Modul BIMTEK tidak ditemukan',
+      category: 'Tidak tersedia',
+      pkb: 0,
+      duration: '-',
+      level: '-',
+      content: 'Modul yang Anda cari tidak tersedia di katalog BIMTEK.',
+      mentor: 'Tim SIAP SKK',
+    };
+  }
+
+  const detail = bimtekModuleDetails[id];
+  if (detail) return { ...catalogModule, ...detail };
+
+  const focus = categoryFocus[catalogModule.category] || 'penerapan kompetensi konstruksi sesuai tujuan modul';
+  return {
+    ...catalogModule,
+    content: `Pelajari ${catalogModule.title} dengan fokus pada ${focus}. Materi disusun sebagai panduan belajar mandiri untuk membantu Anda memahami konsep, langkah kerja, dan contoh penerapannya.`,
+    mentor: categoryMentor[catalogModule.category] || 'Mentor Teknik Konstruksi SIAP SKK',
+  };
 }
 
 export default function BimtekDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const currentModule = getModule(resolvedParams.id);
+  const currentModule = useMemo(
+    () => getModule(resolvedParams.id),
+    [resolvedParams.id],
+  );
   
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [chatOpen, setChatOpen] = useState(false);

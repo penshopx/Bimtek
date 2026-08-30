@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { getQuizQuestions, type QuizQuestion } from '@/app/actions/quiz';
 import { getJabatanById } from '@/lib/skkData';
 import { getSavedJabatanTarget, saveJabatanTarget } from '@/lib/jabatanPreference';
+import { getUnitLearningRecommendation } from '@/lib/learningRecommendations';
 import {
   jabatanSKKData,
   type JabatanSKK,
@@ -108,6 +111,7 @@ export default function MatrixPage() {
   const [search, setSearch] = useState('');
   const [savedJabatanTarget, setSavedJabatanTarget] = useState<string | null>(null);
   const [targetSaved, setTargetSaved] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const unitDetailRef = useRef<HTMLDivElement>(null);
   const shouldScrollToTargetRef = useRef(false);
 
@@ -121,6 +125,21 @@ export default function MatrixPage() {
     setSelectedJabatan(savedTarget);
     setActiveTab('unitkompetensi');
     shouldScrollToTargetRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    getQuizQuestions('Semua')
+      .then((questions) => {
+        if (active) setQuizQuestions(questions);
+      })
+      .catch(() => {
+        if (active) setQuizQuestions([]);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // The detail panel is rendered only after selectedJabatan is restored.
@@ -191,6 +210,25 @@ export default function MatrixPage() {
           const q = search.toLowerCase();
           return u.kode.toLowerCase().includes(q) || u.judul.toLowerCase().includes(q);
         });
+
+  const selectedLearningCoverage = selectedJabatanData
+    ? selectedJabatanData.unitKompetensi.map((unit) => ({
+        unit,
+        recommendation: getUnitLearningRecommendation(selectedJabatanData.id, unit),
+      }))
+    : [];
+  const coveredModuleCount = new Set(
+    selectedLearningCoverage.flatMap(({ recommendation }) =>
+      recommendation.modules.map((module) => module.id),
+    ),
+  ).size;
+  const coveredQuizQuestionCount = new Set(
+    selectedLearningCoverage.flatMap(({ recommendation }) =>
+      quizQuestions
+        .filter((question) => recommendation.quizCategories.includes(question.category))
+        .map((question) => question.id),
+    ),
+  ).size;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -513,6 +551,14 @@ export default function MatrixPage() {
                             </span>
                           );
                         })}
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-amber-300" />
+                          Rekomendasi: {coveredModuleCount} modul
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-300" />
+                          Latihan: {coveredQuizQuestionCount} soal
+                        </span>
                       </div>
                     </div>
 
@@ -527,24 +573,65 @@ export default function MatrixPage() {
 
                     {/* Unit list */}
                     <div className="overflow-y-auto max-h-[490px] divide-y divide-slate-50">
-                      {displayedUnits.map((u, i) => (
-                        <div key={u.kode} className="flex gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
-                          <span className="shrink-0 w-6 h-6 mt-0.5 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-500 font-medium">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start gap-3 flex-wrap">
-                              <code className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap">
-                                {u.kode}
-                              </code>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${kelompokColors[u.kelompok]}`}>
-                                {u.kelompok}
-                              </span>
+                      {displayedUnits.map((u, i) => {
+                        const recommendation = getUnitLearningRecommendation(selectedJabatanData.id, u);
+                        const questionCount = quizQuestions.filter((question) =>
+                          recommendation.quizCategories.includes(question.category),
+                        ).length;
+                        const primaryQuizCategory = recommendation.quizCategories.find((category) =>
+                          quizQuestions.some((question) => question.category === category),
+                        );
+
+                        return (
+                          <div key={u.kode} className="flex gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+                            <span className="shrink-0 w-6 h-6 mt-0.5 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-500 font-medium">
+                              {i + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start gap-3 flex-wrap">
+                                <code className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap">
+                                  {u.kode}
+                                </code>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${kelompokColors[u.kelompok]}`}>
+                                  {u.kelompok}
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-700 mt-1.5 leading-snug">{u.judul}</p>
+                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                  Rekomendasi persiapan SIAP
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {recommendation.modules.map((module) => (
+                                    <Link
+                                      key={module.id}
+                                      href={`/bimtek/${module.id}`}
+                                      className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200"
+                                    >
+                                      📘 {module.title}
+                                    </Link>
+                                  ))}
+                                  {primaryQuizCategory && questionCount > 0 ? (
+                                    <Link
+                                      href={`/quiz?category=${encodeURIComponent(primaryQuizCategory)}&unit=${encodeURIComponent(u.judul)}`}
+                                      className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-200"
+                                    >
+                                      ✍️ {questionCount} soal terkait
+                                    </Link>
+                                  ) : (
+                                    <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs text-slate-600">
+                                      Soal khusus belum tersedia
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                                  Rekomendasi berdasarkan kesesuaian topik dan kategori, bukan penetapan resmi SKKNI.
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-sm text-slate-700 mt-1.5 leading-snug">{u.judul}</p>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {displayedUnits.length === 0 && (
                         <div className="p-8 text-center text-slate-400 text-sm">
                           Tidak ada unit kompetensi yang cocok dengan pencarian

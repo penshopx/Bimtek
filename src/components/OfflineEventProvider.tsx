@@ -167,18 +167,24 @@ export function OfflineEventProvider({ children }: { children: ReactNode }) {
           // so stale localStorage sample data never overrides the real database.
           setEvents(dbEvents.map((e: any) => ({ ...e, participants: e.participants ?? [] })));
           // Load certificates from DB (source of truth when DB is available).
-          // The endpoint requires an admin session — send the session ID if present.
+          // The endpoint requires an admin session, so anonymous visitors should
+          // use their local cache without issuing a guaranteed 401 request.
           try {
             const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
-            const certRes = await fetch('/api/events?action=certificates', {
-              headers: sessionId ? { 'x-session-id': sessionId } : {},
-            });
-            if (certRes.ok) {
-              const dbCerts = await certRes.json();
-              setCertificates(dbCerts);
-            } else {
+            if (!sessionId) {
               const savedCerts = localStorage.getItem('offlineCertificates');
               if (savedCerts) setCertificates(JSON.parse(savedCerts));
+            } else {
+              const certRes = await fetch('/api/events?action=certificates', {
+                headers: { 'x-session-id': sessionId },
+              });
+              if (certRes.ok) {
+                const dbCerts = await certRes.json();
+                setCertificates(dbCerts);
+              } else {
+                const savedCerts = localStorage.getItem('offlineCertificates');
+                if (savedCerts) setCertificates(JSON.parse(savedCerts));
+              }
             }
           } catch {
             const savedCerts = localStorage.getItem('offlineCertificates');
