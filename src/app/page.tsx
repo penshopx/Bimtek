@@ -180,6 +180,14 @@ const aiExperts = [
   { icon: '💬', name: 'Expert AI Chat', desc: 'Konsultasi teknis bebas dengan AI konstruksi', href: '/chat' },
 ];
 
+const aiPromptStarters = [
+  'Saya lulusan SMK, bisa ambil SKK Ahli Pratama?',
+  'Apa saja dokumen untuk FR.APL.01 jabatan Pelaksana Bangunan?',
+  'Berapa lama proses sertifikasi SKK dari awal sampai terima sertifikat?',
+  'Apa bedanya asesmen hardcopy, paperless, dan AJJ?',
+  'Bagaimana cara memilih jabatan SKK yang sesuai pengalaman saya?',
+];
+
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
@@ -423,6 +431,22 @@ export default async function Home() {
                 </div>
               </Link>
             ))}
+          </div>
+
+          {/* Prompt starters */}
+          <div className="mb-10">
+            <p className="text-center text-slate-400 text-sm mb-3">Belum tahu mau mulai dari mana? Coba tanyakan:</p>
+            <div className="flex flex-wrap justify-center gap-2.5">
+              {aiPromptStarters.map((prompt) => (
+                <Link
+                  key={prompt}
+                  href={`/chat?q=${encodeURIComponent(prompt)}`}
+                  className="px-4 py-2.5 bg-slate-800/80 border border-slate-600/70 rounded-full text-sm text-slate-200 hover:text-white hover:border-amber-500/60 hover:bg-slate-700 transition-all"
+                >
+                  {prompt}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Big CTA row */}

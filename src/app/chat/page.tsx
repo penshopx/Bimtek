@@ -106,6 +106,13 @@ export default function ChatPage() {
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
   const [oversizedMessage, setOversizedMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const prompt = new URLSearchParams(window.location.search).get('q');
+    if (prompt?.trim()) {
+      setInputMessage(prompt);
+    }
+  }, []);
+
   // Derive outage state from the visible conversation so a successful AI reply
   // clears the banner immediately, even if it came through a new response path.
   const consecutiveAIErrors = useMemo(() => {
