@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { quizQuestions } from '@/db/schema';
 import { bimtekModules } from '@/lib/bimtekCatalog';
 import { certificationPositions } from '@/lib/certificationPositions';
+import JourneyTracker from '@/components/JourneyTracker';
 
 const journeySteps = [
   {
@@ -334,43 +335,7 @@ export default async function Home() {
           </div>
 
           {/* Step-by-step flow */}
-          <div className="relative">
-            {/* Connector line (desktop) */}
-            <div className="hidden lg:block absolute top-10 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/10 via-amber-500/40 to-amber-500/10 z-0" style={{ top: '2.5rem' }} />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
-              {journeySteps.map((step, idx) => (
-                <div key={step.step} className="flex flex-col items-center text-center group">
-                  {/* Step number bubble */}
-                  <div className="relative mb-4">
-                    <div className="w-20 h-20 rounded-2xl bg-slate-800 border-2 border-slate-700 group-hover:border-amber-500/60 flex items-center justify-center text-3xl transition-all shadow-lg">
-                      {step.icon}
-                    </div>
-                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 text-slate-900 text-xs font-bold flex items-center justify-center shadow">
-                      {step.step}
-                    </span>
-                    {/* Arrow between steps (desktop) */}
-                    {idx < journeySteps.length - 1 && (
-                      <span className="hidden lg:block absolute top-1/2 -right-[calc(50%+0.75rem)] -translate-y-1/2 text-amber-500/50 text-xl pointer-events-none select-none">›</span>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-white text-sm mb-1 group-hover:text-amber-400 transition-colors leading-tight">
-                    {step.title}
-                  </h3>
-                  <p className="text-slate-400 text-xs mb-4 leading-relaxed px-1">
-                    {step.desc}
-                  </p>
-                  <Link
-                    href={step.href}
-                    className="inline-block px-4 py-2 bg-slate-800 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-500/50 rounded-xl text-xs font-semibold text-slate-300 hover:text-amber-400 transition-all"
-                  >
-                    {step.cta} →
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
+          <JourneyTracker steps={journeySteps} />
 
           {/* Quick-access grid */}
           <div className="mt-16">
