@@ -341,7 +341,7 @@ export default function KlinikPage() {
                 </div>
                 <p className="text-slate-300 text-sm">{blueprint.ringkasan}</p>
                 {blueprint.pesanMotivasi && (
-                  <p className="text-amber-400 text-sm mt-3 italic">💬 "{blueprint.pesanMotivasi}"</p>
+                  <p className="text-amber-400 text-sm mt-3 italic">💬 &quot;{blueprint.pesanMotivasi}&quot;</p>
                 )}
               </div>
 

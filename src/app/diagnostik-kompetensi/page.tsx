@@ -238,7 +238,7 @@ export default function DiagnostikPage() {
                   <div className="text-slate-400 space-y-0.5">
                     <div>• Pendidikan: {jenjang} — {bidang === 'Lainnya' ? bidangLain : bidang}</div>
                     <div>• Pengalaman: {pengalamanTahun} di bidang {pengalamanBidang}</div>
-                    {pengalamanDeskripsi && <div>• "{pengalamanDeskripsi.slice(0, 80)}{pengalamanDeskripsi.length > 80 ? '…' : ''}"</div>}
+                    {pengalamanDeskripsi && <div>• &quot;{pengalamanDeskripsi.slice(0, 80)}{pengalamanDeskripsi.length > 80 ? '…' : ''}&quot;</div>}
                   </div>
                 </div>
 

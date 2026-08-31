@@ -131,7 +131,7 @@ function SKKCoachChatInner() {
                 <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto">{agent.short}</p>
                 <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 max-w-md mx-auto text-left">
                   <p className="text-slate-400 text-xs mb-1">Contoh pertanyaan:</p>
-                  <p className="text-slate-300 text-sm italic">"{agent.placeholder}"</p>
+                  <p className="text-slate-300 text-sm italic">&quot;{agent.placeholder}&quot;</p>
                 </div>
               </div>
             )}
