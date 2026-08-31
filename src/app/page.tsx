@@ -236,7 +236,7 @@ export default async function Home() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
-                href="/bimtek"
+                href="#journey"
                 className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl"
               >
                 🎓 Mulai Persiapan SKK
@@ -315,7 +315,7 @@ export default async function Home() {
       </section>
 
       {/* ── Perjalanan SKK ── */}
-      <section className="py-16 bg-slate-900 text-white">
+      <section id="journey" className="py-16 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-12">
