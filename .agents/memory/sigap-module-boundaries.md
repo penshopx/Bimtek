@@ -7,6 +7,6 @@ Treat SIGAP SKK as the organization-facing LMS/learning-management layer. Organi
 
 Keep organization operations and formal workflows behind separate permissions and clear ownership. The platform supports preparation and coaching; it must not present its readiness status as an official competence verdict, issue SKPK on its own, or claim an automatic government verification. Competence decisions belong to authorized assessors/LSP; PKB credit decisions belong to the authorized review process.
 
-**Why:** the product direction is for organizations to subscribe to SIGAP LMS while members learn in SIAP SKK; the blueprint also distinguishes learning/readiness support from regulated assessor, LSP, association, LPJK, and SIJK responsibilities.
+**Why:** the product direction is for organizations to subscribe to SIGAP LMS while members learn in SIAP SKK; the user has prioritized desktop learning improvements and deferred mobile work. The blueprint also distinguishes learning/readiness support from regulated assessor, LSP, association, LPJK, and SIJK responsibilities.
 
-**How to apply:** keep the SIGAP organization portal and SIAP learner app distinct initially, then connect them through SSO and APIs for assignments, catalog, and progress; keep official status, credit estimates, review/audit trails, and organizational data separate and accurately labeled.
+**How to apply:** focus current SIAP work on the desktop learner journey; defer mobile. Keep the SIGAP organization portal and SIAP learner app distinct initially, then connect them through SSO and APIs for assignments, catalog, and progress; keep official status, credit estimates, review/audit trails, and organizational data separate and accurately labeled.
