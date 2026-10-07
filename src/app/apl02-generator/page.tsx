@@ -1,6 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  APL02_DRAFT_KEY, EMPTY_APL02_FORM, hasApl02Answers, parseApl02Draft, serializeApl02Draft,
+  type Apl02Form, type Apl02Unit as UnitKompetensi,
+} from '@/lib/apl02-draft';
 
 // Jabatan data from sertifikasi
 const allPositions = [
@@ -65,13 +69,6 @@ const allPositions = [
   { id: 'MP010', name: 'Kepala Tukang Batu / Beton', level: 'Pelaksana', subklasifikasi: 'MP' },
 ];
 
-interface UnitKompetensi {
-  kode: string;
-  nama: string;
-  elemen: string[];
-  pengalaman: string;
-}
-
 interface DraftUnit {
   kode: string;
   nama: string;
@@ -93,25 +90,61 @@ interface DraftResult {
 const STEP_LABELS = ['Pilih Jabatan', 'Isi Pengalaman', 'Hasil FR.APL.02'];
 
 export default function Apl02GeneratorPage() {
-  const [step, setStep] = useState(1);
+  const [form, setForm] = useState<Apl02Form>(EMPTY_APL02_FORM);
+  const formRef = useRef(form);
+  const [storageReady, setStorageReady] = useState(false);
+  const [savedDraft, setSavedDraft] = useState<Apl02Form | null>(null);
+  const [storageError, setStorageError] = useState('');
+  const [draftSaved, setDraftSaved] = useState(false);
+  const { step, selectedId, namaAsesi, pendidikan, pengalaman, units } = form;
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Step 1 fields
-  const [selectedId, setSelectedId] = useState('');
-  const [namaAsesi, setNamaAsesi] = useState('');
-  const [pendidikan, setPendidikan] = useState('');
-  const [pengalaman, setPengalaman] = useState('');
-
-  // Step 2 data
-  const [units, setUnits] = useState<UnitKompetensi[]>([]);
-
   // Step 3 data
   const [draft, setDraft] = useState<DraftResult | null>(null);
 
   const selectedPos = allPositions.find((p) => p.id === selectedId);
+
+  useEffect(() => {
+    // Read only on mount: never overwrite a saved draft before the user chooses.
+    try {
+      const raw = localStorage.getItem(APL02_DRAFT_KEY);
+      if (raw) setSavedDraft(parseApl02Draft(raw, allPositions.map((p) => p.id)));
+    } catch {
+      setStorageError('Draft tidak dapat dibaca. Penyimpanan browser mungkin diblokir atau draft rusak. Hapus draft untuk mulai baru.');
+    } finally {
+      setStorageReady(true);
+    }
+  }, []);
+
+  function updateForm(patch: Partial<Apl02Form>) {
+    const next = { ...formRef.current, ...patch };
+    formRef.current = next;
+    setForm(next);
+    // Write synchronously on each change, with no debounce or unload dependency.
+    try {
+      if (hasApl02Answers(next)) {
+        localStorage.setItem(APL02_DRAFT_KEY, serializeApl02Draft(next));
+        setDraftSaved(true);
+      } else {
+        localStorage.removeItem(APL02_DRAFT_KEY);
+        setDraftSaved(false);
+      }
+      setStorageError('');
+    } catch {
+      setDraftSaved(false);
+      setStorageError('Draft belum tersimpan. Penyimpanan browser penuh atau diblokir. Jangan tutup halaman sebelum menyalin jawaban Anda.');
+    }
+  }
+
+  function resumeDraft() {
+    if (!savedDraft) return;
+    updateForm(savedDraft);
+    setSavedDraft(null);
+    setError('');
+  }
 
   function getSessionHeaders(): HeadersInit {
     const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
@@ -124,6 +157,10 @@ export default function Apl02GeneratorPage() {
     if (!selectedId) { setError('Pilih jabatan terlebih dahulu.'); return; }
     if (!namaAsesi.trim()) { setError('Nama lengkap harus diisi.'); return; }
     setError('');
+    if (units.length) {
+      updateForm({ step: 2 });
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/apl02', {
@@ -144,10 +181,10 @@ export default function Apl02GeneratorPage() {
         }
         return;
       }
-      setUnits(
-        (data.units ?? []).map((u: Omit<UnitKompetensi, 'pengalaman'>) => ({ ...u, pengalaman: '' }))
-      );
-      setStep(2);
+      updateForm({
+        units: (data.units ?? []).map((u: Omit<UnitKompetensi, 'pengalaman'>) => ({ ...u, pengalaman: '' })),
+        step: 2,
+      });
     } catch {
       setError('Koneksi gagal. Periksa jaringan Anda.');
     } finally {
@@ -183,7 +220,7 @@ export default function Apl02GeneratorPage() {
         return;
       }
       setDraft(data);
-      setStep(3);
+      updateForm({ step: 3 });
     } catch {
       setError('Koneksi gagal. Periksa jaringan Anda.');
     } finally {
@@ -192,7 +229,7 @@ export default function Apl02GeneratorPage() {
   }
 
   function updateUnitPengalaman(idx: number, val: string) {
-    setUnits((prev) => prev.map((u, i) => (i === idx ? { ...u, pengalaman: val } : u)));
+    updateForm({ units: formRef.current.units.map((u, i) => (i === idx ? { ...u, pengalaman: val } : u)) });
   }
 
   function buildCopyText(): string {
@@ -283,12 +320,18 @@ export default function Apl02GeneratorPage() {
   }
 
   function handleReset() {
-    setStep(1);
-    setSelectedId('');
-    setNamaAsesi('');
-    setPendidikan('');
-    setPengalaman('');
-    setUnits([]);
+    if (!window.confirm('Hapus draft tersimpan dan semua jawaban di halaman ini? Tindakan ini tidak dapat dibatalkan.')) return;
+    try {
+      localStorage.removeItem(APL02_DRAFT_KEY);
+    } catch {
+      setStorageError('Draft tidak dapat dihapus dari browser. Jawaban tetap dipertahankan. Periksa izin penyimpanan lalu coba lagi.');
+      return;
+    }
+    formRef.current = EMPTY_APL02_FORM;
+    setForm(EMPTY_APL02_FORM);
+    setSavedDraft(null);
+    setDraftSaved(false);
+    setStorageError('');
     setDraft(null);
     setError('');
   }
@@ -304,6 +347,38 @@ export default function Apl02GeneratorPage() {
           <p className="text-slate-500 text-sm">
             Buat draft asesmen mandiri Anda dengan bantuan AI — siap cetak untuk LSP
           </p>
+        </div>
+
+        <div className="mb-6 print:hidden">
+          {storageError && (
+            <p role="alert" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              {storageError}
+            </p>
+          )}
+          {savedDraft ? (
+            <section aria-label="Draft tersimpan" className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="font-semibold text-slate-800">Draft FR.APL.02 sebelumnya tersedia</p>
+              <p className="mt-1 text-sm text-slate-600">Lanjutkan isian yang tersimpan di browser ini, atau hapus untuk mulai dari awal.</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <button onClick={resumeDraft} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
+                  Lanjutkan draft sebelumnya
+                </button>
+                <button onClick={handleReset} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                  Hapus draft dan mulai baru
+                </button>
+              </div>
+            </section>
+          ) : storageReady && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <p role="status" className="text-slate-600">
+                {draftSaved ? 'Draft tersimpan otomatis di browser ini.' : 'Isian akan disimpan otomatis di browser ini.'}
+                {' '}Draft tidak tersinkron ke perangkat lain.
+              </p>
+              <button onClick={handleReset} disabled={loading || downloading} className="text-red-700 underline disabled:opacity-50">
+                Hapus draft dan mulai baru
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Progress Steps */}
@@ -339,7 +414,7 @@ export default function Apl02GeneratorPage() {
         )}
 
         {/* ── STEP 1 ── */}
-        {step === 1 && (
+        {storageReady && !savedDraft && step === 1 && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-1">Langkah 1 — Pilih Jabatan SKK</h2>
             <p className="text-sm text-slate-500 mb-6">
@@ -353,7 +428,7 @@ export default function Apl02GeneratorPage() {
                 </label>
                 <select
                   value={selectedId}
-                  onChange={(e) => { setSelectedId(e.target.value); setError(''); }}
+                  onChange={(e) => { updateForm({ selectedId: e.target.value, units: [] }); setDraft(null); setError(''); }}
                   className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 >
                   <option value="">— Pilih jabatan —</option>
@@ -377,7 +452,7 @@ export default function Apl02GeneratorPage() {
                 <input
                   type="text"
                   value={namaAsesi}
-                  onChange={(e) => setNamaAsesi(e.target.value)}
+                  onChange={(e) => updateForm({ namaAsesi: e.target.value })}
                   placeholder="Sesuai KTP / ijazah"
                   className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
@@ -387,7 +462,7 @@ export default function Apl02GeneratorPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Pendidikan Terakhir</label>
                 <select
                   value={pendidikan}
-                  onChange={(e) => setPendidikan(e.target.value)}
+                  onChange={(e) => updateForm({ pendidikan: e.target.value })}
                   className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 >
                   <option value="">— Pilih —</option>
@@ -407,7 +482,7 @@ export default function Apl02GeneratorPage() {
                 <input
                   type="text"
                   value={pengalaman}
-                  onChange={(e) => setPengalaman(e.target.value)}
+                  onChange={(e) => updateForm({ pengalaman: e.target.value })}
                   placeholder="Contoh: 5 tahun sebagai pelaksana lapangan"
                   className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
@@ -432,7 +507,7 @@ export default function Apl02GeneratorPage() {
         )}
 
         {/* ── STEP 2 ── */}
-        {step === 2 && (
+        {storageReady && !savedDraft && step === 2 && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-start justify-between mb-1">
               <h2 className="text-lg font-semibold text-slate-800">Langkah 2 — Isi Pengalaman per Unit Kompetensi</h2>
@@ -488,7 +563,7 @@ export default function Apl02GeneratorPage() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => { setStep(1); setError(''); }}
+                onClick={() => { updateForm({ step: 1 }); setError(''); }}
                 className="px-5 py-2.5 border border-slate-300 text-slate-600 rounded-xl text-sm hover:bg-slate-50 transition-colors"
               >
                 ← Kembali
@@ -536,7 +611,7 @@ export default function Apl02GeneratorPage() {
                 {downloading ? '⏳ Menyiapkan PDF…' : '⬇️ Unduh PDF'}
               </button>
               <button
-                onClick={() => { setStep(2); setError(''); }}
+                onClick={() => { updateForm({ step: 2 }); setError(''); }}
                 className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm hover:bg-slate-50 transition-colors"
               >
                 ← Edit Pengalaman
