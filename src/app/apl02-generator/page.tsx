@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   APL02_DRAFT_KEY, EMPTY_APL02_FORM, hasApl02Answers, parseApl02Draft, serializeApl02Draft,
   type Apl02Form, type Apl02Unit as UnitKompetensi,
@@ -100,12 +101,21 @@ export default function Apl02GeneratorPage() {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
+  const [loginRequired, setLoginRequired] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
   // Step 3 data
   const [draft, setDraft] = useState<DraftResult | null>(null);
 
   const selectedPos = allPositions.find((p) => p.id === selectedId);
+
+  useEffect(() => {
+    if (loginRequired) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorRef.current?.focus({ preventScroll: true });
+    }
+  }, [loginRequired]);
 
   useEffect(() => {
     // Read only on mount: never overwrite a saved draft before the user chooses.
@@ -153,7 +163,16 @@ export default function Apl02GeneratorPage() {
       : { 'Content-Type': 'application/json' };
   }
 
+  function showApiError(status: number, message: string) {
+    const needsLogin = status === 401;
+    setLoginRequired(needsLogin);
+    setError(needsLogin
+      ? 'Silakan masuk terlebih dahulu untuk menggunakan generator FR.APL.02. Setelah masuk, Anda akan kembali ke halaman ini. Isian yang tersimpan dapat dilanjutkan.'
+      : message);
+  }
+
   async function handleStep1Submit() {
+    setLoginRequired(false);
     if (!selectedId) { setError('Pilih jabatan terlebih dahulu.'); return; }
     if (!namaAsesi.trim()) { setError('Nama lengkap harus diisi.'); return; }
     setError('');
@@ -174,11 +193,7 @@ export default function Apl02GeneratorPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) {
-          setError('Silakan masuk terlebih dahulu untuk menggunakan fitur ini.');
-        } else {
-          setError(data.error || 'Terjadi kesalahan. Coba lagi.');
-        }
+        showApiError(res.status, data.error || 'Terjadi kesalahan. Coba lagi.');
         return;
       }
       updateForm({
@@ -193,6 +208,7 @@ export default function Apl02GeneratorPage() {
   }
 
   async function handleStep2Submit() {
+    setLoginRequired(false);
     const empty = units.filter((u) => !u.pengalaman.trim());
     if (empty.length === units.length) {
       setError('Isi minimal satu unit kompetensi dengan pengalaman Anda.');
@@ -216,7 +232,7 @@ export default function Apl02GeneratorPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Terjadi kesalahan. Coba lagi.');
+        showApiError(res.status, data.error || 'Terjadi kesalahan. Coba lagi.');
         return;
       }
       setDraft(data);
@@ -276,6 +292,7 @@ export default function Apl02GeneratorPage() {
 
   async function handleDownloadPdf() {
     if (!draft || downloading) return;
+    setLoginRequired(false);
     setDownloading(true);
     setError('');
     try {
@@ -292,7 +309,7 @@ export default function Apl02GeneratorPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || 'PDF gagal dibuat. Silakan coba lagi.');
+        showApiError(res.status, data.error || 'PDF gagal dibuat. Silakan coba lagi.');
         return;
       }
 
@@ -407,9 +424,19 @@ export default function Apl02GeneratorPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex gap-2 items-start print:hidden">
+          <div ref={errorRef} role="alert" tabIndex={-1} className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex gap-2 items-start print:hidden">
             <span className="shrink-0">⚠️</span>
-            <span>{error}</span>
+            <div className="min-w-0">
+              <p>{error}</p>
+              {loginRequired && (
+                <Link
+                  href="/login?redirect=/apl02-generator"
+                  className="mt-2 inline-flex min-h-11 items-center rounded-lg bg-red-700 px-4 py-2 font-semibold text-white hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                >
+                  Masuk / Login
+                </Link>
+              )}
+            </div>
           </div>
         )}
 

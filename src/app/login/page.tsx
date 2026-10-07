@@ -21,7 +21,9 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (result.success) {
-      router.push('/dashboard');
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      // Only allow the generator return path; never navigate to an arbitrary URL.
+      router.push(redirect === '/apl02-generator' ? redirect : '/dashboard');
     } else {
       setError(result.message);
     }
