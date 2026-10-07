@@ -95,6 +95,7 @@ const STEP_LABELS = ['Pilih Jabatan', 'Isi Pengalaman', 'Hasil FR.APL.02'];
 export default function Apl02GeneratorPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -234,6 +235,47 @@ export default function Apl02GeneratorPage() {
     await navigator.clipboard.writeText(buildCopyText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownloadPdf() {
+    if (!draft || downloading) return;
+    setDownloading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/apl02', {
+        method: 'POST',
+        headers: getSessionHeaders(),
+        body: JSON.stringify({
+          action: 'exportPdf',
+          draft,
+          pendidikan,
+          pengalaman,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'PDF gagal dibuat. Silakan coba lagi.');
+        return;
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('content-disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="([^"]+)"/i);
+      const filename = filenameMatch?.[1] || 'FR.APL.02-draft.pdf';
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch {
+      setError('Koneksi gagal saat membuat PDF. Periksa jaringan Anda.');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function handlePrint() {
@@ -487,6 +529,13 @@ export default function Apl02GeneratorPage() {
                 🖨️ Cetak / Simpan PDF
               </button>
               <button
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 disabled:bg-amber-300 transition-colors"
+              >
+                {downloading ? '⏳ Menyiapkan PDF…' : '⬇️ Unduh PDF'}
+              </button>
+              <button
                 onClick={() => { setStep(2); setError(''); }}
                 className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm hover:bg-slate-50 transition-colors"
               >
@@ -660,6 +709,13 @@ export default function Apl02GeneratorPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors"
               >
                 🖨️ Cetak / Simpan PDF
+              </button>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 disabled:bg-amber-300 transition-colors"
+              >
+                {downloading ? '⏳ Menyiapkan PDF…' : '⬇️ Unduh PDF'}
               </button>
               <button
                 onClick={handleReset}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createApl02Pdf, type Apl02ExportDraft, type Apl02ExportUnit } from '@/lib/apl02-pdf';
 
 // ── Input limits ──────────────────────────────────────────────────────────────
 const MAX_JABATAN_LENGTH = 120;
@@ -69,6 +70,40 @@ function truncate(val: unknown, max: number): string {
   return val.slice(0, max);
 }
 
+function sanitizeExportDraft(raw: unknown): Apl02ExportDraft | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const source = raw as Record<string, unknown>;
+  const rawUnits = Array.isArray(source.units) ? source.units.slice(0, MAX_UNITS) : [];
+  if (!rawUnits.length) return null;
+
+  const units: Apl02ExportUnit[] = rawUnits.map((value) => {
+    const unit = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+    const rawEvidence = Array.isArray(unit.buktKompetensi) ? unit.buktKompetensi.slice(0, 8) : [];
+    return {
+      kode: truncate(unit.kode, 40),
+      nama: truncate(unit.nama, 240),
+      pernyataan: truncate(unit.pernyataan, 1800),
+      buktKompetensi: rawEvidence.map((item) => truncate(item, 300)).filter(Boolean),
+      statusMandiri: truncate(unit.statusMandiri, 60),
+      catatan: truncate(unit.catatan, 500),
+    };
+  });
+
+  const namaAsesi = truncate(source.namaAsesi, MAX_NAME_LENGTH);
+  const jabatan = truncate(source.jabatan, MAX_JABATAN_LENGTH);
+  if (!namaAsesi || !jabatan) return null;
+
+  return {
+    namaAsesi,
+    jabatan,
+    tanggalDibuat: truncate(source.tanggalDibuat, 80) || new Date().toLocaleDateString('id-ID'),
+    ringkasan: truncate(source.ringkasan, 1800),
+    units,
+    disclaimer: truncate(source.disclaimer, 1000) ||
+      'Pernyataan ini dibuat secara mandiri oleh kandidat dan akan diverifikasi oleh asesor BNSP yang ditunjuk LSP.',
+  };
+}
+
 export async function POST(request: NextRequest) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
@@ -82,13 +117,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'AI tidak tersedia' }, { status: 503 });
-
   const body = await request.json();
   const { action } = body;
 
   if (action === 'getUnits') {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: 'AI tidak tersedia' }, { status: 503 });
     const jabatan = truncate(body.jabatan, MAX_JABATAN_LENGTH);
     const level = truncate(body.level, MAX_PENDIDIKAN_LENGTH);
     if (!jabatan) return NextResponse.json({ error: 'Jabatan diperlukan' }, { status: 400 });
@@ -135,6 +169,8 @@ Kode unit harus mengikuti format SKKNI Indonesia yang nyata. Kembalikan HANYA JS
   }
 
   if (action === 'generateDraft') {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: 'AI tidak tersedia' }, { status: 503 });
     const jabatan = truncate(body.jabatan, MAX_JABATAN_LENGTH);
     const level = truncate(body.level, MAX_PENDIDIKAN_LENGTH);
     const namaAsesi = truncate(body.namaAsesi, MAX_NAME_LENGTH);
@@ -217,6 +253,38 @@ Kembalikan HANYA JSON.`;
       return NextResponse.json(JSON.parse(data.choices[0]?.message?.content ?? '{}'));
     } catch {
       return NextResponse.json({ error: 'Format respons tidak valid' }, { status: 500 });
+    }
+  }
+
+  if (action === 'exportPdf') {
+    const draft = sanitizeExportDraft(body.draft);
+    if (!draft) {
+      return NextResponse.json({ error: 'Draft tidak valid atau belum memiliki unit kompetensi' }, { status: 400 });
+    }
+
+    try {
+      const pdf = await createApl02Pdf(
+        draft,
+        truncate(body.pendidikan, MAX_PENDIDIKAN_LENGTH),
+        truncate(body.pengalaman, MAX_PENGALAMAN_LENGTH),
+      );
+      const filenameBase = `${draft.namaAsesi}-${draft.jabatan}`
+        .normalize('NFKD')
+        .replace(/[^\x00-\x7F]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 100) || 'asesi';
+
+      return new NextResponse(new Uint8Array(pdf), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="FR.APL.02-${filenameBase}.pdf"`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    } catch {
+      return NextResponse.json({ error: 'PDF gagal dibuat. Silakan coba lagi.' }, { status: 500 });
     }
   }
 
