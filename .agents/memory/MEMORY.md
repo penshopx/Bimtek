@@ -2,3 +2,4 @@
 - [Drizzle migration ordering](drizzle-migration-ordering.md) — inspect generated SQL and journal timestamps; future-dated entries can silently skip a new migration.
 - [Narrow section screenshots](narrow-section-screenshots.md) — use Chromium DevTools element clipping for reviewable mobile evidence; tall CLI screenshots can misframe anchored sections.
 - [Tailwind workspace cache scanning](tailwind-workspace-cache-scanning.md) — keep generated package caches ignored or PostCSS can hang during the first Next.js page compile.
+- [SIGAP module boundaries](sigap-module-boundaries.md) — share participant identity and competency context, but keep preparation, PKB administration, and official certification decisions clearly separated.
