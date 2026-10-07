@@ -59,6 +59,7 @@ export default function ProfilePage() {
   const [skkKualifikasi, setSkkKualifikasi] = useState<Kualifikasi | ''>('');
   const [savingSkk, setSavingSkk] = useState(false);
   const [skkSaved, setSkkSaved] = useState(false);
+  const [skkError, setSkkError] = useState<string | null>(null);
   const [certificateLevel, setCertificateLevel] = useState('');
   const [certificateIssuedAt, setCertificateIssuedAt] = useState('');
   const [savingCertificate, setSavingCertificate] = useState(false);
@@ -93,15 +94,30 @@ export default function ProfilePage() {
     setSkkKualifikasi((user?.kualifikasiSkk as Kualifikasi) || '');
     setEditingSkk(true);
     setSkkSaved(false);
+    setSkkError(null);
   };
 
   const saveSkk = async () => {
-    if (!skkBidang || !skkJabatanId || !skkKualifikasi) return;
+    if (!skkBidang || !skkJabatanId || !skkKualifikasi || savingSkk) return;
     setSavingSkk(true);
-    await updateProfile({ bidang: skkBidang, jabatanSkk: skkJabatanId, kualifikasiSkk: skkKualifikasi } as any);
-    setSavingSkk(false);
-    setEditingSkk(false);
-    setSkkSaved(true);
+    setSkkSaved(false);
+    setSkkError(null);
+    try {
+      const saved = await updateProfile({
+        bidang: skkBidang,
+        jabatanSkk: skkJabatanId,
+        kualifikasiSkk: skkKualifikasi,
+      });
+      if (!saved) {
+        throw new Error('SKK save failed');
+      }
+      setEditingSkk(false);
+      setSkkSaved(true);
+    } catch {
+      setSkkError('Jabatan SKK gagal disimpan. Periksa koneksi internet Anda lalu coba simpan lagi. Pilihan Anda tetap tersedia di formulir ini.');
+    } finally {
+      setSavingSkk(false);
+    }
   };
 
   const saveCertificate = async () => {
@@ -258,6 +274,12 @@ export default function ProfilePage() {
                   </div>
                 )}
 
+                {skkError && (
+                  <div role="alert" className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl text-red-700 dark:text-red-300 text-sm">
+                    {skkError}
+                  </div>
+                )}
+
                 {!editingSkk && currentJabatan && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -385,7 +407,11 @@ export default function ProfilePage() {
 
                     <div className="flex gap-3 pt-2">
                       <button
-                        onClick={() => setEditingSkk(false)}
+                        disabled={savingSkk}
+                        onClick={() => {
+                          setEditingSkk(false);
+                          setSkkError(null);
+                        }}
                         className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-semibold"
                       >
                         Batal
@@ -395,7 +421,7 @@ export default function ProfilePage() {
                         onClick={saveSkk}
                         className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all"
                       >
-                        {savingSkk ? '⏳ Menyimpan...' : '💾 Simpan'}
+                        {savingSkk ? '⏳ Menyimpan...' : skkError ? 'Coba Simpan Lagi' : '💾 Simpan'}
                       </button>
                     </div>
                   </div>

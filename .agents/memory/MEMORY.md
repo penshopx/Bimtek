@@ -4,3 +4,4 @@
 - [Tailwind workspace cache scanning](tailwind-workspace-cache-scanning.md) — keep generated package caches ignored or PostCSS can hang during the first Next.js page compile.
 - [SIGAP module boundaries](sigap-module-boundaries.md) — share participant identity and competency context, but keep preparation, PKB administration, and official certification decisions clearly separated.
 - [FR.APL.02 draft preservation](apl02-draft-preservation.md) — retain original AI-generated units with answers; regeneration can change their codes or order.
+- [Browser failure simulation](browser-failure-simulation.md) — block service workers when intercepting API requests to verify network and server failures.

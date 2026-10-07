@@ -25,7 +25,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  updateProfile: (updates: Partial<User>) => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
   syncProgress: () => Promise<void>;
   saveQuizScore: (category: string, score: number, totalQuestions: number) => Promise<void>;
   addBookmark: (type: string, itemId: string, title: string) => Promise<void>;
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfile = async (updates: Partial<User>) => {
-    if (!user) return;
+    if (!user) return false;
 
     const previousUser = user;
     const updatedUser = { ...user, ...updates };
@@ -177,11 +177,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Rollback optimistic update on server failure
         setUser(previousUser);
         localStorage.setItem('user', JSON.stringify(previousUser));
+        return false;
       }
+      return true;
     } catch (e) {
       // Rollback on network error
       setUser(previousUser);
       localStorage.setItem('user', JSON.stringify(previousUser));
+      return false;
     }
   };
 
