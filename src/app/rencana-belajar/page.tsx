@@ -335,23 +335,25 @@ export default function RencanaBelajarPage() {
     if (score >= 85) {
       return {
         score,
-        tier: 'Siap' as const,
-        action: 'Kamu siap daftar asesmen',
+        tier: score === 100 ? 'Rencana selesai' as const : 'Rencana hampir selesai' as const,
+        action: score === 100
+          ? 'Seluruh item ditandai selesai. Periksa bukti kompetensi bersama asesor/LSP sebelum pengajuan.'
+          : 'Lanjutkan item yang belum selesai dan periksa bukti kompetensi bersama asesor/LSP.',
         accent: 'green' as const,
       };
     }
     if (score >= 60) {
       return {
         score,
-        tier: 'Perlu Penguatan' as const,
-        action: 'Selesaikan 2 UK lagi dulu',
+        tier: 'Rencana berjalan' as const,
+        action: 'Lanjutkan materi yang belum ditandai selesai.',
         accent: 'amber' as const,
       };
     }
     return {
       score,
-      tier: 'Belum Siap' as const,
-      action: 'Latih soal Mock Asesmen dulu',
+      tier: 'Masih ada item belajar' as const,
+      action: 'Selesaikan materi prioritas dan gunakan latihan untuk menemukan bagian yang perlu diperkuat.',
       accent: 'red' as const,
     };
   }, [plan, checked, pct]);
@@ -497,7 +499,7 @@ export default function RencanaBelajarPage() {
                 </div>
                 <div>
                   <div className="text-lg font-bold text-white">{totalJam}</div>
-                  <div className="text-slate-500 text-xs">Jam Belajar</div>
+                  <div className="text-slate-400 text-xs">Estimasi Jam Belajar</div>
                 </div>
                 <div>
                   <div className={`text-lg font-bold ${daysLeft < 30 ? 'text-red-400' : 'text-green-400'}`}>{daysLeft}</div>
@@ -507,6 +509,10 @@ export default function RencanaBelajarPage() {
             </div>
 
             {readiness && <ReadinessCard readiness={readiness} />}
+            <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-100 text-sm">
+              Progres ini berasal dari checklist yang Anda tandai sendiri, bukan verifikasi bukti atau penilaian kompetensi.
+              Kesiapan pengajuan asesmen dan keputusan kompeten tetap mengikuti pemeriksaan asesor/LSP yang berwenang.
+            </div>
 
             {/* Today's topic */}
             {todayItem && (
@@ -527,8 +533,8 @@ export default function RencanaBelajarPage() {
               <div className="flex items-center gap-4 p-5 bg-green-500/10 border border-green-500/30 rounded-2xl">
                 <span className="text-4xl">🎉</span>
                 <div>
-                  <p className="text-green-300 font-semibold">Semua materi selesai!</p>
-                  <p className="text-green-400/70 text-sm">Anda sudah menyelesaikan seluruh rencana belajar. Semoga sukses di hari asesmen!</p>
+                  <p className="text-green-300 font-semibold">Semua item rencana ditandai selesai</p>
+                  <p className="text-green-300 text-sm">Checklist belajar sudah lengkap. Ini bukan hasil asesmen atau penetapan status kompeten.</p>
                 </div>
               </div>
             )}
@@ -599,7 +605,7 @@ function ReadinessCard({
 }: {
   readiness: {
     score: number;
-    tier: 'Siap' | 'Perlu Penguatan' | 'Belum Siap';
+    tier: 'Rencana selesai' | 'Rencana hampir selesai' | 'Rencana berjalan' | 'Masih ada item belajar';
     action: string;
     accent: 'green' | 'amber' | 'red';
   };
@@ -642,11 +648,11 @@ function ReadinessCard({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${accentStyles.text}`}>
-                Kesiapan Asesmen
+                Progres Prioritas Belajar
               </p>
               <h2 id="readiness-heading" className="text-white text-lg font-semibold">{readiness.tier}</h2>
             </div>
-            <div className={`text-3xl font-bold ${accentStyles.text}`} aria-label={`Skor kesiapan ${readiness.score} persen`}>
+            <div className={`text-3xl font-bold ${accentStyles.text}`} aria-label={`Progres checklist berbobot prioritas ${readiness.score} persen`}>
               {readiness.score}%
             </div>
           </div>

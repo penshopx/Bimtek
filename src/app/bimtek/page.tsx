@@ -23,8 +23,6 @@ function BimtekContent() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [showOnlyRelevant, setShowOnlyRelevant] = useState(false);
   const [completedModules, setCompletedModules] = useState<string[]>([]);
-  const [totalPKB, setTotalPKB] = useState(0);
-  const [targetPKB] = useState(150);
 
   useEffect(() => {
     const saved = localStorage.getItem('bimtekCompleted');
@@ -32,11 +30,6 @@ function BimtekContent() {
       try {
         const completed = JSON.parse(saved);
         setCompletedModules(completed);
-        const pkb = completed.reduce((sum: number, id: string) => {
-          const mod = bimtekModules.find(m => m.id === id);
-          return sum + (mod?.pkb || 0);
-        }, 0);
-        setTotalPKB(pkb);
       } catch (e) {
         // ignore
       }
@@ -66,11 +59,6 @@ function BimtekContent() {
       : [...completedModules, id];
     setCompletedModules(newCompleted);
     localStorage.setItem('bimtekCompleted', JSON.stringify(newCompleted));
-    const pkb = newCompleted.reduce((sum, modId) => {
-      const mod = bimtekModules.find(m => m.id === modId);
-      return sum + (mod?.pkb || 0);
-    }, 0);
-    setTotalPKB(pkb);
   };
 
   const getCategoryColor = (category: string) => {
@@ -104,7 +92,7 @@ function BimtekContent() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-800 mb-4">🎓 BIMTEK - Pelatihan Konstruksi</h1>
-          <p className="text-lg text-slate-600">{bimtekModules.length} modul pelatihan dengan PKB points</p>
+          <p className="text-lg text-slate-600">{bimtekModules.length} modul pembelajaran untuk memperkuat pengetahuan konstruksi</p>
         </div>
 
         {/* Personalization banner */}
@@ -152,26 +140,27 @@ function BimtekContent() {
           </div>
         ) : null}
 
-        {/* PKB Progress */}
+        {/* Learning progress for the current filter */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-slate-800">Progress PKB Anda</h2>
-              <p className="text-slate-500">Target: {targetPKB} PKB Points</p>
+              <h2 className="text-xl font-semibold text-slate-800">Kemajuan belajar BIMTEK</h2>
+              <p className="text-slate-600">Modul yang ditandai selesai pada filter aktif</p>
             </div>
             <div className="text-right">
-              <span className="text-3xl font-bold text-amber-600">{totalPKB}</span>
-              <span className="text-slate-400"> / {targetPKB} PKB</span>
+              <span className="text-3xl font-bold text-amber-600">{completedCount}</span>
+              <span className="text-slate-600"> / {filteredModules.length} modul</span>
             </div>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
             <div
               className="bg-gradient-to-r from-amber-500 to-orange-600 h-4 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((totalPKB / targetPKB) * 100, 100)}%` }}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
           <p className="text-sm text-slate-500 mt-2 text-center">
-            {completedModules.length} modul selesai dari {bimtekModules.length} total
+            Penyelesaian modul mencatat kemajuan belajar pribadi, bukan pemberian SKPK otomatis.
+            Kredit PKB resmi memerlukan bukti kegiatan dan penilaian pihak berwenang.
           </p>
         </div>
 
@@ -241,6 +230,8 @@ function BimtekContent() {
                   </div>
                   <button
                     onClick={(e) => toggleComplete(e, module.id)}
+                    aria-label={`${isCompleted ? 'Batalkan tanda selesai' : 'Tandai selesai'}: ${module.title}`}
+                    aria-pressed={isCompleted}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
                       isCompleted
                         ? 'bg-green-500 text-white'
@@ -263,7 +254,6 @@ function BimtekContent() {
                       {module.level}
                     </span>
                   </div>
-                  <span className="font-semibold text-amber-600">+{module.pkb} PKB</span>
                 </div>
               </div>
             );

@@ -500,11 +500,11 @@ export default function ProfilePage() {
                   {[
                     { icon: '🎯', title: 'First Step', desc: '1 modul selesai', unlocked: progress.bimtekCompleted.length >= 1 },
                     { icon: '📚', title: 'Penggemar BIMTEK', desc: '10 modul selesai', unlocked: progress.bimtekCompleted.length >= 10 },
-                    { icon: '⭐', title: 'PKB Hunter', desc: '50 PKB points', unlocked: progress.totalPKB >= 50 },
+                    { icon: '⭐', title: 'Learning Hunter', desc: '50 poin belajar internal, bukan SKPK', unlocked: progress.totalPKB >= 50 },
                     { icon: '🧠', title: 'Quiz Master', desc: '5 kategori quiz', unlocked: Object.keys(progress.quizBestScores).length >= 5 },
-                    { icon: '🏆', title: 'Century', desc: '100 PKB points', unlocked: progress.totalPKB >= 100 },
+                    { icon: '🏆', title: 'Century', desc: '100 poin belajar internal, bukan SKPK', unlocked: progress.totalPKB >= 100 },
                     { icon: '🎓', title: 'Mahir', desc: '20 modul selesai', unlocked: progress.bimtekCompleted.length >= 20 },
-                    { icon: '👑', title: 'Expert', desc: '150 PKB points', unlocked: progress.totalPKB >= 150 },
+                    { icon: '👑', title: 'Expert', desc: '150 poin belajar internal, bukan SKPK', unlocked: progress.totalPKB >= 150 },
                     { icon: '🎯', title: 'Berjabatan', desc: 'Jabatan SKK dipilih', unlocked: !!user?.jabatanSkk },
                   ].map(ach => (
                     <div key={ach.title} className={`p-4 rounded-xl text-center ${ach.unlocked ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-700'}`}>
@@ -537,7 +537,7 @@ export default function ProfilePage() {
                         <div key={id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                           <div>
                             <h4 className="font-medium text-slate-800 dark:text-white">{mod.title}</h4>
-                            <p className="text-sm text-slate-500">{mod.category} • +{mod.pkb} PKB</p>
+                            <p className="text-sm text-slate-500">{mod.category} • Materi pembelajaran</p>
                           </div>
                           <button onClick={() => toggleFavorite(id)} className="text-amber-500 hover:text-amber-600">⭐</button>
                         </div>

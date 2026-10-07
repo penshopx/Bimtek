@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { getJabatanById, getRelatedCategories } from '@/lib/skkData';
+import { bimtekModules } from '@/lib/bimtekCatalog';
 
 interface DashboardStats {
   completedModules: number;
@@ -36,8 +37,11 @@ interface QuizScore {
 
 interface WeeklyData {
   day: string;
-  hours: number;
   activities: number;
+}
+
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function fullYearsSince(dateString: string): number {
@@ -67,7 +71,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     completedModules: 0,
-    totalModules: 67,
+    totalModules: bimtekModules.length,
     quizScores: 0,
     averageScore: 0,
     streak: 0,
@@ -171,8 +175,8 @@ export default function DashboardPage() {
       const weekly = generateWeeklyData(activitiesData);
 
       setStats({
-        completedModules: completed.length,
-        totalModules: 67,
+        completedModules: bimtekModules.filter(module => completed.includes(module.id)).length,
+        totalModules: bimtekModules.length,
         quizScores: quizCount,
         averageScore: avgScore,
         streak: streakData.currentStreak || 0,
@@ -180,7 +184,7 @@ export default function DashboardPage() {
         bookmarks: bookmarksData.length,
         achievements: achievementsData.filter((a: any) => a.unlocked).length,
         totalAchievements: 14,
-        hoursLearned: streakData.totalHours || Math.floor(completed.length * 2),
+        hoursLearned: Number.isFinite(streakData.totalHours) ? Math.max(0, streakData.totalHours) : 0,
         certificates: certCount,
       });
 
@@ -201,15 +205,15 @@ export default function DashboardPage() {
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = localDateKey(date);
 
-      const dayActivities = activities.filter((a: Activity) =>
-        a.timestamp && a.timestamp.startsWith(dateStr)
-      );
+      const dayActivities = activities.filter((a: Activity) => {
+        const activityDate = new Date(a.timestamp);
+        return !Number.isNaN(activityDate.getTime()) && localDateKey(activityDate) === dateStr;
+      });
 
       result.push({
         day: days[date.getDay()],
-        hours: dayActivities.length * 0.5 + Math.random() * 1.5,
         activities: dayActivities.length,
       });
     }
@@ -406,13 +410,18 @@ export default function DashboardPage() {
                     <div key={i} className="flex-1 flex flex-col items-center">
                       <div
                         className="w-full bg-gradient-to-t from-amber-500 to-orange-500 rounded-t-lg transition-all"
-                        style={{ height: `${Math.min(day.hours * 30, 160)}px` }}
+                        style={{ height: `${day.activities / Math.max(1, ...weeklyData.map(d => d.activities)) * 140}px` }}
                       />
                       <div className="mt-2 text-xs text-slate-400">{day.day}</div>
-                      <div className="text-xs text-slate-500">{day.hours.toFixed(1)}j</div>
+                      <div className="text-xs text-slate-400">{day.activities} aktivitas</div>
                     </div>
                   ))}
                 </div>
+                <p className="text-xs text-slate-400 mt-3">
+                  {weeklyData.some(day => day.activities > 0)
+                    ? 'Jumlah aktivitas yang tercatat, bukan estimasi jam belajar.'
+                    : 'Belum ada aktivitas yang tercatat dalam tujuh hari terakhir.'}
+                </p>
               </div>
 
               <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
@@ -440,8 +449,8 @@ export default function DashboardPage() {
                     <span className="text-white font-medium">{stats.totalModules} modul</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Waktu belajar</span>
-                    <span className="text-white font-medium">{stats.hoursLearned} jam</span>
+                    <span className="text-slate-400">Durasi tercatat</span>
+                    <span className="text-white font-medium">{stats.hoursLearned > 0 ? `${stats.hoursLearned} jam` : 'Belum tersedia'}</span>
                   </div>
                 </div>
               </div>

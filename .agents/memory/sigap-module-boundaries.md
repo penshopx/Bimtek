@@ -10,3 +10,9 @@ Keep organization operations and formal workflows behind separate permissions an
 **Why:** the product direction is for organizations to subscribe to SIGAP LMS while members learn in SIAP SKK; the user has prioritized desktop learning improvements and deferred mobile work. The blueprint also distinguishes learning/readiness support from regulated assessor, LSP, association, LPJK, and SIJK responsibilities.
 
 **How to apply:** focus current SIAP work on the desktop learner journey; defer mobile. Keep the SIGAP organization portal and SIAP learner app distinct initially, then connect them through SSO and APIs for assignments, catalog, and progress; keep official status, credit estimates, review/audit trails, and organizational data separate and accurately labeled.
+
+Do not turn unchecked blueprint credit formulas or module-completion points into official PKB targets or awarded SKPK. Use private estimates or learning progress until rules, supporting evidence, and review authority are established.
+
+**Why:** the uploaded blueprint is a product concept, not proof that a learning module or manually entered activity already has recognized credit.
+
+**How to apply:** preserve personal records, but separate estimates from verified credit and avoid pass/renewal claims from checklist completion or a points total.

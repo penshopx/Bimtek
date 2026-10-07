@@ -25,8 +25,6 @@ interface PKBActivity {
   createdAt: string;
 }
 
-const RENEWAL_TARGET = 80; // typical SKP target for 5-year renewal
-
 const typeInfo = (type: string) =>
   ACTIVITY_TYPES.find((t) => t.value === type) ?? ACTIVITY_TYPES[0];
 
@@ -81,7 +79,6 @@ export default function PKBPage() {
   }, [user, isLoading, fetchActivities, router]);
 
   const totalPoints = activities.reduce((sum, a) => sum + a.points, 0);
-  const progressPercent = Math.min(100, Math.round((totalPoints / RENEWAL_TARGET) * 100));
 
   const filtered =
     filterType === 'all' ? activities : activities.filter((a) => a.type === filterType);
@@ -186,7 +183,7 @@ export default function PKBPage() {
               📈 Tracker PKB
             </h1>
             <p className="text-slate-500 dark:text-slate-400">
-              Pengembangan Keprofesian Berkelanjutan — catat aktivitas &amp; pantau poin SKP
+              Catatan aktivitas Pengembangan Keprofesian Berkelanjutan dan estimasi kredit pribadi
             </p>
           </div>
           <button
@@ -202,22 +199,17 @@ export default function PKBPage() {
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-amber-100 text-sm font-medium mb-1">Total Poin SKP</p>
+              <p className="text-white text-sm font-medium mb-1">Total estimasi kredit yang dicatat</p>
               <p className="text-5xl font-bold">{totalPoints}</p>
               <p className="text-amber-100 text-sm mt-1">
-                dari target {RENEWAL_TARGET} SKP untuk perpanjangan
+                Nilai diisi pengguna dan belum diverifikasi
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-amber-100 text-sm font-medium mb-2">{progressPercent}% tercapai</p>
-              <div className="w-full sm:w-48 h-3 bg-white/30 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-white rounded-full transition-all duration-700"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <p className="text-amber-100 text-sm mt-2">
-                {Math.max(0, RENEWAL_TARGET - totalPoints)} SKP lagi untuk lulus
+              <p className="text-white font-semibold">{activities.length} aktivitas tercatat</p>
+              <p className="text-white text-sm mt-2 max-w-sm">
+                Target dan pengakuan SKPK mengikuti jenjang, jenis kegiatan, bukti, dan aturan yang berlaku.
+                Ringkasan ini bukan keputusan kelulusan atau perpanjangan SKK.
               </p>
             </div>
           </div>
@@ -319,7 +311,7 @@ export default function PKBPage() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <div className="text-2xl font-bold text-amber-500">+{activity.points}</div>
-                      <div className="text-xs text-slate-400 dark:text-slate-500 mb-3">SKP</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">Estimasi kredit</div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEdit(activity)}
@@ -422,7 +414,7 @@ export default function PKBPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Poin SKP <span className="text-red-500">*</span>
+                      Estimasi kredit <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -496,7 +488,7 @@ export default function PKBPage() {
               <div className="text-5xl mb-4">🗑️</div>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Hapus Aktivitas?</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-                Poin SKP dari aktivitas ini akan dihapus dari total Anda.
+                Catatan aktivitas dan estimasi kreditnya akan dihapus dari ringkasan pribadi Anda.
               </p>
               <div className="flex gap-3">
                 <button

@@ -244,7 +244,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
         `Berdasarkan materi "${currentModule.title}", ${currentModule.content}. Ada bagian spesifik yang ingin Anda tanyakan?`,
         `Pertanyaan bagus! Untuk topik "${currentModule.title}" dengan kategori ${currentModule.category}, point penting adalah ${currentModule.content}. Apa yang ingin Anda eksplorasi lebih dalam?`,
         `Sebagai ${currentModule.mentor}, saya bicara tentang modul ini: ${currentModule.content}. Apakah Anda ingin mencoba quiz atau lanjut ke materi berikutnya?`,
-        `Modul ini bernilai ${currentModule.pkb} PKB dan membutuhkan waktu sekitar ${currentModule.duration}. Dijelaskan: ${currentModule.content}. Ada yang tidak jelas?`,
+        `Estimasi durasi belajar modul ini adalah ${currentModule.duration}. Materi: ${currentModule.content}. Ada bagian yang ingin Anda pelajari lebih lanjut?`,
       ];
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       const assistantMsg: Message = { id: `asst-${Date.now()}`, role: 'assistant', content: randomResponse };
@@ -276,7 +276,6 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-wrap gap-4 text-sm">
             <span className="bg-white/20 px-3 py-1 rounded-full">⏱️ {currentModule.duration}</span>
             <span className="bg-white/20 px-3 py-1 rounded-full">📊 Level: {currentModule.level}</span>
-            <span className="bg-white/20 px-3 py-1 rounded-full">⭐ +{currentModule.pkb} PKB</span>
           </div>
         </div>
       </div>
@@ -354,12 +353,8 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-800 mb-3">Info Sertifikasi</h3>
+              <h3 className="font-semibold text-slate-800 mb-3">Info Pembelajaran</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">PKB Points</span>
-                  <span className="font-semibold text-amber-600">+{currentModule.pkb}</span>
-                </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Level</span>
                   <span className="font-semibold">{currentModule.level}</span>
@@ -369,6 +364,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
                   <span className="font-semibold">{currentModule.duration}</span>
                 </div>
               </div>
+              <p className="text-sm text-slate-600 mt-4">Checklist modul adalah catatan belajar mandiri. Penyelesaiannya tidak otomatis menghasilkan SKPK atau sertifikasi kompetensi.</p>
             </div>
 
             <Link
