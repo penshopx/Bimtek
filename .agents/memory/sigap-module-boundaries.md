@@ -28,3 +28,9 @@ When correcting expert-level labels, do not automatically promote generic job re
 **Why:** correcting an inconsistent label is not proof that the underlying job belongs to an expert scheme; automatic numeric replacement could silently reclassify the occupation.
 
 **How to apply:** apply confirmed expert rank mappings to explicit expert records; obtain the authoritative job/qualification mapping before classifying generic job titles.
+
+The user confirmed the conceptual SIAP SKK tutor model: PanduanASKOM is the main router/guide; specialist agents tutor within the learner's selected jabatan and jenjang. The intended journey is target selection → guide → specialist tutor → materials/practice → progress records. Do not treat this conceptual agreement as permission to create agents or change code, databases, or model configuration.
+
+**Why:** the user explicitly confirmed the mapping and limited it to conceptual alignment, without implementation.
+
+**How to apply:** use this model when discussing future learning assistance. Keep official-scheme claims conditional on verification; obtain an implementation instruction before building the mapped agents.
