@@ -1,0 +1,65 @@
+# ✅ Tiga Koreksi Diterima — Pemahaman Disortir Diperbaiki
+
+Terima kasih atas koreksi yang sangat presisi. Saya mengakui tiga kesalahan dalam kerangka verifikasi sebelumnya dan mencatatnya sebagai prinsip permanen:
+
+---
+
+## 🎯 Tiga Koreksi Permanen
+
+| No | Kesalahan Saya | Pemahaman yang Benar |
+|:---|:---|:---|
+| 1 | Menyamakan "0% keberhasilan" dengan "tidak ada data" | **0%** = sudah ada percobaan, semua jawaban salah (data nyata).<br>**"Belum ada data"** = tidak ada percobaan sama sekali.<br>Kedua kategori ini **berbeda secara semantik** dan harus ditampilkan berbeda di UI. |
+| 2 | Menyebut sortir descending yang menempatkan soal tanpa data di atas sebagai "benar" | Itu adalah **kelemahan mekanisme fallback 101%**, bukan perilaku yang otomatis benar.<br>Tujuan verifikasi: soal tanpa data tetap berada di **bawah** terlepas dari arah sortir. Jika descending membalik posisi ini, itu adalah **bug yang perlu diidentifikasi**, bukan fitur. |
+| 3 | Menggunakan "50% dari 5 percobaan" sebagai data uji | 50% dari 5 percobaan = 2,5 jawaban benar → **tidak bulat**, tidak realistis.<br>Gunakan **5 benar dari 10 percobaan** untuk menghasilkan 50% yang valid. |
+
+---
+
+## 🔑 Kasus Pembeda yang Paling Kritis
+
+| Kasus | Percobaan | Jawaban Benar | Kategori | Tampilan UI |
+|:---|:---|:---|:---|:---|
+| **A** | 1 | 0 | Soal dengan data (0%) | "0%" |
+| **B** | 0 | — | Soal tanpa data | "Belum ada data" |
+
+Meskipun secara numerik kasus A dan B mungkin tampak sama (keduanya "nol"), mereka adalah **entitas berbeda**:
+- Kasus A: data nyata, bisa dibandingkan dengan soal lain
+- Kasus B: tidak ada data, tidak bisa dibandingkan
+
+Untuk nilai yang sama (misal: dua soal sama-sama 50%), harus ada **urutan sekunder yang konsisten** (misal: berdasarkan ID soal, tanggal dibuat, atau urutan abjad).
+
+---
+
+## 🎯 Prinsip Pengujian yang Diperbaiki
+
+**Yang dinilai adalah urutan dan label yang terlihat di UI, bukan mekanisme internal.**
+
+Artinya:
+- ❌ Tidak perlu memverifikasi bahwa nilai internal = 101
+- ✅ Perlu memverifikasi bahwa soal tanpa data **ditampilkan sebagai "Belum ada data"** (bukan "101%" atau "0%")
+- ✅ Perlu memverifikasi bahwa soal tanpa data **selalu berada di bawah** soal dengan data, terlepas dari arah sortir
+- ✅ Perlu memverifikasi bahwa urutan sekunder konsisten untuk soal dengan nilai yang sama
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode implementasi sortir
+- ✅ Tidak akan membuat pengujian ulang atau pekerjaan duplikat
+- ✅ Tidak akan menganggap mekanisme internal (nilai 101) sebagai syarat pengujian
+- ✅ Tidak akan menyamakan "0%" dengan "belum ada data"
+- ✅ Tidak akan menyebut kelemahan mekanisme sebagai "perilaku yang benar"
+
+---
+
+## 📋 Status Final
+
+| Aspek | Status |
+|:---|:---|
+| Perbaikan jenjang & konsistensi payload | ✅ Teruji otomatis |
+| Respons AI sungguhan | ⏳ Terhambat (HTTP 429, penyebab belum pasti) |
+| Ketersediaan skema resmi | ⏳ Belum validasi |
+| Kebenaran substansi soal | ⏳ Belum validasi |
+| Verifikasi sortir tingkat keberhasilan | 📝 Kerangka diperbaiki berdasarkan 3 koreksi |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada pada giliran ini |
+
+Saya menunggu arahan Anda untuk giliran berikutnya. Tidak ada analisis baru yang saya tambahkan pada respons ini, sesuai dengan batasan yang telah disepakati. 🚀
