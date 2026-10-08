@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { createClient } from '@libsql/client';
+import { readFileSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/libsql';
 import { eq } from 'drizzle-orm';
 import { Window } from 'happy-dom';
@@ -26,6 +27,9 @@ const bootstrap = await POST(new NextRequest('http://dokumen.test/api/auth?actio
   body: '{}',
 }));
 expect(bootstrap.status).toBe(400);
+const checklistRoute = await import('../api/dokumen/route.ts?dokumen-tests');
+// Initialize the checklist handler's cached DB under this suite's mock too.
+expect((await checklistRoute.GET(new NextRequest('http://dokumen.test/api/dokumen?jabatan=fixture-bootstrap'))).status).toBe(401);
 
 const credentials = { email: 'dokumen-test@example.test', password: 'test-only-password' };
 const userId = 'dokumen-test-user';
@@ -121,10 +125,18 @@ beforeAll(async () => {
       id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
       expires_at TEXT NOT NULL, created_at TEXT NOT NULL
     );
+    CREATE TABLE document_checklist (
+      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, jabatan_id TEXT NOT NULL,
+      document_id TEXT NOT NULL, checked INTEGER DEFAULT false,
+      checked_at TEXT, note TEXT, created_at TEXT NOT NULL
+    );
   `);
+  // Exercise the actual N/A migration rather than hand-writing its column.
+  await client.executeMultiple(readFileSync(new URL('../../db/migrations/0010_document_checklist_na.sql', import.meta.url), 'utf8'));
 });
 
 beforeEach(async () => {
+  await db.delete(schema.documentChecklist);
   await db.delete(schema.sessions);
   await db.delete(schema.users);
   const now = new Date().toISOString();
@@ -171,12 +183,14 @@ beforeEach(async () => {
       }
     }
     expect(url.pathname).toBe('/api/dokumen');
+    if (init?.method === 'POST') {
+      return checklistRoute.POST(new NextRequest(url, { method: 'POST', headers, body: init.body }));
+    }
     checklistRequests.push({
       id: url.searchParams.get('jabatan')!,
       sessionId: headers.get('x-session-id'),
     });
-    // Checklist persistence is outside these pre-selection tests.
-    return Response.json({ items: [] });
+    return checklistRoute.GET(new NextRequest(url, { headers }));
   }) as typeof fetch;
 });
 
@@ -193,6 +207,78 @@ async function clickButton(text: string) {
   expect(button).toBeDefined();
   await act(async () => { button!.click(); });
 }
+
+describe('/dokumen N/A persistence', () => {
+  function documentRow(name: string) {
+    const label = Array.from(document.querySelectorAll('div.font-semibold'))
+      .find(element => element.textContent === name);
+    expect(label).toBeDefined();
+    return { label: label!, row: label!.parentElement!.parentElement! };
+  }
+
+  async function reopenPage(guest: boolean) {
+    await act(async () => { root!.unmount(); });
+    root = undefined;
+    document.body.replaceChildren();
+    meFinished = false;
+    await mountPage();
+    if (guest) await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+  }
+
+  for (const guest of [false, true]) {
+    for (const initiallyChecked of [false, true]) {
+      it(`retains N/A styling and progress after reload, then restores unchecked (${guest ? 'guest' : 'signed in'}, initially ${initiallyChecked ? 'checked' : 'new'})`, async () => {
+        if (!guest) await login('MP001');
+        await mountPage();
+        if (guest) await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+
+        const targetName = 'KTP / Kartu Identitas';
+        const otherName = 'Pas Foto 3×4';
+        const progressText = () => Array.from(document.querySelectorAll('p'))
+          .find(element => /^\d+ \/ \d+ dokumen$/.test(element.textContent ?? ''))!.textContent!;
+        const originalTotal = Number(progressText().match(/\/ (\d+)/)![1]);
+        await act(async () => { documentRow(otherName).row.click(); });
+        if (initiallyChecked) {
+          await act(async () => { documentRow(targetName).row.click(); });
+        }
+        await act(async () => { documentRow(targetName).row.querySelector('button')!.click(); });
+
+        async function expectPersistedNA(na: boolean) {
+          const [saved] = (await db.select().from(schema.documentChecklist))
+            .filter(item => item.documentId === 'ktp');
+          expect(saved.na).toBe(na);
+          expect(saved.checked).toBe(false);
+          expect(saved.checkedAt).toBeNull();
+          const { label, row } = documentRow(targetName);
+          expect(label.classList.contains('line-through')).toBe(na);
+          expect(label.classList.contains(na ? 'text-slate-500' : 'text-white')).toBe(true);
+          expect(row.classList.contains('opacity-60')).toBe(na);
+          expect(row.querySelector('svg')).toBeNull();
+          expect(row.querySelector('button')!.title).toBe(na
+            ? 'Batalkan N/A — dokumen ini berlaku'
+            : 'Tandai sebagai Tidak Berlaku (N/A)');
+          const total = originalTotal - (na ? 1 : 0);
+          expect(progressText()).toBe(`1 / ${total} dokumen`);
+          const bar = document.querySelector('div.h-2\\.5.transition-all') as HTMLElement;
+          expect(bar.style.width).toBe(`${Math.round(100 / total)}%`);
+        }
+
+        await expectPersistedNA(true);
+        await reopenPage(guest);
+        await expectPersistedNA(true);
+
+        await act(async () => { documentRow(targetName).row.querySelector('button')!.click(); });
+        await expectPersistedNA(false);
+        await reopenPage(guest);
+        await expectPersistedNA(false);
+        // The restored document can be checked normally again.
+        await act(async () => { documentRow(targetName).row.click(); });
+        expect(documentRow(targetName).row.querySelector('svg')).not.toBeNull();
+        expect(progressText()).toBe(`2 / ${originalTotal} dokumen`);
+      });
+    }
+  }
+});
 
 describe('/dokumen save default jabatan', () => {
   it('only offers saving a different manually selected role, and keeps the new default after remount', async () => {
