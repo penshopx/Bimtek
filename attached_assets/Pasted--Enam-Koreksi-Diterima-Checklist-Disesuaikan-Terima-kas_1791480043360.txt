@@ -1,0 +1,103 @@
+# ✅ Enam Koreksi Diterima — Checklist Disesuaikan
+
+Terima kasih atas koreksi yang sangat presisi. Saya mengakui kesalahan dalam skenario sebelumnya dan memperbarui pemahaman saya.
+
+---
+
+## 🎯 Enam Koreksi yang Dicatat
+
+| No | Kesalahan Saya | Pemahaman yang Benar |
+|:---|:---|:---|
+| 1 | Key = `randomMode` | Key yang benar adalah **`quiz-random-mode`** |
+| 2 | `"true"` sebagai teks = data rusak | **Salah.** `localStorage` selalu menyimpan teks, jadi `"true"` dan `"false"` adalah **format yang diharapkan**. Yang rusak adalah nilai seperti `{broken`, `123`, atau `'"true"'` (dengan kutip ganda tambahan). |
+| 3 | Asumsi ada `try/catch` | **Belum ada.** Storage yang diblokir akan menyebabkan error runtime, bukan graceful fallback. Ini risiko nyata. |
+| 4 | Multi-tab = sinkronisasi real-time | **Bukan.** Refresh Tab A setelah perubahan Tab B menguji **pembacaan nilai terbaru** dari localStorage saat inisialisasi ulang, bukan sinkronisasi via `storage` event. |
+| 5 | Mengklaim "sudah terverifikasi" | **Tidak valid.** Klaim verifikasi tanpa bukti pengujian aktual tidak dapat diandalkan. |
+| 6 | Tidak menyebutkan hydration Next.js | **Terlewat.** Preferensi dibaca saat inisialisasi state di client, sementara server render menggunakan nilai default. Mismatch bisa menyebabkan hydration warning atau flash konten yang salah. |
+
+---
+
+## 📋 Checklist yang Sudah Disesuaikan
+
+### **Skenario 1: Happy Path (Baseline)**
+
+| # | Langkah | Detail Teknis | Ekspektasi |
+|:---|:---|:---|:---|
+| 1.1 | Toggle random mode ON | `localStorage.getItem('quiz-random-mode')` → `"true"` | Toggle terlihat aktif |
+| 1.2 | Refresh halaman (F5) | Nilai dibaca ulang dari localStorage | Toggle **tetap ON** |
+| 1.3 | Toggle random mode OFF | `localStorage.getItem('quiz-random-mode')` → `"false"` | Toggle terlihat nonaktif |
+| 1.4 | Refresh halaman | Nilai dibaca ulang | Toggle **tetap OFF** |
+| 1.5 | Navigasi ke halaman lain → kembali | State diinisialisasi ulang dari localStorage | Toggle **tetap OFF** |
+
+### **Skenario 2: Data Tidak Valid di localStorage**
+
+| # | Langkah | Detail Teknis | Ekspektasi |
+|:---|:---|:---|:---|
+| 2.1 | Set nilai `{broken` | `localStorage.setItem('quiz-random-mode', '{broken')` → Refresh | Aplikasi **tidak crash**. Perilaku fallback: gunakan nilai default. |
+| 2.2 | Set nilai `123` | `localStorage.setItem('quiz-random-mode', '123')` → Refresh | Aplikasi **tidak crash**. Nilai `123` bukan `"true"` atau `"false"`, jadi fallback ke default. |
+| 2.3 | Set nilai `'"true"'` (kutip ganda tambahan) | `localStorage.setItem('quiz-random-mode', '"true"')` → Refresh | Perlu diamati: apakah kode membaca ini sebagai `true` atau tidak. Nilai ini **berbeda** dari `"true"`. |
+| 2.4 | Hapus key sepenuhnya | `localStorage.removeItem('quiz-random-mode')` → Refresh | Aplikasi **tidak crash**. Fallback ke nilai default. |
+
+### **Skenario 3: Storage Diblokir (Risiko Nyata — Belum Ada try/catch)**
+
+| # | Langkah | Detail Teknis | Ekspektasi Saat Ini (Tanpa try/catch) |
+|:---|:---|:---|:---|
+| 3.1 | Blokir storage (DevTools → Settings → Block third-party cookies + storage, atau incognito ketat) | `localStorage.setItem()` akan melempar `SecurityError` atau `QuotaExceededError` | ⚠️ **Risiko error runtime** karena belum ada `try/catch`. Perlu diamati apakah aplikasi crash atau tetap berjalan. |
+| 3.2 | Toggle random mode saat storage diblokir | `localStorage.setItem('quiz-random-mode', 'true')` gagal | Toggle mungkin terlihat berubah di UI (state lokal) tetapi **tidak tersimpan**. Setelah refresh, kembali ke default. |
+
+### **Skenario 4: Multi-Tab (Pembacaan Nilai Terbaru, Bukan Sync Real-Time)**
+
+| # | Langkah | Detail Teknis | Ekspektasi |
+|:---|:---|:---|:---|
+| 4.1 | Tab A: toggle ON | `quiz-random-mode` = `"true"` | Tab A: ON |
+| 4.2 | Tab B: toggle OFF | `quiz-random-mode` = `"false"` (menimpa nilai Tab A) | Tab B: OFF |
+| 4.3 | Tab A: refresh | Tab A membaca ulang `quiz-random-mode` dari localStorage | Tab A: **OFF** (membaca nilai terbaru yang ditulis Tab B) |
+| 4.4 | Tab A: toggle ON lagi → Tab B: refresh | Tab B membaca nilai terbaru | Tab B: **ON** |
+
+### **Skenario 5: Hydration Next.js (Sebelumnya Terlewat)**
+
+| # | Langkah | Detail Teknis | Ekspektasi |
+|:---|:---|:---|:---|
+| 5.1 | Set `quiz-random-mode` = `"true"` → Refresh | Server render menggunakan nilai default (`false`), lalu client hydrate dengan `"true"` dari localStorage | **Tidak ada hydration mismatch warning** di console. UI langsung menampilkan toggle ON tanpa flash. |
+| 5.2 | Set `quiz-random-mode` = `"false"` → Refresh | Server render default (`false`), client hydrate `"false"` | Tidak ada mismatch. UI konsisten. |
+| 5.3 | Hapus key → Refresh | Server render default (`false`), client hydrate default (`false`) | Tidak ada mismatch. |
+| 5.4 | Cek browser console | Buka DevTools → Console | **Tidak ada warning**: `Warning: Text content did not match` atau `Hydration failed because...` |
+
+---
+
+## 🔍 Catatan Penting tentang Hydration
+
+Ini adalah skenario yang paling mudah terlewat dan paling sering menyebabkan bug di Next.js:
+
+**Masalah potensial:**
+- Server tidak punya akses ke `localStorage`, jadi selalu merender dengan nilai default (misal: `false`)
+- Client membaca `localStorage` saat `useEffect` atau inisialisasi state
+- Jika state awal client ≠ server → **hydration mismatch**
+- Gejala: toggle berkedip (flash) dari OFF ke ON setelah halaman dimuat, atau warning di console
+
+**Yang perlu diamati saat pengujian:**
+1. Apakah ada flash visual saat halaman dimuat?
+2. Apakah ada warning hydration di console?
+3. Apakah toggle langsung menampilkan nilai yang benar tanpa kedipan?
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak memberikan contoh kode implementasi atau perbaikan
+- ✅ Tidak mengklaim sesuatu "sudah terverifikasi" tanpa bukti
+- ✅ Tidak membuat task paralel yang tumpang tindih
+- ✅ Checklist ini adalah **bahan peninjauan**, bukan instruksi eksekusi
+- ✅ Memahami bahwa pemeriksaan preferensi urutan kuis **masih sedang dikerjakan**
+
+---
+
+## 💡 Posisi Selanjutnya
+
+Saya menunggu hasil pemeriksaan Anda. Ketika Anda siap, saya bisa membantu:
+
+1. **Menganalisis temuan** dari skenario-skenario di atas (terutama Skenario 3 dan 5 yang berisiko tinggi)
+2. **Mendiskusikan strategi mitigasi** untuk storage yang diblokir (karena saat ini belum ada `try/catch`)
+3. **Melanjutkan ke prioritas lain** yang Anda tentukan
+
+Silakan lanjutkan pemeriksaan sesuai waktu Anda. 🚀
