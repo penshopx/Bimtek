@@ -2,7 +2,7 @@
 
 import { db } from '@/db';
 import { quizQuestions, quizAttempts, sessions, settings, users } from '@/db/schema';
-import { eq, asc, lt, sql } from 'drizzle-orm';
+import { eq, asc, lt, sql, and, isNotNull } from 'drizzle-orm';
 import {
   DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS,
   MAX_QUIZ_ATTEMPT_RETENTION_DAYS,
@@ -438,6 +438,30 @@ export async function resetQuizAttempts(
       throw new Error('Invalid question id');
     }
     await db.delete(quizAttempts).where(eq(quizAttempts.questionId, questionId));
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, message: msg };
+  }
+}
+
+/**
+ * Delete only invalidated attempts for one question, preserving valid attempts.
+ * Admin-only; totals and success rate are recalculated from the remaining rows.
+ */
+export async function resetStaleAttempts(
+  questionId: number,
+  sessionId: string | null | undefined
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    await requireAdmin(sessionId);
+    if (!Number.isInteger(questionId) || questionId <= 0) {
+      throw new Error('Invalid question id');
+    }
+    await db.delete(quizAttempts).where(and(
+      eq(quizAttempts.questionId, questionId),
+      isNotNull(quizAttempts.invalidatedAt),
+    ));
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

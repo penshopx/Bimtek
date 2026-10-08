@@ -12,6 +12,7 @@ import {
   reorderQuizQuestions,
   getQuizAttemptStats,
   resetQuizAttempts,
+  resetStaleAttempts,
 } from '@/app/actions/quiz';
 import type { QuizQuestion, QuizAttemptStat } from '@/app/actions/quiz';
 import { getDisplayedAdminQuizQuestions } from '@/lib/adminQuizQuestionOrder';
@@ -32,6 +33,7 @@ export default function AdminQuizPage() {
   const [reordering, setReordering] = useState(false);
   const [resetConfirmId, setResetConfirmId] = useState<number | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [clearingStaleId, setClearingStaleId] = useState<number | null>(null);
   const [sortBySuccessRate, setSortBySuccessRate] = useState(false);
   const [clearAttempts, setClearAttempts] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -165,6 +167,32 @@ export default function AdminQuizPage() {
       showToast('Terjadi kesalahan saat mereset statistik.', 'error');
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleClearStale = async (questionId: number) => {
+    if (clearingStaleId !== null || !confirm(
+      'Hapus permanen hanya percobaan yang sudah tidak valid untuk soal ini? Percobaan valid tetap tersimpan. Total dan persentase keberhasilan akan dihitung ulang dari data yang tersisa.'
+    )) return;
+    setClearingStaleId(questionId);
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      const result = await resetStaleAttempts(questionId, sessionId);
+      if (!result.success) {
+        showToast(result.message || 'Gagal menghapus data usang.', 'error');
+        return;
+      }
+      try {
+        const attemptStats = await getQuizAttemptStats(sessionId);
+        setStats(new Map(attemptStats.map((s) => [s.questionId, s])));
+        showToast('Data usang berhasil dihapus. Percobaan valid tetap tersimpan.');
+      } catch {
+        showToast('Data usang telah dihapus, tetapi statistik gagal dimuat ulang. Muat ulang halaman untuk memperbarui statistik.', 'error');
+      }
+    } catch {
+      showToast('Terjadi kesalahan saat menghapus data usang.', 'error');
+    } finally {
+      setClearingStaleId(null);
     }
   };
 
@@ -574,6 +602,15 @@ export default function AdminQuizPage() {
                                     <p className="text-xs text-amber-700 dark:text-amber-400 leading-snug">
                                       Soal diubah setelah percobaan tercatat. Rincian per-opsi disembunyikan agar tidak menyesatkan.
                                     </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleClearStale(q.id)}
+                                      disabled={clearingStaleId !== null}
+                                      title="Hapus hanya percobaan tidak valid; total dan persentase dihitung ulang dari percobaan valid."
+                                      className="shrink-0 text-xs text-amber-800 dark:text-amber-300 underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {clearingStaleId === q.id ? 'Menghapus...' : 'Clear stale data'}
+                                    </button>
                                   </div>
                                 ) : stat!.optionCounts.length > 0 && stat!.optionCounts.some((c) => c > 0) && (
                                   <div className="mt-1 space-y-0.5">

@@ -10,7 +10,7 @@ const database = drizzle(client, { schema });
 mock.module('@/db', () => ({ db: database }));
 const {
   createQuizQuestion, getQuizQuestions, recordQuizAttempt,
-  updateQuizQuestion, getQuizAttemptStats,
+  updateQuizQuestion, getQuizAttemptStats, resetStaleAttempts,
 } = await import('./quiz');
 
 const sessionId = 'quiz-sort-test-session';
@@ -123,6 +123,70 @@ test('editing invalidates old option indices while counting only new attempts in
     successRate: 33, optionCounts: [0, 1, 2], hasStaleAttempts: true,
   });
   expect(await statsFor(untouched.id)).toEqual(untouchedBefore);
+});
+
+test('clearing stale attempts preserves valid rows and all attempts on other questions', async () => {
+  const [question, other] = await getQuizQuestions(category);
+  await recordQuizAttempt(question.id, 0);
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(other.id, 0);
+  for (const row of [question, other]) {
+    await updateQuizQuestion(row.id, {
+      question: `${row.question} edited`, category, options: ['Benar', 'Salah'], correct: 0,
+    }, sessionId);
+  }
+  await recordQuizAttempt(question.id, 0);
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(other.id, 1);
+  const before = await database.select().from(schema.quizAttempts);
+  const validBefore = before.filter(row => row.questionId === question.id && row.invalidatedAt === null);
+  const otherBefore = before.filter(row => row.questionId === other.id);
+
+  expect(await resetStaleAttempts(question.id, sessionId)).toEqual({ success: true });
+  const after = await database.select().from(schema.quizAttempts);
+  expect(after.filter(row => row.questionId === question.id)).toEqual(validBefore);
+  expect(after.filter(row => row.questionId === other.id)).toEqual(otherBefore);
+  expect((await getQuizAttemptStats(sessionId)).find(row => row.questionId === question.id)).toEqual({
+    questionId: question.id, totalAttempts: 2, correctAttempts: 1,
+    successRate: 50, optionCounts: [1, 1], hasStaleAttempts: false,
+  });
+  // Repeated cleanup is safe and does not delete clean data.
+  expect(await resetStaleAttempts(question.id, sessionId)).toEqual({ success: true });
+  expect(await database.select().from(schema.quizAttempts)).toEqual(after);
+});
+
+test('clearing an entirely stale history leaves no stats for that question', async () => {
+  const [question] = await getQuizQuestions(category);
+  await recordQuizAttempt(question.id, 0);
+  await updateQuizQuestion(question.id, {
+    question: 'Edited', category, options: ['Benar', 'Salah'], correct: 0,
+  }, sessionId);
+  expect(await resetStaleAttempts(question.id, sessionId)).toEqual({ success: true });
+  expect(await getQuizAttemptStats(sessionId)).toEqual([]);
+});
+
+test('stale cleanup rejects missing, invalid, expired and non-admin sessions without deleting rows', async () => {
+  const [question] = await getQuizQuestions(category);
+  await database.insert(schema.quizAttempts).values({
+    questionId: question.id, correct: true, selectedOption: 0, attemptedAt: now, invalidatedAt: now,
+  });
+  await database.insert(schema.users).values({
+    id: 'quiz-regular-user', name: 'Test User', email: 'quiz-user@example.test',
+    passwordHash: 'unused', role: 'user', createdAt: now, updatedAt: now,
+  });
+  await database.insert(schema.sessions).values([
+    { id: 'quiz-user-session', userId: 'quiz-regular-user', expiresAt: new Date(Date.now() + 86_400_000).toISOString(), createdAt: now },
+    { id: 'quiz-expired-session', userId: 'quiz-sort-admin', expiresAt: '2000-01-01T00:00:00.000Z', createdAt: now },
+  ]);
+  const before = await database.select().from(schema.quizAttempts);
+  for (const session of [null, '', 'missing-session', 'quiz-expired-session', 'quiz-user-session']) {
+    expect((await resetStaleAttempts(question.id, session)).success).toBe(false);
+    expect(await database.select().from(schema.quizAttempts)).toEqual(before);
+  }
+  for (const id of [0, -1, 1.5, NaN]) {
+    expect(await resetStaleAttempts(id, sessionId)).toEqual({ success: false, message: 'Invalid question id' });
+    expect(await database.select().from(schema.quizAttempts)).toEqual(before);
+  }
 });
 
 afterAll(() => {

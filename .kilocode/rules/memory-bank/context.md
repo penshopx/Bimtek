@@ -4,6 +4,7 @@
 Complete construction training platform with AI chatbot system built and deployed.
 
 ## Recently Completed
+- [x] Admin quiz: “Clear stale data” menghapus hanya percobaan tidak valid untuk soal terpilih, dengan konfirmasi, penyegaran statistik, dan tes perlindungan percobaan valid serta akses admin.
 - [x] Profil Profesional SKK at `/profil-skk`: browser-local explicit saving, basic/current/target SKK sections, completeness, account jabatan import, and profile-context preparation links.
 - [x] Tombol “N/A Semua” per kategori dokumen, pembatalan ke status belum dicentang, progres yang mengecualikan dokumen N/A, dan tes penyimpanan serta kegagalan sebagian.
 - [x] Tes integrasi checklist dokumen memverifikasi login dan profil dari API asli, delapan pemetaan jabatan, tab bidang, sorotan jabatan, dan kondisi kosong tanpa profil yang sesuai (`bun run test:dokumen`).

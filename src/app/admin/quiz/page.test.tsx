@@ -16,6 +16,8 @@ const getStats = mock(async (sessionId: string | null) => {
   expect(sessionId).toBe('admin-stats-test-session');
   return stats;
 });
+const clearStale = mock(async (_questionId: number, _sessionId: string | null): Promise<{ success: boolean; message?: string }> => ({ success: true }));
+const confirmCleanup = mock(() => true);
 mock.module('@/components/AuthProvider', () => ({
   useAuth: () => ({ user: adminUser }),
 }));
@@ -28,20 +30,21 @@ mock.module('@/app/actions/quiz', () => ({
   deleteQuizQuestion: async () => ({ success: true }),
   reorderQuizQuestions: async () => ({ success: true }),
   resetQuizAttempts: async () => ({ success: true }),
+  resetStaleAttempts: clearStale,
 }));
 const { default: AdminQuizPage } = await import('./page');
 
 let browser: Window;
 let root: Root;
 let container: HTMLElement;
-const keys = ['window', 'document', 'navigator', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT'] as const;
+const keys = ['window', 'document', 'navigator', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT', 'confirm'] as const;
 let originals: (PropertyDescriptor | undefined)[];
 const warning = 'Soal diubah setelah percobaan tercatat. Rincian per-opsi disembunyikan agar tidak menyesatkan.';
 
 beforeEach(() => {
   browser = new Window({ url: 'http://admin.test/admin/quiz' });
   originals = keys.map(key => Object.getOwnPropertyDescriptor(globalThis, key));
-  const values = [browser, browser.document, browser.navigator, browser.localStorage, true];
+  const values = [browser, browser.document, browser.navigator, browser.localStorage, true, confirmCleanup];
   keys.forEach((key, index) => Object.defineProperty(globalThis, key, {
     configurable: true, writable: true, value: values[index],
   }));
@@ -50,6 +53,10 @@ beforeEach(() => {
   document.body.append(container);
   root = createRoot(container);
   getStats.mockClear();
+  clearStale.mockReset();
+  clearStale.mockImplementation(async () => ({ success: true }));
+  confirmCleanup.mockReset();
+  confirmCleanup.mockImplementation(() => true);
 });
 
 afterEach(async () => {
@@ -100,10 +107,65 @@ test('admin still shows per-option bars when no attempts are stale', async () =>
     successRate: 25, optionCounts: [1, 1, 2], hasStaleAttempts: false,
   });
   expect(cell.textContent).not.toContain(warning);
+  expect(cell.textContent).not.toContain('Clear stale data');
   const tracks = [...cell.querySelectorAll<HTMLElement>(optionTracks)];
   expect(tracks).toHaveLength(3);
   expect(tracks.map(track => (track.firstElementChild as HTMLElement).style.width))
     .toEqual(['25%', '25%', '50%']);
   expect(tracks.map(track => track.parentElement!.firstElementChild!.textContent))
     .toEqual(['A.', 'B.', 'C.']);
+});
+
+const staleStat: QuizAttemptStat = {
+  questionId: question.id, totalAttempts: 6, correctAttempts: 2,
+  successRate: 33, optionCounts: [0, 1, 2], hasStaleAttempts: true,
+};
+
+function cleanupButton() {
+  return [...container.querySelectorAll('button')].find(button => button.textContent === 'Clear stale data')!;
+}
+
+test('stale cleanup refreshes stats and restores only the clean option bars', async () => {
+  await renderStat(staleStat);
+  stats = [{ ...staleStat, totalAttempts: 3, correctAttempts: 1, hasStaleAttempts: false }];
+  await act(async () => cleanupButton().click());
+  expect(confirmCleanup).toHaveBeenCalledTimes(1);
+  expect(clearStale).toHaveBeenCalledWith(question.id, 'admin-stats-test-session');
+  expect(getStats).toHaveBeenCalledTimes(2);
+  expect(container.textContent).not.toContain(warning);
+  expect(container.textContent).toContain('3 percobaan');
+  expect(container.querySelectorAll(optionTracks)).toHaveLength(3);
+  expect(container.textContent).toContain('Data usang berhasil dihapus.');
+});
+
+test('admin can cancel stale deletion without calling the server', async () => {
+  await renderStat(staleStat);
+  confirmCleanup.mockImplementation(() => false);
+  await act(async () => cleanupButton().click());
+  expect(clearStale).not.toHaveBeenCalled();
+  expect(getStats).toHaveBeenCalledTimes(1);
+  expect(container.textContent).toContain(warning);
+});
+
+test.each(['rejected', 'thrown'])('failed stale cleanup keeps the warning and allows retry: %s', async (mode) => {
+  await renderStat(staleStat);
+  clearStale.mockImplementation(async () => {
+    if (mode === 'thrown') throw new Error('network');
+    return { success: false, message: 'Penghapusan ditolak.' };
+  });
+  await act(async () => cleanupButton().click());
+  expect(getStats).toHaveBeenCalledTimes(1);
+  expect(container.textContent).toContain(warning);
+  expect(cleanupButton().disabled).toBe(false);
+  expect(container.textContent).toContain(mode === 'thrown'
+    ? 'Terjadi kesalahan saat menghapus data usang.' : 'Penghapusan ditolak.');
+});
+
+test('cleanup with no remaining attempts shows the empty state', async () => {
+  await renderStat(staleStat);
+  stats = [];
+  await act(async () => cleanupButton().click());
+  expect(container.textContent).toContain('Belum ada data');
+  expect(container.textContent).not.toContain(warning);
+  expect(container.querySelectorAll(optionTracks)).toHaveLength(0);
 });
