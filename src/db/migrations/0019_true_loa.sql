@@ -1,0 +1,1 @@
+CREATE INDEX `quiz_attempts_stats_idx` ON `quiz_attempts` (`question_id`,`selected_option`,`invalidated_at`,`correct`);

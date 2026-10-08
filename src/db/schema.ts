@@ -210,6 +210,9 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   invalidatedAt: text("invalidated_at"),
 }, (t) => ({
   attemptedAtIdx: index("quiz_attempts_attempted_at_idx").on(t.attemptedAt),
+  questionIdIdx: index("quiz_attempts_question_id_idx").on(t.questionId),
+  // Cover both statistics aggregates without reading the attempt table.
+  statsIdx: index("quiz_attempts_stats_idx").on(t.questionId, t.selectedOption, t.invalidatedAt, t.correct),
 }));
 
 export const documentChecklist = sqliteTable("document_checklist", {

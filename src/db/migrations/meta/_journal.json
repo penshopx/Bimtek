@@ -127,6 +127,20 @@
       "when": 1791460636600,
       "tag": "0017_serious_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1791483819446,
+      "tag": "0018_short_deathbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1791484008856,
+      "tag": "0019_true_loa",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+CREATE INDEX `quiz_attempts_question_id_idx` ON `quiz_attempts` (`question_id`);

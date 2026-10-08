@@ -11,3 +11,4 @@
 - [Multipart runtime compatibility](multipart-runtime-compatibility.md) — Bun and Next.js may parse valid file parts with different MIME parameters or File constructors.
 - [Multi-step form submission](multi-step-form-submit.md) — keep submit behavior stable across steps; React button reuse can unexpectedly submit during step navigation.
 - [Bun browser-test runner](bun-browser-test-runner.md) — compile browser specs before Playwright under Bun; use supplied Chromium when downloaded binaries are absent.
+- [Quiz statistics performance](quiz-statistics-performance.md) — indeks question_id saja tidak menjamin agregasi lebih cepat; ukur dengan distribusi riwayat realistis.
