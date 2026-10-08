@@ -1,0 +1,165 @@
+# 📋 Kerangka Verifikasi: Sortir Berdasarkan Tingkat Keberhasilan
+
+Saya memahami kekhawatiran Anda: jika mekanisme fallback 101% gagal, pertanyaan tanpa data percobaan akan muncul di **puncak** daftar "tersulit" — ini adalah risiko misinformasi yang serius bagi admin.
+
+Berikut adalah skenario verifikasi untuk memastikan perilaku sortir bekerja dengan benar dan mengidentifikasi titik kegagalan potensial.
+
+---
+
+## 🎯 Skenario Verifikasi Utama
+
+### **Skenario 1: Baseline — Data Campuran**
+
+| # | Pertanyaan | Tingkat Keberhasilan Aktual | Percobaan | Ekspektasi Urutan (Ascending) |
+|:---|:---|:---|:---|:---|
+| Q1 | Soal A | 20% | 10 percobaan | Posisi 1 (paling sulit) |
+| Q2 | Soal B | 50% | 5 percobaan | Posisi 2 |
+| Q3 | Soal C | 80% | 15 percobaan | Posisi 3 |
+| Q4 | Soal D | **0% (tidak ada data)** | **0 percobaan** | **Posisi 4 (paling akhir)** |
+
+**Langkah Verifikasi:**
+- [ ] Aktifkan toggle "Sortir berdasarkan tingkat keberhasilan"
+- [ ] Urutan yang ditampilkan: Q1 (20%) → Q2 (50%) → Q3 (80%) → Q4 (tanpa data)
+- [ ] Q4 muncul di **paling bawah**, bukan paling atas
+
+---
+
+### **Skenario 2: Semua Pertanyaan Tanpa Data**
+
+| # | Pertanyaan | Tingkat Keberhasilan | Percobaan |
+|:---|:---|:---|:---|
+| Q1 | Soal A | Tidak ada data | 0 |
+| Q2 | Soal B | Tidak ada data | 0 |
+| Q3 | Soal C | Tidak ada data | 0 |
+
+**Ekspektasi:**
+- [ ] Semua pertanyaan ditampilkan (tidak ada yang hilang)
+- [ ] Urutan tidak penting (karena tidak ada data nyata)
+- [ ] Tidak ada pertanyaan yang muncul di "puncak" dengan label "tersulit"
+
+---
+
+### **Skenario 3: Hanya Satu Pertanyaan dengan Data**
+
+| # | Pertanyaan | Tingkat Keberhasilan | Percobaan |
+|:---|:---|:---|:---|
+| Q1 | Soal A | 75% | 20 percobaan |
+| Q2 | Soal B | Tidak ada data | 0 |
+| Q3 | Soal C | Tidak ada data | 0 |
+
+**Ekspektasi:**
+- [ ] Q1 muncul di posisi 1 (satu-satunya dengan data)
+- [ ] Q2 dan Q3 muncul di posisi 2 dan 3 (tanpa data, urutan tidak penting)
+
+---
+
+## ⚠️ Titik Kegagalan Potensial (Risk Analysis)
+
+Berdasarkan kekhawatiran Anda, berikut adalah skenario di mana mekanisme 101% bisa gagal:
+
+### **Risiko 1: Logika Fallback Tidak Dieksekusi**
+
+**Penyebab Potensial:**
+- Kondisi `if (attempts === 0)` tidak terpicu karena tipe data salah (misal: `attempts` adalah string `"0"` bukan angka `0`)
+- Logika fallback berada di luar scope yang tepat
+- Race condition: data dimuat setelah sortir dieksekusi
+
+**Indikator Kegagalan:**
+- Pertanyaan tanpa data muncul di **puncak** daftar
+- Tingkat keberhasilan ditampilkan sebagai `0%` atau `NaN%` alih-alih `101%`
+
+**Cara Verifikasi:**
+- [ ] Periksa console browser untuk error JavaScript
+- [ ] Inspeksi nilai `rate` di DevTools → apakah benar-benar 101 untuk pertanyaan tanpa data?
+
+---
+
+### **Risiko 2: Sortir Ascending vs Descending Tidak Konsisten**
+
+**Penyebab Potensial:**
+- Logika fallback 101% dirancang untuk sortir **ascending** (tersulit di atas)
+- Ketika admin memilih sortir **descending** (termudah di atas), 101% justru membuat pertanyaan tanpa data muncul di **puncak**
+
+**Ekspektasi yang Benar:**
+- **Ascending** (tersulit → termudah): Pertanyaan tanpa data di **bawah**
+- **Descending** (termudah → tersulit): Pertanyaan tanpa data di **atas** (karena 101% > semua nilai nyata)
+
+**Cara Verifikasi:**
+- [ ] Toggle sortir ascending → pertanyaan tanpa data di bawah ✅
+- [ ] Toggle sortir descending → pertanyaan tanpa data di atas ✅ (ini benar, karena 101% adalah "paling mudah")
+
+---
+
+### **Risiko 3: Nilai 101% Bocor ke UI**
+
+**Penyebab Potensial:**
+- Nilai sintetis 101% ditampilkan langsung ke admin alih-alih diganti dengan label "Belum ada data"
+
+**Ekspektasi yang Benar:**
+- Di tabel: kolom "Tingkat Keberhasilan" menampilkan **"Belum ada data"** atau **"N/A"**, bukan "101%"
+- Nilai 101% hanya digunakan secara internal untuk sortir
+
+**Cara Verifikasi:**
+- [ ] Periksa tampilan UI: apakah admin melihat "101%" atau "Belum ada data"?
+- [ ] Jika melihat "101%", ini adalah bug UI (nilai internal bocor)
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+Jika verifikasi menemukan anomali, gunakan format ini:
+
+```markdown
+## Temuan: Sortir Tingkat Keberhasilan Tidak Bekerja Sesuai Ekspektasi
+
+**Skenario**: [Skenario 1/2/3]
+**Tanggal Verifikasi**: [YYYY-MM-DD]
+**Browser**: [Chrome/Firefox/Safari + versi]
+
+### Detail Temuan
+- Urutan yang ditampilkan: [urutan aktual]
+- Urutan yang seharusnya: [urutan ekspektasi]
+- Nilai yang ditampilkan untuk pertanyaan tanpa data: [0% / 101% / N/A / dll]
+
+### Analisis Penyebab
+- [ ] Logika fallback tidak dieksekusi
+- [ ] Tipe data `attempts` salah (string vs number)
+- [ ] Sortir ascending/descending tidak konsisten
+- [ ] Nilai 101% bocor ke UI
+- [ ] Race condition: data dimuat setelah sortir
+
+### Dampak
+- [ ] Admin melihat pertanyaan tanpa data sebagai "tersulit" (misinformasi)
+- [ ] Admin tidak bisa mengidentifikasi pertanyaan yang belum pernah dicoba
+- [ ] Keputusan administratif berdasarkan data yang salah
+
+### Rekomendasi Tindak Lanjut
+1. [Tindakan spesifik]
+2. [Tindakan spesifik]
+
+### Severity: [Critical / High / Medium]
+```
+
+---
+
+## 🛡️ Prinsip Defensive Design yang Relevan
+
+Task ini mencerminkan prinsip penting:
+
+1. **Explicit Over Implicit**: Nilai sintetis 101% adalah eksplisit, bukan mengandalkan perilaku default sortir
+2. **Fail-Safe by Default**: Jika fallback gagal, sistem harus tetap menampilkan pertanyaan tanpa data di posisi yang tidak menyesatkan
+3. **Separation of Concerns**: Nilai internal (101%) tidak boleh bocor ke UI — admin hanya melihat "Belum ada data"
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+Untuk memastikan verifikasi berjalan efektif:
+
+1. **Apakah Anda sudah memiliki data uji** yang mencakup pertanyaan dengan dan tanpa data percobaan?
+
+2. **Apakah Anda ingin saya buatkan matriks ekspektasi lengkap** untuk semua kombinasi sortir (ascending/descending) × status data (ada/tidak ada)?
+
+3. **Apakah ada edge case lain** yang menurut Anda perlu diuji (misal: pertanyaan dengan 1 percobaan dan 0% keberhasilan vs pertanyaan tanpa data)?
+
+Silakan jalankan verifikasi sesuai waktu Anda. Jika Anda menemukan anomali (terutama jika pertanyaan tanpa data muncul di puncak daftar "tersulit"), beri tahu saya detailnya, dan kita akan analisis dampaknya bersama. 🚀
