@@ -41,6 +41,83 @@ function resetButton() {
   return [...document.querySelectorAll('button')].find(button => button.textContent === 'Mulai ulang');
 }
 
+async function toggleStep(index: number) {
+  await act(async () => {
+    (document.querySelector(`#prosedur-${currentMethod()}-${index} button`) as HTMLButtonElement).click();
+  });
+}
+
+function currentMethod() {
+  return document.querySelector('[id^="prosedur-"]')!.id.split('-')[1];
+}
+
+async function selectMethod(label: string) {
+  const tab = [...document.querySelectorAll('button')].find(button => button.textContent?.includes(label));
+  expect(tab).toBeDefined();
+  await act(async () => tab!.click());
+}
+
+function expectProgress(method: string, indices: number[]) {
+  expect(currentMethod()).toBe(method);
+  expect(document.body.textContent).toContain(`${indices.length}/5 langkah selesai`);
+  expect(document.body.textContent).toContain(`${indices.length * 20}%`);
+  for (let i = 0; i < 5; i++) {
+    const button = document.querySelector(`#prosedur-${method}-${i} button`);
+    expect(button?.getAttribute('title')).toBe(indices.includes(i) ? 'Tandai belum selesai' : 'Tandai selesai');
+  }
+}
+
+it('restores the exact two completed steps and 40% progress after a page remount', async () => {
+  await mount();
+  await toggleStep(0);
+  await toggleStep(3);
+  expectProgress('hardcopy', [0, 3]);
+  expect(localStorage.getItem('prosedur-checklist-hardcopy')).toBe('[true,false,false,true,false]');
+
+  await act(async () => root.render(null));
+  await mount();
+  expectProgress('hardcopy', [0, 3]);
+});
+
+it('keeps all three methods independent when switching tabs and remounting', async () => {
+  await mount();
+  await toggleStep(0);
+  await toggleStep(3);
+  await selectMethod('Paperless');
+  expectProgress('paperless', []);
+  await toggleStep(1);
+  await selectMethod('AJJ');
+  expectProgress('ajj', []);
+  await toggleStep(2);
+  await toggleStep(4);
+  await selectMethod('Hardcopy');
+  expectProgress('hardcopy', [0, 3]);
+  await selectMethod('Paperless');
+  expectProgress('paperless', [1]);
+  await selectMethod('AJJ');
+  expectProgress('ajj', [2, 4]);
+
+  await act(async () => root.render(null));
+  await mount();
+  expectProgress('hardcopy', [0, 3]);
+  await selectMethod('Paperless');
+  expectProgress('paperless', [1]);
+  await selectMethod('AJJ');
+  expectProgress('ajj', [2, 4]);
+});
+
+it('recovers from invalid JSON without clearing another method’s progress', async () => {
+  localStorage.setItem('prosedur-checklist-hardcopy', '{invalid json');
+  localStorage.setItem('prosedur-checklist-paperless', '[false,true,false,false,true]');
+  await mount();
+  expectProgress('hardcopy', []);
+  await toggleStep(2);
+  await selectMethod('Paperless');
+  expectProgress('paperless', [1, 4]);
+  await selectMethod('Hardcopy');
+  expectProgress('hardcopy', [2]);
+});
+
 it('shows reset only with progress and clears only the current method, including after remount', async () => {
   localStorage.setItem('prosedur-checklist-paperless', '[true,false]');
   await mount();
