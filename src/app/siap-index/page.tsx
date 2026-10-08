@@ -1,19 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import SiapIndexHistory from '@/components/SiapIndexHistory';
+import {
+  SIAP_HISTORY_KEY, appendSiapHistory, mergeSiapHistory, parseSiapHistory,
+  type DimensionId, type SiapHistoryEntry,
+} from '@/lib/siap-index-history';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-
-type DimensionId =
-  | 'knowledge'
-  | 'application'
-  | 'evidence'
-  | 'communication'
-  | 'simulation'
-  | 'consistency'
-  | 'evidence_prep'
-  | 'learning_progress';
 
 interface Dimension {
   id: DimensionId;
@@ -188,6 +183,36 @@ export default function SIAPIndexPage() {
   const [level, setLevel] = useState<keyof typeof levelConfig | ''>('');
   const [submitted, setSubmitted] = useState(false);
   const [activeDim, setActiveDim] = useState<DimensionId | null>(null);
+  const [view, setView] = useState<'assessment' | 'history'>('assessment');
+  const [history, setHistory] = useState<SiapHistoryEntry[]>([]);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<SiapHistoryEntry | null>(null);
+  const submissionLocked = useRef(false);
+
+  useEffect(() => {
+    try {
+      setHistory(parseSiapHistory(localStorage.getItem(SIAP_HISTORY_KEY)));
+    } catch {
+      setStorageError('Riwayat tidak dapat dibaca. Penyimpanan browser mungkin diblokir atau data riwayat rusak. Hasil asesmen tetap dapat dilihat.');
+    }
+  }, []);
+
+  const persistEntry = (entry: SiapHistoryEntry) => {
+    try {
+      // Read again at save time so another tab's saved results are retained.
+      const stored = parseSiapHistory(localStorage.getItem(SIAP_HISTORY_KEY));
+      const next = mergeSiapHistory(stored, [...history, entry]);
+      localStorage.setItem(SIAP_HISTORY_KEY, JSON.stringify(next));
+      setHistory(next);
+      setPendingEntry(null);
+      setStorageError(null);
+    } catch {
+      setHistory(prev => prev.some(item => item.timestamp === entry.timestamp)
+        ? prev : appendSiapHistory(prev, entry));
+      setPendingEntry(entry);
+      setStorageError('Hasil terbaru belum tersimpan di browser dan dapat hilang saat halaman dimuat ulang. Aktifkan penyimpanan browser lalu coba simpan lagi. Riwayat lama tidak dihapus.');
+    }
+  };
 
   const allFilled = Object.keys(scores).length === dimensions.length;
 
@@ -237,16 +262,28 @@ export default function SIAPIndexPage() {
   };
 
   const handleSubmit = () => {
-    if (!allFilled) return;
+    if (!allFilled || siapIndex === null || submissionLocked.current) return;
+    submissionLocked.current = true;
+    const dimensionScores = Object.fromEntries(
+      dimensions.map(dim => [dim.id, Math.round(((scores[dim.id]! - 1) / 4) * 100)]),
+    ) as Record<DimensionId, number>;
+    persistEntry({
+      timestamp: new Date().toISOString(),
+      dimensionScores,
+      overallScore: siapIndex,
+    });
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleReset = () => {
+    submissionLocked.current = false;
     setScores({});
     setSubmitted(false);
     setLevel('');
     setActiveDim(null);
+    setView('assessment');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -266,6 +303,43 @@ export default function SIAPIndexPage() {
           </p>
         </div>
 
+        <div role="tablist" aria-label="Tampilan SIAP Index" className="flex gap-2 rounded-xl bg-slate-800/60 border border-slate-700/60 p-1">
+          {([
+            ['assessment', 'Asesmen'],
+            ['history', `Riwayat (${history.length})`],
+          ] as const).map(([tab, label]) => (
+            <button
+              key={tab}
+              id={`siap-tab-${tab}`}
+              role="tab"
+              aria-selected={view === tab}
+              aria-controls={`siap-panel-${tab}`}
+              onClick={() => setView(tab)}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-indigo-400 ${view === tab ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {storageError && (
+          <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200 space-y-3">
+            <p>{storageError}</p>
+            {pendingEntry && (
+              <button onClick={() => persistEntry(pendingEntry)} className="rounded-lg border border-amber-400/50 px-3 py-2 font-semibold hover:bg-amber-500/10">
+                Coba Simpan Lagi
+              </button>
+            )}
+          </div>
+        )}
+
+        {view === 'history' && (
+          <section id="siap-panel-history" role="tabpanel" aria-labelledby="siap-tab-history">
+            <SiapIndexHistory history={history} dimensions={dimensions} onRetake={handleReset} />
+          </section>
+        )}
+
+        <section id="siap-panel-assessment" role="tabpanel" aria-labelledby="siap-tab-assessment" hidden={view !== 'assessment'} className="space-y-6">
         {/* Result card — shown after submit */}
         {submitted && siapIndex !== null && (
           <div className={`rounded-2xl border p-6 space-y-5 ${sc.bg} ${sc.border}`}>
@@ -488,6 +562,7 @@ export default function SIAPIndexPage() {
             </div>
           </div>
         )}
+        </section>
 
         {/* Bottom links */}
         <div className="grid sm:grid-cols-2 gap-3">
