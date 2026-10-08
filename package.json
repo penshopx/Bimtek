@@ -11,6 +11,7 @@
     "test:auth": "bun test src/components/AuthProvider.test.tsx",
     "test:dokumen": "bun test src/app/dokumen/page.test.tsx",
     "test:bookmarks": "bun test src/app/bookmarks/page.test.tsx",
+    "test:quiz": "bun test src/app/actions/quiz.integration.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:seed": "bun run src/db/seed.ts"
