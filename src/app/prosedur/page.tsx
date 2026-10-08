@@ -366,6 +366,7 @@ export default function ProsedurPage() {
   const [checkedSteps, setCheckedSteps] = useState<boolean[]>([]);
   const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
   const didRestoreRef = useRef(false);
+  const [targetStep, setTargetStep] = useState<{ method: Method; index: number } | null>(null);
 
   const steps = stepsMap[activeTab];
 
@@ -411,19 +412,23 @@ export default function ProsedurPage() {
     if (method && (method === 'hardcopy' || method === 'paperless' || method === 'ajj')) {
       setActiveTab(method);
       if (stepParam !== null) {
-        const stepIndex = parseInt(stepParam, 10);
-        if (!isNaN(stepIndex)) {
-          // Wait a tick for tab state to propagate then scroll
-          setTimeout(() => {
-            const el = document.getElementById(`prosedur-${method}-${stepIndex}`);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 100);
+        const stepIndex = Number(stepParam);
+        if (/^\d+$/.test(stepParam) && Number.isSafeInteger(stepIndex) && stepIndex < stepsMap[method].length) {
+          setTargetStep({ method, index: stepIndex });
         }
       }
     }
   }, []);
+
+  // Effects run after the selected method's step cards have been rendered.
+  useEffect(() => {
+    if (!targetStep || activeTab !== targetStep.method) return;
+    const el = document.getElementById(`prosedur-${targetStep.method}-${targetStep.index}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTargetStep(null);
+    }
+  }, [activeTab, targetStep]);
 
   const makeBookmarkId = (method: Method, index: number) => `prosedur-${method}-${index}`;
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useBookmarks, BookmarkItem } from '@/components/BookmarkProvider';
+import { useBookmarks } from '@/components/BookmarkProvider';
 
 const typeLabels: Record<string, string> = {
   module: '🎓 Modul',
@@ -11,7 +11,26 @@ const typeLabels: Record<string, string> = {
   tool: '🔧 Tools',
   position: '📋 Posisi',
   solver: '🧮 Solver',
+  prosedur: 'Prosedur',
 };
+
+const methodLabels: Record<string, string> = {
+  hardcopy: 'Hardcopy',
+  paperless: 'Paperless',
+  ajj: 'AJJ',
+};
+
+function getProsedurContext(url: string) {
+  const params = new URLSearchParams(url.split('?')[1]?.split('#')[0]);
+  const method = params.get('method') ?? '';
+  const step = params.get('step');
+  return {
+    methodLabel: methodLabels[method],
+    stepNumber: step !== null && /^\d+$/.test(step) && Number.isSafeInteger(Number(step))
+      ? Number(step) + 1
+      : null,
+  };
+}
 
 export default function BookmarksPage() {
   const { bookmarks, removeBookmark } = useBookmarks();
@@ -75,27 +94,48 @@ export default function BookmarksPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredBookmarks.map((bookmark) => (
+            {filteredBookmarks.map((bookmark) => {
+              const prosedur = bookmark.type === 'prosedur' ? getProsedurContext(bookmark.url) : null;
+              return (
               <div
                 key={bookmark.id}
-                className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between"
+                className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border p-4 flex items-center justify-between gap-3 ${
+                  prosedur ? 'border-blue-300 dark:border-blue-700' : 'border-slate-200 dark:border-slate-700'
+                }`}
               >
-                <Link href={bookmark.url} className="flex-1">
+                <Link href={bookmark.url} className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">
-                      {bookmark.type === 'module' ? '🎓' :
+                    <span className="text-2xl" aria-hidden="true">
+                      {prosedur ? '📋' :
+                       bookmark.type === 'module' ? '🎓' :
                        bookmark.type === 'quiz' ? '✍️' :
                        bookmark.type === 'article' ? '📚' :
                        bookmark.type === 'tool' ? '🔧' :
                        bookmark.type === 'position' ? '📋' : '🧮'}
                     </span>
-                    <div>
-                      <h3 className="font-medium text-slate-800 dark:text-white hover:text-amber-600">
+                    <div className="min-w-0">
+                      {prosedur && (
+                        <div className="flex flex-wrap items-center gap-2 mb-2 text-xs font-semibold">
+                          <span className="text-blue-700 dark:text-blue-300">Prosedur</span>
+                          {prosedur.methodLabel && (
+                            <span className="rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-1 text-blue-800 dark:text-blue-100">
+                              {prosedur.methodLabel}
+                            </span>
+                          )}
+                          {prosedur.stepNumber !== null && (
+                            <span className="text-slate-600 dark:text-slate-300">Langkah {prosedur.stepNumber}</span>
+                          )}
+                        </div>
+                      )}
+                      <h3 className="font-medium text-slate-800 dark:text-white hover:text-amber-600 break-words">
                         {bookmark.title}
                       </h3>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         {typeLabels[bookmark.type]} • Ditambahkan {new Date(bookmark.addedAt).toLocaleDateString('id-ID')}
                       </p>
+                      {prosedur && (
+                        <p className="mt-2 text-sm font-medium text-blue-700 dark:text-blue-300">Buka langkah prosedur →</p>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -103,13 +143,15 @@ export default function BookmarksPage() {
                   onClick={() => removeBookmark(bookmark.id)}
                   className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                   title="Hapus bookmark"
+                  aria-label={`Hapus bookmark ${bookmark.title}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
