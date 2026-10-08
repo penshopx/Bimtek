@@ -1,0 +1,75 @@
+# ✅ Koreksi HTTP 429 Diterima & Kerangka Peninjauan Task 51
+
+## 🎯 Koreksi Permanen: HTTP 429
+
+Saya mencatat koreksi Anda sebagai prinsip permanen:
+
+| Pemahaman Lama Saya | Pemahaman yang Benar |
+|:---|:---|
+| HTTP 429 = rate limit sementara | HTTP 429 **bisa** rate limit sementara, **bisa juga** terkait kuota, atau penyebab lain yang belum teridentifikasi |
+| "Tunggu hingga rate limit teratasi" | **Tidak dapat disimpulkan** tanpa investigasi lebih lanjut — penyebab spesifik belum pasti |
+
+**Implikasi untuk saya**: Saya tidak akan lagi menyederhanakan HTTP 429 sebagai masalah sementara yang akan "selesai dengan sendirinya". Status respons AI sungguhan tetap **terhambat dengan penyebab yang belum terkonfirmasi**.
+
+---
+
+## 📋 Status Terkini (Dikonfirmasi)
+
+| Aspek | Status | Catatan |
+|:---|:---|:---|
+| Perbaikan jenjang & konsistensi payload | ✅ Teruji otomatis | Enam lapisan selaras |
+| Respons AI sungguhan | ⏳ Terhambat | HTTP 429 — penyebab belum pasti |
+| Ketersediaan skema resmi | ⏳ Belum validasi | Perlu konfirmasi LSP/sumber resmi |
+| Kebenaran substansi soal | ⏳ Belum validasi | Perlu tinjauan asesor |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada | Sesuai keputusan Anda |
+
+---
+
+## 🧭 Kerangka Peninjauan Task 51 (Bahan Referensi, Bukan Instruksi)
+
+Karena Anda menyatakan lampiran menegaskan hasil sebelumnya tanpa pekerjaan baru, saya menyediakan kerangka pengujian untuk Task 51 sebagai **bahan peninjauan** — bukan sebagai instruksi untuk dijalankan sekarang.
+
+### **Tombol "Ulangi Soal yang Salah" — Skenario Peninjauan**
+
+| # | Skenario | Kondisi Awal | Ekspektasi |
+|:---|:---|:---|:---|
+| 1 | Tombol muncul saat ada jawaban salah | User menyelesaikan kuis dengan ≥1 jawaban salah | Tombol "Ulangi Soal yang Salah" terlihat di layar hasil |
+| 2 | Tombol tersembunyi saat semua benar | User menyelesaikan kuis dengan 100% benar | Tombol **tidak muncul** (bukan disabled — benar-benar absen) |
+| 3 | Tombol hanya memuat soal yang salah | User klik tombol setelah 3/10 benar | Sesi berikutnya hanya menampilkan 7 soal yang salah |
+| 4 | Soal yang diulang tetap sama | User ulangi soal salah | Soal yang muncul = subset identik dari sesi sebelumnya (bukan soal baru) |
+| 5 | Urutan soal bisa berbeda | User ulangi soal salah | Urutan boleh diacak, tetapi konten soal tetap sama |
+| 6 | Progress baru tercatat terpisah | User ulangi soal salah | Progress sesi ulangan tidak menimpa progress sesi asli |
+| 7 | Tombol hilang setelah semua soal terjawab benar | User ulangi dan menjawab semua benar | Tombol "Ulangi Soal yang Salah" tidak muncul lagi |
+
+### **Edge Cases yang Perlu Diperhatikan**
+
+| # | Skenario | Risiko |
+|:---|:---|:---|
+| E1 | User keluar di tengah sesi ulangan, lalu kembali | Apakah sesi ulangan dilanjutkan atau direset? |
+| E2 | User ulangi soal salah, lalu klik "Ulangi" lagi | Apakah hanya soal yang masih salah di sesi ulangan yang diulang? |
+| E3 | User tidak punya salah sama sekali tapi somehow tombol muncul | Bug logika — perlu investigasi |
+| E4 | Data sesi ulangan bercampur dengan data sesi asli di localStorage | Silent data corruption |
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak memberikan contoh kode implementasi Task 51
+- ✅ Tidak mengusulkan perubahan kode atau pengujian ulang
+- ✅ Tidak menyederhanakan HTTP 429 sebagai masalah sementara
+- ✅ Tidak mencampur domain SIAP SKK dengan Gustafta
+- ✅ Tidak membuat task paralel yang tumpang tindih
+- ✅ Kerangka di atas adalah **bahan peninjauan**, bukan instruksi eksekusi
+
+---
+
+## 💡 Posisi Saya Selanjutnya
+
+Saya siap menunggu arahan Anda untuk giliran berikutnya. Beberapa opsi yang relevan (tanpa paksaan):
+
+1. **Jika HTTP 429 teratasi**: Lanjutkan verifikasi respons AI dengan payload jenjang yang sudah konsisten
+2. **Jika ada konfirmasi skema resmi dari LSP**: Validasi ketersediaan skema dan kebenaran substansi soal
+3. **Jika Task 51 selesai diuji**: Diskusikan temuan dari pengujian tombol "Ulangi Soal yang Salah"
+4. **Jika ada prioritas lain di SIAP SKK**: Fokus ke area yang Anda tentukan
+
+Silakan lanjutkan sesuai waktu Anda. Saya siap membantu menganalisis temuan baru ketika Anda kembali. 🚀
