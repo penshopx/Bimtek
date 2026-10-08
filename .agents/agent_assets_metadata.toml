@@ -14,3 +14,17 @@ mtime_ms = 1791459793111
 storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:3f2aadc3-db52-4f5c-8a04-b729b548abae/db10825a-cee4-4aa3-ae8d-02b70039c989/329ebf99-b628-4b90-a515-6ee930922c7a"
 storage_version_token = "1791459805776633"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "29WxDQ7h6AGBvwhpi7HVj"
+uri = "file://reports/ruang-bukti-peserta-tahap-1.md"
+type = "text"
+title = "Laporan pengembangan Ruang Bukti — tahap 1"
+description = "Implementasi, hasil pengujian, dependensi App Storage, batas fitur, dan langkah pemulihan."
+logical_id = "ee68f835-fac7-4446-80d9-52073b7e38ad"
+content_hash = "sha256:b1199cc70a84984b36820db0a018112109393ef025d01fb813c5fa0c3ebd5a54"
+size = 4518
+mtime_ms = 1791461101947
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:3f2aadc3-db52-4f5c-8a04-b729b548abae/ee68f835-fac7-4446-80d9-52073b7e38ad/fbf604cb-aa26-4523-8f1e-c72f9e41a2fe"
+storage_version_token = "1791461113711205"
+content_type = "text/markdown"

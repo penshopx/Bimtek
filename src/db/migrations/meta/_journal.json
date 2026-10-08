@@ -120,6 +120,13 @@
       "when": 1788362000000,
       "tag": "0016_fearless_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1791460636600,
+      "tag": "0017_serious_rhodey",
+      "breakpoints": true
     }
   ]
 }

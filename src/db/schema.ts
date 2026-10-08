@@ -1,5 +1,20 @@
 import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
+export const participantEvidence = sqliteTable("participant_evidence", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  objectKey: text("object_key").notNull(),
+  originalName: text("original_name").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  category: text("category").notNull(),
+  contexts: text("contexts").notNull(),
+  note: text("note").notNull().default(""),
+  period: text("period").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => ({ ownerIndex: index("participant_evidence_owner_idx").on(table.userId) }));
+
 export const bimtekProgress = sqliteTable("bimtek_progress", {
   moduleId: text("module_id").primaryKey(),
   completedAt: integer("completed_at", { mode: "timestamp" }),

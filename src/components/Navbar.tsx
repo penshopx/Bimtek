@@ -47,6 +47,7 @@ const navItems = [
   { href: '/matrix', label: 'Matrix', icon: '🔗' },
   { href: '/pkb', label: 'Tracker PKB', icon: '📈' },
   { href: '/dokumen', label: 'Persiapan Dokumen', icon: '📄' },
+  { href: '/ruang-bukti', label: 'Ruang Bukti', icon: 'RB' },
   { href: '/prosedur', label: 'Prosedur UJK', icon: '📋' },
   { href: '/sertifikasi', label: 'Sertifikasi', icon: '📋' },
   { href: '/certify', label: 'Certify', icon: '✅' },
