@@ -54,7 +54,11 @@ beforeEach(() => {
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
-  getStats.mockClear();
+  getStats.mockReset();
+  getStats.mockImplementation(async (sessionId: string | null) => {
+    expect(sessionId).toBe('admin-stats-test-session');
+    return stats;
+  });
   clearStale.mockReset();
   clearStale.mockImplementation(async () => ({ success: true }));
   resetAttempts.mockReset();
@@ -177,6 +181,7 @@ test('cleanup with no remaining attempts shows the empty state', async () => {
 });
 
 const resetSuccessMessage = 'Riwayat percobaan berhasil dihapus.';
+const statsResetSuccessMessage = 'Statistik soal berhasil direset';
 
 async function clickButton(text: string) {
   const button = [...container.querySelectorAll('button')]
@@ -230,7 +235,10 @@ test.each(['rejected', 'thrown'])('failed edit keeps the form and inline error w
 test.each(['table', 'edit'] as const)('successful %s reset shows a dismissible success notice', async (path) => {
   await startReset(path);
   expect(resetAttempts).toHaveBeenCalledWith(question.id, 'admin-stats-test-session');
-  expect(container.querySelector('[role="status"]')?.textContent).toContain(resetSuccessMessage);
+  const toast = container.querySelector('[role="status"]')!;
+  expect(toast.textContent).toContain(path === 'table' ? statsResetSuccessMessage : resetSuccessMessage);
+  expect(toast.classList.contains('bg-green-600')).toBe(true);
+  expect(container.textContent).not.toContain('Reset Statistik Soal?');
   if (path === 'edit') {
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Soal berhasil diperbarui');
   }
@@ -255,9 +263,46 @@ test.each([
   await startReset(path);
   expect(container.querySelector('[role="status"]')).toBeNull();
   expect(container.textContent).not.toContain(resetSuccessMessage);
+  expect(container.textContent).not.toContain(statsResetSuccessMessage);
   expect(container.textContent).toContain(mode === 'rejected'
     ? 'Reset ditolak.'
     : path === 'table' ? 'Terjadi kesalahan saat mereset statistik.' : 'Terjadi kesalahan.');
+  if (path === 'table') {
+    expect(container.querySelector('[role="alert"]')?.classList.contains('bg-red-600')).toBe(true);
+    expect(container.textContent).not.toContain('Reset Statistik Soal?');
+    await clickButton('Reset stats');
+    expect(container.textContent).toContain('Reset Statistik Soal?');
+    const confirm = [...container.querySelectorAll('button')].find(button => button.textContent === 'Ya, Reset')!;
+    expect(confirm.disabled).toBe(false);
+  }
+});
+
+test.each([
+  { session: 'invalid-session', message: 'Unauthorized' },
+  { session: 'expired-session', message: 'Unauthorized' },
+  { session: 'non-admin-session', message: 'Forbidden' },
+  { session: null, message: undefined },
+])('reset rejection with $session closes the dialog and shows a dismissible error toast', async ({ session, message }) => {
+  await renderStat(staleStat);
+  await clickButton('Reset stats');
+  if (session === null) localStorage.removeItem('sessionId');
+  else localStorage.setItem('sessionId', session);
+  // Stats reload may run after a rejected reset; keep its existing fixture.
+  getStats.mockImplementation(async () => stats);
+  resetAttempts.mockImplementation(async () => ({ success: false, message }));
+  await clickButton('Ya, Reset');
+  expect(resetAttempts).toHaveBeenCalledWith(question.id, session);
+  const toast = container.querySelector('[role="alert"]')!;
+  expect(toast).not.toBeNull();
+  expect(toast.textContent).toContain(message || 'Gagal mereset statistik.');
+  expect(toast.classList.contains('bg-red-600')).toBe(true);
+  expect(container.querySelector('[role="status"]')).toBeNull();
+  expect(container.textContent).not.toContain('Reset Statistik Soal?');
+  expect(container.textContent).toContain('6 percobaan');
+  await act(async () => {
+    toast.querySelector<HTMLButtonElement>('[aria-label="Tutup notifikasi"]')!.click();
+  });
+  expect(container.querySelector('[role="alert"]')).toBeNull();
 });
 
 test('reset success notice disappears automatically after three seconds', async () => {

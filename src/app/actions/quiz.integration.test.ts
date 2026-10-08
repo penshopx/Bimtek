@@ -10,7 +10,7 @@ const database = drizzle(client, { schema });
 mock.module('@/db', () => ({ db: database }));
 const {
   createQuizQuestion, getQuizQuestions, recordQuizAttempt,
-  updateQuizQuestion, getQuizAttemptStats, resetStaleAttempts,
+  updateQuizQuestion, getQuizAttemptStats, resetStaleAttempts, resetQuizAttempts,
 } = await import('./quiz');
 
 const sessionId = 'quiz-sort-test-session';
@@ -187,6 +187,39 @@ test('stale cleanup rejects missing, invalid, expired and non-admin sessions wit
     expect(await resetStaleAttempts(id, sessionId)).toEqual({ success: false, message: 'Invalid question id' });
     expect(await database.select().from(schema.quizAttempts)).toEqual(before);
   }
+});
+
+test('stats reset rejects missing, invalid, expired and non-admin sessions without deleting attempts', async () => {
+  const [question] = await getQuizQuestions(category);
+  await recordQuizAttempt(question.id, 0);
+  await recordQuizAttempt(question.id, 1);
+  await database.insert(schema.users).values({
+    id: 'reset-regular-user', name: 'Reset Test User', email: 'reset-user@example.test',
+    passwordHash: 'unused', role: 'user', createdAt: now, updatedAt: now,
+  });
+  await database.insert(schema.sessions).values([
+    { id: 'reset-user-session', userId: 'reset-regular-user', expiresAt: new Date(Date.now() + 86_400_000).toISOString(), createdAt: now },
+    { id: 'reset-expired-session', userId: 'quiz-sort-admin', expiresAt: '2000-01-01T00:00:00.000Z', createdAt: now },
+  ]);
+  const before = await database.select().from(schema.quizAttempts);
+  expect(before).toHaveLength(2);
+  for (const session of [null, '', 'reset-invalid-session', 'reset-expired-session', 'reset-user-session']) {
+    expect(await resetQuizAttempts(question.id, session)).toEqual({
+      success: false, message: session === 'reset-user-session' ? 'Forbidden' : 'Unauthorized',
+    });
+    expect(await database.select().from(schema.quizAttempts)).toEqual(before);
+  }
+});
+
+test('authorized stats reset deletes only the selected question attempts', async () => {
+  const [question, untouched] = await getQuizQuestions(category);
+  await recordQuizAttempt(question.id, 0);
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(untouched.id, 0);
+  const preserved = await database.select().from(schema.quizAttempts)
+    .where(eq(schema.quizAttempts.questionId, untouched.id));
+  expect(await resetQuizAttempts(question.id, sessionId)).toEqual({ success: true });
+  expect(await database.select().from(schema.quizAttempts)).toEqual(preserved);
 });
 
 afterAll(() => {

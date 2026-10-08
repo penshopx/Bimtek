@@ -167,7 +167,7 @@ export default function AdminQuizPage() {
       setResetConfirmId(null);
       loadData();
       if (result.success) {
-        showToast('Riwayat percobaan berhasil dihapus.');
+        showToast('Statistik soal berhasil direset');
       } else {
         showToast(result.message || 'Gagal mereset statistik.', 'error');
       }
