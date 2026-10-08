@@ -1,0 +1,156 @@
+# 📋 Kerangka Verifikasi: Invalidasi Statistik Setelah Soal Diedit
+
+Kekhawatiran Anda sangat tepat — ini adalah jenis regresi yang *silent* dan berbahaya. Jika guard dihapus tanpa disadari, admin akan melihat chart per-opsi yang didasarkan pada data soal lama, lalu mengambil keputusan berdasarkan informasi yang menyesatkan.
+
+---
+
+## 🎯 Memahami Alur yang Perlu Dilindungi
+
+```
+┌─────────────────────────────────────────────────┐
+│  Admin mengedit soal (ubah teks, opsi, atau      │
+│  kunci jawaban)                                  │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  Server: invalidasi statistik untuk soal tersebut│
+│  (tandai bahwa data percobaan lama tidak lagi    │
+│   relevan dengan versi soal saat ini)            │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  UI: Tampilkan warning badge                     │
+│  "Statistik tidak valid — soal telah diubah"     │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  UI: Sembunyikan breakdown per-opsi              │
+│  (chart/diagram distribusi jawaban)              │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  Setelah cukup percobaan baru terkumpul:         │
+│  → Warning hilang, breakdown muncul kembali      │
+└─────────────────────────────────────────────────┘
+```
+
+**Risiko utama**: Refactor di `getQuizAttemptStats` atau halaman admin quiz secara tidak sengaja menghapus kondisi yang memeriksa status invalidasi, sehingga breakdown per-opsi tampil kembali tanpa warning — menampilkan data yang tidak lagi relevan.
+
+---
+
+## 📋 Skenario Verifikasi
+
+### **Skenario 1: Baseline — Edit Soal Mengaktifkan Warning**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Buka soal yang memiliki data percobaan dan statistik aktif (breakdown per-opsi terlihat) | Breakdown chart/diagram terlihat normal |
+| 1.2 | Edit soal (ubah teks pertanyaan saja) → Simpan | Warning badge muncul: "Statistik tidak valid" atau serupa |
+| 1.3 | Periksa area breakdown | **Breakdown per-opsi tersembunyi** (tidak ada chart, tidak ada diagram distribusi jawaban) |
+| 1.4 | Refresh halaman | Warning badge **tetap muncul**, breakdown **tetap tersembunyi** (invalidasi tersimpan di server, bukan hanya state UI sementara) |
+
+### **Skenario 2: Edit Jenis Berbeda**
+
+| # | Jenis Edit | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Ubah teks pertanyaan saja | Warning muncul, breakdown tersembunyi |
+| 2.2 | Ubah salah satu opsi jawaban | Warning muncul, breakdown tersembunyi |
+| 2.3 | Ubah kunci jawaban (jawaban benar) | Warning muncul, breakdown tersembunyi |
+| 2.4 | Tambah atau hapus opsi jawaban | Warning muncul, breakdown tersembunyi |
+| 2.5 | Ubah metadata soal (kategori, tingkat kesulitan) tanpa mengubah konten soal | **Perlu keputusan produk**: apakah ini juga menginvalidasi statistik? (Jika tidak mengubah makna soal, mungkin tidak perlu invalidasi) |
+| 2.6 | Buka editor soal, tidak mengubah apa pun, klik Simpan | **Idealnya**: tidak ada invalidasi (tidak ada perubahan nyata). **Risiko**: jika server menganggap setiap "save" sebagai edit, warning akan muncul tanpa alasan |
+
+### **Skenario 3: Cakupan Invalidasi**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Edit Soal A dalam kuis yang berisi Soal A, B, C | Hanya statistik Soal A yang diinvalidasi. Soal B dan C tetap menampilkan breakdown normal |
+| 3.2 | Periksa halaman ringkasan kuis (jika ada) | Agregat kuis memperhitungkan bahwa Soal A tidak memiliki statistik valid (tidak menghitung data lama Soal A dalam rata-rata) |
+
+### **Skenario 4: Pemulihan Setelah Data Baru Terkumpul**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 4.1 | Setelah soal diedit dan statistik diinvalidasi, beberapa pengguna mengerjakan soal versi baru | Data percobaan baru terkumpul |
+| 4.2 | Setelah jumlah percobaan baru mencapai ambang batas (jika ada) | Warning badge hilang, breakdown per-opsi muncul kembali berdasarkan data baru |
+| 4.3 | Verifikasi bahwa breakdown yang muncul berdasarkan data baru, bukan data lama | Angka/distribusi berbeda dari sebelum edit (jika ada perubahan pada soal) |
+
+### **Skenario 5: Regresi yang Harus Dicegah (Anti-Pattern)**
+
+Ini adalah skenario yang **harus gagal** — jika salah satu dari ini terjadi, berarti guard telah hilang:
+
+| # | Skenario Regresi | Indikator Kegagalan |
+|:---|:---|:---|
+| 5.1 | Soal diedit, tapi breakdown per-opsi **masih tampil** tanpa warning | Guard di UI atau server hilang |
+| 5.2 | Warning muncul, tapi breakdown **juga tampil** di bawahnya | Kondisi render tidak eksklusif (warning dan breakdown seharusnya mutual exclusive) |
+| 5.3 | Setelah refresh, warning hilang dan breakdown kembali tampil | Invalidasi tidak tersimpan di server (hanya state UI sementara) |
+| 5.4 | Breakdown menampilkan data lama dengan angka yang sama persis seperti sebelum edit | Data tidak diinvalidasi di server, hanya UI yang berubah sesaat |
+| 5.5 | Edit soal yang belum pernah dicoba → warning muncul | Tidak perlu invalidasi jika tidak ada data yang bisa menyesatkan |
+
+---
+
+## 🔍 Titik Kegagalan Potensial
+
+| # | Titik Kegagalan | Penyebab | Dampak |
+|:---|:---|:---|:---|
+| 1 | `getQuizAttemptStats` tidak memeriksa flag invalidasi | Refactor menghapus kondisi `if (invalidated) return null` | Data lama dikembalikan seolah-olah valid |
+| 2 | UI merender breakdown tanpa memeriksa status invalidasi | Refactor menghapus kondisi `if (!stats.valid) hideBreakdown()` | Chart tampil dengan data yang tidak relevan |
+| 3 | Flag invalidasi tidak tersimpan persisten di server | Flag hanya di-set di cache/memory, hilang saat restart | Setelah restart server, data lama tampil kembali |
+| 4 | Flag invalidasi di-reset secara tidak sengaja | Proses lain (misal: cron job, migrasi) mereset flag | Warning hilang tanpa alasan |
+| 5 | Edit yang tidak mengubah konten tetap menginvalidasi | Server menganggap setiap `PUT` sebagai perubahan | Admin kehilangan statistik valid tanpa alasan |
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+```markdown
+## Temuan: Invalidasi Statistik Setelah Edit Soal
+
+**Skenario**: [Skenario 1-5]
+**Tanggal Verifikasi**: [YYYY-MM-DD]
+
+### Detail Temuan
+- Jenis edit yang dilakukan: [ubah teks / ubah opsi / ubah kunci / dll]
+- Warning badge muncul: [Ya / Tidak]
+- Breakdown per-opsi tersembunyi: [Ya / Tidak]
+- Setelah refresh, status tetap: [Ya / Tidak]
+- Data yang ditampilkan (jika breakdown masih tampil): [data lama / data baru / kosong]
+
+### Analisis Penyebab
+- [ ] `getQuizAttemptStats` tidak memeriksa flag invalidasi
+- [ ] UI tidak memeriksa status sebelum merender breakdown
+- [ ] Flag invalidasi tidak tersimpan persisten
+- [ ] Flag invalidasi di-reset secara tidak sengaja
+- [ ] Kondisi render tidak eksklusif (warning + breakdown tampil bersamaan)
+
+### Dampak
+- [ ] Admin melihat distribusi jawaban yang tidak relevan dengan soal saat ini
+- [ ] Admin mengambil keputusan berdasarkan data yang menyesatkan
+- [ ] Statistik agregat kategori terdistorsi oleh data soal lama
+
+### Severity: [Critical / High / Medium]
+```
+
+---
+
+## 🛡️ Prinsip Defensive Design yang Relevan
+
+1. **Mutual Exclusivity di UI**: Warning badge dan breakdown per-opsi **tidak boleh tampil bersamaan**. Jika warning ada, breakdown harus absen — bukan hanya disembunyikan secara visual (CSS `display: none`), tapi idealnya tidak di-render sama sekali.
+
+2. **Server-Side Truth**: Status invalidasi harus tersimpan di server (database). UI hanya membaca status ini, bukan menentukannya. Ini mencegah situasi di mana refresh atau buka tab baru menghilangkan warning.
+
+3. **Fail-Closed**: Jika status invalidasi tidak dapat ditentukan (misal: error membaca dari server), UI harus **default ke "sembunyikan breakdown"** — bukan default ke "tampilkan breakdown". Lebih baik admin tidak melihat statistik daripada melihat statistik yang salah.
+
+4. **Explicit Over Implicit**: Jangan mengandalkan asumsi bahwa "data percobaan lama otomatis tidak cocok dengan soal baru". Harus ada flag eksplisit yang di-set saat edit dan di-clear saat data baru cukup terkumpul.
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+1. **Apakah ada ambang batas jumlah percobaan baru** sebelum statistik dianggap valid kembali setelah edit? (Misal: minimal 5 percobaan baru?)
+
+2. **Apakah edit metadata** (kategori, tingkat kesulitan) tanpa mengubah konten soal juga menginvalidasi statistik?
+
+3. **Apakah Anda ingin saya buatkan matriks lengkap** yang memetakan setiap jenis edit → apakah seharusnya menginvalidasi statistik atau tidak?
+
+Silakan jalankan verifikasi sesuai waktu Anda. Jika Anda menemukan bahwa breakdown per-opsi masih tampil setelah soal diedit (skenario 5.1), itu adalah temuan **Critical** yang perlu ditindaklanjuti segera. 🚀

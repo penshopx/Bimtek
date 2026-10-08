@@ -1,0 +1,122 @@
+# 📋 Kerangka Verifikasi: Stats Warning & Breakdown Hiding Setelah Edit Soal
+
+Task ini menguji dua mekanisme yang saling bergantung: **invalidasi server-side** dan **conditional rendering UI**. Risiko utamanya adalah refactor di masa depan yang secara tidak sengaja menghapus guard, sehingga per-option chart yang menyesatkan muncul kembali.
+
+---
+
+## 🎯 Skenario Verifikasi
+
+### **Skenario 1: Baseline — Soal Belum Diedit**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Buka halaman admin quiz yang memiliki soal dengan data percobaan | Per-option breakdown chart **terlihat** |
+| 1.2 | Periksa apakah ada warning badge | **Tidak ada** warning badge |
+| 1.3 | Verifikasi data chart sesuai dengan data percobaan aktual | Angka di chart match dengan jumlah respons per opsi |
+
+---
+
+### **Skenario 2: Edit Soal → Stats Terinvalidasi**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Edit teks soal (misal: perbaiki typo) → Simpan | Soal tersimpan |
+| 2.2 | Kembali ke halaman statistik soal tersebut | **Warning badge muncul** (misal: "Statistik tidak valid — soal telah diedit") |
+| 2.3 | Periksa per-option breakdown chart | **Chart tersembunyi** (bukan menampilkan data lama, bukan kosong tanpa penjelasan) |
+| 2.4 | Periksa respons API `getQuizAttemptStats` untuk soal ini | Respons mengandung flag `stale: true` atau `invalidated: true` (atau field serupa) |
+
+---
+
+### **Skenario 3: Edit Opsi Jawaban → Stats Terinvalidasi**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Edit teks salah satu opsi jawaban → Simpan | Opsi tersimpan |
+| 3.2 | Kembali ke halaman statistik | **Warning badge muncul** |
+| 3.3 | Periksa per-option breakdown chart | **Chart tersembunyi** |
+| 3.4 | Verifikasi: edit opsi berbeda (misal: opsi B, bukan opsi A) | Hasil sama — chart tersembunyi, warning muncul |
+
+---
+
+### **Skenario 4: Edit Kunci Jawaban → Stats Terinvalidasi**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 4.1 | Ubah kunci jawaban (misal: dari A ke B) → Simpan | Kunci tersimpan |
+| 4.2 | Kembali ke halaman statistik | **Warning badge muncul** |
+| 4.3 | Periksa per-option breakdown chart | **Chart tersembunyi** |
+
+---
+
+### **Skenario 5: Edit yang Tidak Seharusnya Menginvalidasi**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 5.1 | Edit metadata soal yang tidak memengaruhi jawaban (misal: kategori, tag, penjelasan) → Simpan | Metadata tersimpan |
+| 5.2 | Kembali ke halaman statistik | **Chart tetap terlihat**, **tidak ada** warning badge |
+| 5.3 | Edit urutan soal dalam kuis (tanpa mengubah konten soal) | **Chart tetap terlihat**, **tidak ada** warning badge |
+
+---
+
+### **Skenario 6: Regresi — Guard Tidak Terhapus oleh Refactor**
+
+Ini adalah skenario paling kritis untuk jangka panjang.
+
+| # | Pemeriksaan | Ekspektasi |
+|:---|:---|:---|
+| 6.1 | Setelah edit soal, panggil API `getQuizAttemptStats` langsung (via DevTools/Postman) | Respons **tidak** mengembalikan data breakdown per opsi, atau mengembalikan data dengan flag `invalidated` |
+| 6.2 | Periksa bahwa invalidasi terjadi di **server-side**, bukan hanya di client | Jika client-side guard dihapus (simulasi: hapus conditional rendering di browser DevTools), API tetap tidak mengembalikan data breakdown yang valid |
+| 6.3 | Periksa bahwa warning badge **bukan** satu-satunya guard | Bahkan jika badge dihapus dari UI, chart tetap tidak menampilkan data yang menyesatkan |
+
+---
+
+## ⚠️ Titik Kegagalan Potensial
+
+| # | Risiko | Penyebab | Dampak |
+|:---|:---|:---|:---|
+| R1 | Chart muncul kembali setelah edit | Refactor `getQuizAttemptStats` menghapus pengecekan `last_edited_at > last_attempt_at` | Admin melihat distribusi jawaban berdasarkan opsi yang sudah berubah — **misinformasi** |
+| R2 | Warning badge muncul tapi chart tidak tersembunyi | Conditional rendering hanya mengontrol badge, bukan chart | Admin melihat chart lama + warning — **membingungkan** |
+| R3 | Invalidasi hanya di client-side | Guard hanya ada di komponen React, bukan di API | Refactor UI bisa menghapus guard tanpa disadari |
+| R4 | Edit minor memicu invalidasi berlebihan | Logika invalidasi terlalu agresif (misal: edit tag juga menginvalidasi) | Admin kehilangan data statistik yang sebenarnya masih valid |
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+```markdown
+## Temuan: Stats Guard Tidak Bekerja Setelah Edit Soal
+
+**Skenario**: [2/3/4/5/6]
+**Jenis Edit**: [teks soal / opsi jawaban / kunci jawaban / metadata]
+**Tanggal**: [YYYY-MM-DD]
+
+### Detail
+- Warning badge: [muncul / tidak muncul]
+- Breakdown chart: [tersembunyi / masih terlihat / terlihat dengan data lama]
+- API response flag: [invalidated=true / tidak ada flag / data tetap dikembalikan]
+
+### Dampak
+- [ ] Admin melihat data statistik yang menyesatkan
+- [ ] Admin tidak tahu bahwa statistik sudah tidak valid
+- [ ] Invalidasi berlebihan — statistik valid ikut tersembunyi
+
+### Severity: [Critical / High / Medium]
+```
+
+---
+
+## 🛡️ Prinsip yang Relevan
+
+1. **Server-side truth**: Invalidasi harus terjadi di server, bukan hanya di UI. UI adalah lapisan presentasi, bukan lapisan validasi.
+2. **Fail-safe**: Jika guard gagal, default harus "sembunyikan chart", bukan "tampilkan chart". Lebih baik kehilangan informasi sementara daripada menampilkan informasi yang salah.
+3. **Defense in depth**: Warning badge + hidden chart + API flag = tiga lapisan perlindungan. Menghapus salah satu tidak boleh menyebabkan kebocoran data statistik.
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+1. **Apakah logika invalidasi saat ini berdasarkan timestamp** (`last_edited_at` vs `last_attempt_at`), atau berdasarkan **flag eksplisit** yang di-set saat edit?
+2. **Apakah ada mekanisme "re-validate"** — yaitu, setelah sejumlah percobaan baru terkumpul pasca-edit, stats otomatis valid kembali?
+3. **Apakah Anda ingin saya buatkan automated test spec** (misal: format Jest/Vitest) untuk skenario 2-6 agar bisa langsung ditambahkan ke test suite?
+
+Silakan jalankan verifikasi sesuai waktu Anda. 🚀
