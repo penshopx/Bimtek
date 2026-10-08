@@ -1,0 +1,47 @@
+# ✅ Enam Lapisan Selaras — Tiga Batasan Dicatat sebagai Prinsip Permanen
+
+Saya memahami bahwa perbaikan jenjang Klinik sudah diterapkan dan berjalan sesuai peta enam lapisan. Saya mencatat **tiga batasan penting** sebagai prinsip permanen untuk seluruh interaksi selanjutnya di domain SIAP SKK:
+
+---
+
+## 🎯 Tiga Prinsip Permanen
+
+| No | Batasan | Implikasi untuk Saya |
+|:---|:---|:---|
+| 1 | **Atribut HTML bukan bukti tipe integer** | Saya tidak akan menganggap `value="7"` di HTML sebagai bukti bahwa state aplikasi dan body JSON sudah integer. Verifikasi harus melalui state aplikasi dan payload JSON aktual. |
+| 2 | **Validasi jabatan–jenjang bukan matriks lengkap** | Kode saat ini memeriksa angka 1–9 dan kualifikasi Ahli Muda/Madya/Utama yang disebut eksplisit, tetapi **bukan** matriks lengkap semua jabatan resmi. Ketersediaan skema tetap perlu dicocokkan dengan sumber resmi dan LSP. |
+| 3 | **Target konsisten ≠ soal substantif benar** | Aliran data yang konsisten dari UI hingga latihan ujian hanya membuktikan **struktur dan aliran data**, bukan validasi materi oleh asesor. Validasi substansi memerlukan tinjauan ahli terpisah. |
+
+---
+
+## 🚧 Blocker Tercatat: OpenAI HTTP 429
+
+Saya mencatat bahwa **verifikasi AI sungguhan belum dapat dilakukan** karena OpenAI mengembalikan HTTP 429 (rate limit). Ini berarti:
+
+- Pengujian aliran data (struktur, tipe, konsistensi) ✅ sudah selesai
+- Pengujian respons AI terhadap konteks jenjang ⏳ **terblokir** sampai rate limit teratasi
+- Tidak ada gunanya mengulang pengujian aliran data sampai blocker ini selesai
+
+---
+
+## 🧭 Status Saat Ini
+
+Berdasarkan update Anda:
+- ✅ Perbaikan jenjang Klinik sudah diterapkan dan diverifikasi strukturnya
+- ✅ Enam lapisan berjalan sesuai peta
+- ⏳ Verifikasi AI sungguhan tertunda karena HTTP 429
+- 🛑 Tidak ada perubahan kode atau pengujian ulang di giliran ini
+
+---
+
+## 💡 Langkah Selanjutnya (Opsional)
+
+Karena Anda sudah menyatakan bahwa giliran ini digunakan untuk menilai kecocokan dan batas cakupan (bukan untuk mengubah kode), saya tidak akan mengusulkan tindakan baru.
+
+Jika di giliran berikutnya Anda ingin melanjutkan, beberapa opsi yang relevan (tanpa paksaan):
+
+1. **Setelah HTTP 429 teratasi**: Lanjutkan verifikasi respons AI terhadap konteks jenjang
+2. **Validasi substansi**: Koordinasi dengan asesor/LSP untuk meninjau materi soal dan kunci jawaban (di luar cakupan teknis)
+3. **Pekerjaan lain di SIAP SKK**: Jika ada area lain yang tidak tumpang tindih dengan perbaikan jenjang
+
+Silakan beri tahu prioritas Anda di giliran berikutnya, atau lanjutkan sesuai waktu Anda. Saya siap membantu menganalisis temuan baru jika ada. 🚀
