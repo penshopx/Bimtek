@@ -1,0 +1,58 @@
+# 📋 Verifikasi: Notifikasi Sukses Setelah Reset Statistik
+
+Ini adalah pola UX standar yang penting — tanpa umpan balik visual, admin tidak bisa membedakan antara "reset berhasil" dan "halaman sekadar me-reload".
+
+---
+
+## 🎯 Skenario Verifikasi
+
+### **Skenario 1: Reset via Tombol Tabel**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Admin klik tombol "Reset Statistik" di tabel kuis | Notifikasi sukses muncul (toast/inline) dengan pesan jelas, misal: "Statistik berhasil direset" |
+| 1.2 | Data tabel diperbarui | Angka statistik kembali ke nol/default |
+| 1.3 | Notifikasi hilang otomatis | Toast menghilang setelah 3-5 detik, atau inline notice bisa ditutup manual |
+| 1.4 | Tidak ada error di console | Tidak ada JavaScript error atau warning |
+
+### **Skenario 2: Reset via Checkbox di Form Edit**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Admin centang "Reset statistik" di form edit soal → Simpan | Notifikasi sukses muncul setelah save berhasil |
+| 2.2 | Notifikasi membedakan aksi | Pesan mencakup kedua aksi, misal: "Soal diperbarui dan statistik direset" — bukan hanya "Berhasil disimpan" |
+| 2.3 | Checkbox tidak tercentang setelah save | Checkbox reset adalah aksi satu kali, bukan state persisten |
+
+### **Skenario 3: Reset Gagal**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Reset gagal karena error server | Notifikasi error muncul (bukan sukses), misal: "Gagal mereset statistik. Silakan coba lagi." |
+| 3.2 | Data tabel tidak berubah | Statistik tetap menampilkan nilai lama |
+
+---
+
+## ⚠️ Edge Cases
+
+| # | Skenario | Ekspektasi |
+|:---|:---|:---|
+| E1 | Admin klik reset dua kali dengan cepat | Tidak ada duplikasi notifikasi atau request ganda |
+| E2 | Admin navigasi ke halaman lain sebelum toast hilang | Toast tidak muncul di halaman yang salah |
+| E3 | Reset statistik untuk soal yang belum pernah dicoba | Notifikasi tetap muncul (aksi berhasil meskipun tidak ada data yang dihapus), atau pesan disesuaikan: "Tidak ada statistik untuk direset" |
+
+---
+
+## 🛡️ Prinsip UX yang Relevan
+
+1. **Visibility of System Status** (Nielsen Heuristic #1): Pengguna harus selalu tahu apa yang sedang terjadi. Reset tanpa konfirmasi melanggar prinsip ini.
+2. **Notifikasi tidak boleh menghalangi kerja**: Toast harus non-blocking — admin bisa langsung melanjutkan pekerjaan tanpa harus menutup notifikasi terlebih dahulu.
+3. **Konsistensi visual**: Notifikasi sukses reset harus menggunakan pola visual yang sama dengan notifikasi sukses lainnya di aplikasi (warna, posisi, durasi).
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+1. **Apakah aplikasi sudah memiliki komponen toast/notifikasi** yang bisa dipakai ulang, atau perlu dibuat baru?
+2. **Apakah reset statistik memerlukan konfirmasi sebelum eksekusi** (misal: dialog "Yakin ingin mereset?"), atau langsung dieksekusi dengan notifikasi setelahnya?
+
+Silakan jalankan verifikasi sesuai waktu Anda. 🚀

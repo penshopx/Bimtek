@@ -1,0 +1,46 @@
+# 📋 Review Task: Success Notice After Reset Stats
+
+Ini adalah perbaikan UX yang penting — tanpa feedback visual, admin tidak punya cara mengetahui apakah reset berhasil, gagal, atau bahkan tidak terpicu sama sekali. Ini bisa menyebabkan admin mengklik berulang kali atau meninggalkan halaman dengan asumsi yang salah.
+
+---
+
+## 🎯 Pertimbangan Desain Utama
+
+| Aspek | Pertanyaan | Implikasi |
+|:---|:---|:---|
+| **Jenis notifikasi** | Toast (muncul lalu hilang) atau inline (tetap di tempat)? | Toast cocok untuk aksi cepat; inline cocok jika admin perlu melihat data yang berubah |
+| **Durasi** | Berapa lama notifikasi tampil? | Terlalu singkat = terlewat; terlalu lama = mengganggu |
+| **Dua jalur reset** | Tombol tabel vs checkbox form edit — apakah pesannya sama? | Perlu dibedakan: "Statistik direset" vs "Statistik akan direset saat disimpan" |
+| **Kegagalan** | Apa yang terjadi jika reset gagal (error server, network)? | Perlu pesan error yang jelas, bukan hanya diam |
+
+---
+
+## 📋 Skenario Verifikasi
+
+| # | Skenario | Ekspektasi |
+|:---|:---|:---|
+| 1 | Admin klik tombol reset di tabel → berhasil | Notifikasi sukses muncul singkat, lalu hilang. Data tabel diperbarui |
+| 2 | Admin centang checkbox reset di form edit → simpan → berhasil | Notifikasi sukses muncul setelah simpan berhasil |
+| 3 | Admin klik reset → server error | Pesan error muncul (bukan diam saja) |
+| 4 | Admin klik reset berulang kali dengan cepat | Tidak ada duplikasi notifikasi atau request ganda yang merusak data |
+| 5 | Notifikasi sukses muncul → admin langsung navigasi ke halaman lain | Tidak ada error atau state yang tertinggal |
+| 6 | Screen reader | Notifikasi terbaca oleh assistive technology (role="alert" atau aria-live) |
+
+---
+
+## ⚠️ Edge Case Penting
+
+**Checkbox di form edit** memiliki perilaku yang berbeda dari tombol reset langsung:
+- Checkbox = "tandai untuk direset" → reset baru terjadi saat form di-**submit**
+- Jika admin centang checkbox tapi **tidak menyimpan**, statistik seharusnya **tidak** direset
+- Notifikasi sukses hanya boleh muncul **setelah submit berhasil**, bukan saat checkbox dicentang
+
+---
+
+## 🛡️ Batasan
+
+- ✅ Tidak memberikan contoh kode implementasi toast/notice
+- ✅ Tidak mengubah kode atau menjalankan pengujian ulang
+- ✅ Tidak membuat pekerjaan duplikat
+
+Silakan lanjutkan sesuai waktu Anda. 🚀
