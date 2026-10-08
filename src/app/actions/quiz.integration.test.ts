@@ -8,7 +8,10 @@ import * as schema from '@/db/schema';
 const client = createClient({ url: ':memory:' });
 const database = drizzle(client, { schema });
 mock.module('@/db', () => ({ db: database }));
-const { createQuizQuestion, getQuizQuestions } = await import('./quiz');
+const {
+  createQuizQuestion, getQuizQuestions, recordQuizAttempt,
+  updateQuizQuestion, getQuizAttemptStats,
+} = await import('./quiz');
 
 const sessionId = 'quiz-sort-test-session';
 const category = 'K3';
@@ -33,6 +36,14 @@ beforeAll(async () => {
       category TEXT NOT NULL, options TEXT NOT NULL, correct INTEGER NOT NULL,
       sort_order INTEGER DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
     );
+    CREATE TABLE quiz_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, question_id INTEGER NOT NULL,
+      correct INTEGER NOT NULL, selected_option INTEGER,
+      attempted_at TEXT NOT NULL, invalidated_at TEXT
+    );
+    CREATE TABLE settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, value TEXT NOT NULL
+    );
   `);
   await database.insert(schema.users).values({
     id: 'quiz-sort-admin',
@@ -52,6 +63,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  await database.delete(schema.quizAttempts);
   await database.delete(schema.quizQuestions);
   // Seed distinct category-local and global maxima; do not mock query results.
   await database.insert(schema.quizQuestions).values(
@@ -67,6 +79,50 @@ beforeEach(async () => {
       updatedAt: now,
     }))
   );
+});
+
+test('editing invalidates old option indices while counting only new attempts in the breakdown', async () => {
+  const [question, untouched] = await getQuizQuestions(category);
+  await recordQuizAttempt(question.id, 0);
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(untouched.id, 0);
+
+  const statsFor = async (id: number) =>
+    (await getQuizAttemptStats(sessionId)).find(stat => stat.questionId === id);
+  expect(await statsFor(question.id)).toEqual({
+    questionId: question.id, totalAttempts: 3, correctAttempts: 1,
+    successRate: 33, optionCounts: [1, 2], hasStaleAttempts: false,
+  });
+  const untouchedBefore = await statsFor(untouched.id);
+
+  expect(await updateQuizQuestion(question.id, {
+    question: 'Soal diubah dengan pilihan baru',
+    category,
+    options: ['Salah', 'Benar', 'Pilihan tambahan'],
+    correct: 1,
+  }, sessionId)).toEqual({ success: true });
+
+  expect((await getQuizQuestions(category)).find(row => row.id === question.id)?.options)
+    .toEqual(['Salah', 'Benar', 'Pilihan tambahan']);
+  expect(await statsFor(question.id)).toEqual({
+    questionId: question.id, totalAttempts: 3, correctAttempts: 1,
+    successRate: 33, optionCounts: [0, 0, 0], hasStaleAttempts: true,
+  });
+  const oldAttempts = await database.select().from(schema.quizAttempts)
+    .where(eq(schema.quizAttempts.questionId, question.id));
+  expect(oldAttempts).toHaveLength(3);
+  expect(oldAttempts.every(attempt => Boolean(attempt.invalidatedAt))).toBe(true);
+
+  // Positive new counts must not accidentally bring the hidden chart back.
+  await recordQuizAttempt(question.id, 1);
+  await recordQuizAttempt(question.id, 2);
+  await recordQuizAttempt(question.id, 2);
+  expect(await statsFor(question.id)).toEqual({
+    questionId: question.id, totalAttempts: 6, correctAttempts: 2,
+    successRate: 33, optionCounts: [0, 1, 2], hasStaleAttempts: true,
+  });
+  expect(await statsFor(untouched.id)).toEqual(untouchedBefore);
 });
 
 afterAll(() => {
