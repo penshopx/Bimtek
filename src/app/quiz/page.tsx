@@ -8,15 +8,7 @@ import type { QuizQuestion } from '@/app/actions/quiz';
 import { useAuth } from '@/components/AuthProvider';
 import { getRelatedQuizCategories, getJabatanById } from '@/lib/skkData';
 import { useQuizJabatanFilter } from '@/lib/useQuizJabatanFilter';
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+import { orderQuizQuestions } from '@/lib/quizQuestionOrder';
 
 function QuizContent() {
   const searchParams = useSearchParams();
@@ -35,6 +27,7 @@ function QuizContent() {
   const [categories, setCategories] = useState<string[]>(['Semua']);
   const [selectedCategory, setSelectedCategory] = useState(requestedCategory);
   const [jabatanFilterActive, setJabatanFilterActive] = useQuizJabatanFilter(user?.id, Boolean(jabatanSkk));
+  const prioritizeRelevant = selectedCategory === 'Semua' && relatedCategories.length > 0;
   const [randomMode, setRandomMode] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('quiz-random-mode') === 'true';
@@ -82,13 +75,16 @@ function QuizContent() {
     });
   }, [selectedCategory, jabatanFilterActive]);
 
-  // Apply order mode and jabatan filter whenever questions / mode / filter changes
+  const buildDisplayQuestions = useCallback((source: QuizQuestion[]) => orderQuizQuestions(source, {
+    relatedCategories,
+    jabatanFilterActive,
+    prioritizeRelevant,
+    randomMode,
+  }), [relatedCategories, jabatanFilterActive, prioritizeRelevant, randomMode]);
+
+  // Apply order mode, relevance priority and jabatan filter.
   useEffect(() => {
-    let baseQs = questions;
-    if (jabatanFilterActive && relatedCategories.length > 0) {
-      baseQs = questions.filter((q) => relatedCategories.includes(q.category));
-    }
-    setDisplayQuestions(randomMode ? shuffleArray(baseQs) : baseQs);
+    setDisplayQuestions(buildDisplayQuestions(questions));
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
@@ -96,7 +92,7 @@ function QuizContent() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(false);
-  }, [questions, randomMode, jabatanFilterActive, relatedCategories]);
+  }, [questions, buildDisplayQuestions]);
 
   const handleAnswer = (answerIndex: number) => {
     if (answered) return;
@@ -128,11 +124,7 @@ function QuizContent() {
   };
 
   const restartQuiz = useCallback(() => {
-    let baseQs = questions;
-    if (jabatanFilterActive && relatedCategories.length > 0) {
-      baseQs = questions.filter((q) => relatedCategories.includes(q.category));
-    }
-    setDisplayQuestions(randomMode ? shuffleArray(baseQs) : baseQs);
+    setDisplayQuestions(buildDisplayQuestions(questions));
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
@@ -140,12 +132,12 @@ function QuizContent() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(false);
-  }, [questions, randomMode, jabatanFilterActive, relatedCategories]);
+  }, [questions, buildDisplayQuestions]);
 
   const retryWrongQuestions = useCallback(() => {
     // Sort wrong questions by sortOrder ASC (mirroring the default fetch order)
     const sorted = [...wrongQuestions].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
-    setDisplayQuestions(randomMode ? shuffleArray(sorted) : sorted);
+    setDisplayQuestions(buildDisplayQuestions(sorted));
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
@@ -153,7 +145,7 @@ function QuizContent() {
     setAnswered(false);
     setWrongQuestions([]);
     setIsRetrySession(true);
-  }, [wrongQuestions, randomMode]);
+  }, [wrongQuestions, buildDisplayQuestions]);
 
   const handleCategoryChange = (cat: string) => {
     setJabatanFilterActive(false);
@@ -353,6 +345,18 @@ function QuizContent() {
             {randomMode ? '🔀 Acak' : '📋 Urutan Tetap'}
           </button>
         </div>
+
+        {prioritizeRelevant && !jabatanFilterActive && (
+          <p className="mb-4 text-center text-sm text-slate-600">
+            Soal relevan untuk jabatan Anda ditampilkan lebih dahulu. Semua kategori tetap tersedia.
+          </p>
+        )}
+
+        {prioritizeRelevant && !jabatanFilterActive && !isQuestionRelevant && (
+          <div className="mb-3 border-t border-slate-200 pt-3 text-sm text-slate-500">
+            Kategori lainnya
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-4">
