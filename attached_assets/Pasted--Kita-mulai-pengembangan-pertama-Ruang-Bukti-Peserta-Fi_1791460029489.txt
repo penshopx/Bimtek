@@ -1,0 +1,120 @@
+**Kita mulai pengembangan pertama: Ruang Bukti Peserta.** Fitur ini menjadi fondasi untuk Bedah Dokumen, Portofolio, dan PKB—tanpa membuat peserta mengunggah berkas yang sama berulang kali.
+
+Karena saya belum memiliki proyek lengkap, langkah eksekusi paling langsung adalah **jalankan prompt berikut di Replit Agent pada proyek BIMTEK yang ada**. Ini bukan membangun aplikasi baru.
+
+### Prompt implementasi tahap pertama
+
+```
+Kembangkan fitur Ruang Bukti Peserta pada aplikasi BIMTEK / SIAP SKK yang sudah ada.
+
+BATAS UTAMA
+- Aplikasi tetap mandiri: jangan menghubungkan login, database, storage, pembayaran, atau API gustafta.my.id.
+- Pertahankan fitur dan data existing yang masih sesuai.
+- Jangan deploy produksi, menghapus data, atau melakukan migrasi destruktif tanpa persetujuan.
+- Jangan menampilkan secret atau data pribadi peserta dalam laporan/log.
+
+1. INSPEKSI SEBELUM MENGUBAH KODE
+Periksa autentikasi, schema Drizzle, penyimpanan berkas, route upload/download,
+Persiapan Dokumen, profil peserta, Generator APL.02, dan Tracker PKB.
+
+Tentukan apakah sudah ada kemampuan penyimpanan bukti yang dapat diperluas.
+Jangan membuat tabel, storage, atau halaman paralel jika fungsi yang sama sudah ada.
+
+Laporkan:
+- berkas dan tabel yang relevan;
+- kemampuan yang sudah tersedia;
+- perubahan yang diperlukan;
+- risiko terhadap data lama.
+
+Jika perubahan membutuhkan layanan berbayar, kredensial baru, perubahan
+otorisasi besar, atau migrasi berisiko, berhenti dan minta persetujuan.
+
+2. IMPLEMENTASI DI LINGKUNGAN PENGEMBANGAN
+Bangun atau perluas Ruang Bukti dengan:
+- daftar berkas milik peserta;
+- unggah berkas;
+- kategori bukti;
+- metadata dan catatan;
+- pencarian nama/metadata;
+- preview atau download yang dikontrol akses;
+- pengaitan berkas ke konteks persiapan SKK, portofolio, atau kegiatan PKB.
+
+Kategori awal:
+- persyaratan administrasi;
+- bukti pendidikan/pelatihan;
+- bukti pengalaman/proyek;
+- bukti kegiatan PKB;
+- dokumen pendukung lainnya.
+
+Gunakan struktur database existing bila sesuai.
+Metadata minimum: pemilik, identitas berkas, nama asli, tipe, ukuran,
+kategori, tanggal unggah, dan konteks penggunaan.
+Pengaitan ke skema/unit kompetensi hanya dilakukan jika sumbernya tersedia.
+
+Jangan menampilkan pilihan jabatan atau unit kompetensi fiktif.
+
+3. KEAMANAN BERKAS
+- Verifikasi sesi dan kepemilikan pada server untuk setiap operasi.
+- Jangan mengandalkan userId yang dikirim browser sebagai bukti kepemilikan.
+- Tetapkan allowlist tipe berkas dan batas ukuran yang eksplisit.
+- Validasi berkas di server; jangan hanya memeriksa ekstensi.
+- Gunakan nama/object key yang dibuat server, bukan path dari pengguna.
+- Jangan menyimpan dokumen peserta pada URL publik tanpa kontrol akses.
+- Preview berkas yang berpotensi menjalankan konten aktif harus dibatasi.
+- Jangan mengirim dokumen ke model AI pada tahap ini.
+
+4. STATUS YANG JUJUR
+Pisahkan status penyimpanan dari status penilaian.
+
+“Berhasil diunggah” hanya berarti berkas tersimpan.
+Jangan otomatis memberi label:
+- dokumen sah;
+- peserta memenuhi kelayakan;
+- kompeten;
+- kegiatan terverifikasi resmi;
+- kredit PKB ditetapkan.
+
+Jangan menaikkan kredit PKB karena berkas diunggah.
+
+Jika penyimpanan backend belum tersedia, jangan membuat tombol upload
+yang tampak berhasil tetapi hanya menyimpan state sementara.
+Laporkan dependensi yang belum tersedia secara jelas.
+
+5. INTEGRASI TERARAH
+Tambahkan akses Ruang Bukti pada navigasi peserta.
+
+Pertahankan halaman Persiapan Dokumen sebagai checklist.
+Checklist boleh merujuk berkas dari Ruang Bukti, tetapi jangan otomatis
+menyatakan persyaratan terpenuhi hanya karena ada lampiran.
+
+Jangan mengubah perilaku APL.02 atau PKB secara besar pada tahap ini.
+Siapkan pengaitan yang dapat digunakan fitur tersebut pada tahap berikutnya.
+
+6. UJI PENERIMAAN
+Buktikan:
+- pengguna tanpa login tidak dapat mengakses dokumen privat;
+- peserta A tidak dapat membaca/mengubah berkas peserta B;
+- berkas valid tersimpan dan tetap tersedia setelah reload;
+- tipe/ukuran tidak valid ditolak dengan pesan yang jelas;
+- kegagalan upload tidak ditampilkan sebagai sukses;
+- metadata dan pencarian bekerja;
+- preview/download memeriksa akses;
+- pengunggahan tidak mengubah hasil kompetensi atau kredit PKB;
+- navigasi dan fitur existing tidak mengalami regresi.
+
+Jalankan lint, typecheck, build, dan test yang tersedia dalam proyek.
+
+7. HANDOFF
+Serahkan:
+- daftar berkas yang diubah;
+- perubahan schema/migrasi, jika ada;
+- hasil pengujian nyata;
+- dependensi yang belum selesai;
+- langkah rollback;
+- screenshot alur utama tanpa data pribadi.
+
+Jangan mengklaim fitur selesai jika hanya UI yang dibuat.
+Jangan deploy produksi tanpa persetujuan.
+```
+
+**Target selesai tahap ini:** peserta dapat menyimpan, menemukan, dan menggunakan kembali bukti secara privat. **Analisis AI dokumen dan penyusunan portofolio menyusul setelah penyimpanan serta kontrol aksesnya terbukti bekerja.**
