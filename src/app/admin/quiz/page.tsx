@@ -14,6 +14,7 @@ import {
   resetQuizAttempts,
 } from '@/app/actions/quiz';
 import type { QuizQuestion, QuizAttemptStat } from '@/app/actions/quiz';
+import { getDisplayedAdminQuizQuestions } from '@/lib/adminQuizQuestionOrder';
 
 export default function AdminQuizPage() {
   const { user } = useAuth();
@@ -217,15 +218,7 @@ export default function AdminQuizPage() {
 
   const filtered = filterCategory === 'Semua' ? questions : questions.filter((q) => q.category === filterCategory);
 
-  const displayed = sortBySuccessRate
-    ? [...filtered].sort((a, b) => {
-        const statA = stats.get(a.id);
-        const statB = stats.get(b.id);
-        const rateA = statA && statA.totalAttempts > 0 ? statA.successRate : 101;
-        const rateB = statB && statB.totalAttempts > 0 ? statB.successRate : 101;
-        return rateA - rateB;
-      })
-    : filtered;
+  const displayed = getDisplayedAdminQuizQuestions(questions, stats, filterCategory, sortBySuccessRate);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
