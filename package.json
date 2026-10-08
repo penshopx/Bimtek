@@ -12,6 +12,7 @@
     "test:dokumen": "bun test src/app/dokumen/page.test.tsx",
     "test:bookmarks": "bun test src/app/bookmarks/page.test.tsx",
     "test:quiz": "bun test src/app/actions/quiz.integration.test.ts",
+    "test:quiz-retry": "bun build tests/e2e/quiz-retry.spec.ts --target=bun --packages=external --outfile=tests/e2e/quiz-retry.built.spec.js && bun --bun x playwright test --config=playwright.config.ts; status=$?; rm -f tests/e2e/quiz-retry.built.spec.js; exit $status",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:seed": "bun run src/db/seed.ts"
@@ -31,6 +32,7 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "happy-dom": "^20.14.5",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^24.10.2",
