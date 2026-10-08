@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:auth": "bun test src/components/AuthProvider.test.tsx",
+    "test:dokumen": "bun test src/app/dokumen/page.test.tsx",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:seed": "bun run src/db/seed.ts"

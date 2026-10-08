@@ -4,6 +4,7 @@
 Complete construction training platform with AI chatbot system built and deployed.
 
 ## Recently Completed
+- [x] Tes integrasi checklist dokumen memverifikasi login dan profil dari API asli, delapan pemetaan jabatan, tab bidang, sorotan jabatan, dan kondisi kosong tanpa profil yang sesuai (`bun run test:dokumen`).
 - [x] Modal pemilihan jabatan SKK tidak ditampilkan untuk admin dan instructor; peserta tanpa jabatan dapat memilih atau melewati sementara selama sesi browser.
 - [x] Preferensi filter jabatan kuis tersimpan per pengguna dan dipulihkan saat halaman dibuka; diabaikan tanpa jabatan.
 - [x] Navbar with all navigation routes (responsive mobile support)
