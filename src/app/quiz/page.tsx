@@ -7,6 +7,7 @@ import { getQuizQuestions, getQuizCategories, recordQuizAttempt } from '@/app/ac
 import type { QuizQuestion } from '@/app/actions/quiz';
 import { useAuth } from '@/components/AuthProvider';
 import { getRelatedQuizCategories, getJabatanById } from '@/lib/skkData';
+import { useQuizJabatanFilter } from '@/lib/useQuizJabatanFilter';
 
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -33,7 +34,7 @@ function QuizContent() {
   const [displayQuestions, setDisplayQuestions] = useState<QuizQuestion[]>([]);
   const [categories, setCategories] = useState<string[]>(['Semua']);
   const [selectedCategory, setSelectedCategory] = useState(requestedCategory);
-  const [jabatanFilterActive, setJabatanFilterActive] = useState(false);
+  const [jabatanFilterActive, setJabatanFilterActive] = useQuizJabatanFilter(user?.id, Boolean(jabatanSkk));
   const [randomMode, setRandomMode] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('quiz-random-mode') === 'true';
@@ -160,7 +161,7 @@ function QuizContent() {
   };
 
   const handleToggleJabatanFilter = () => {
-    setJabatanFilterActive((prev) => !prev);
+    setJabatanFilterActive(!jabatanFilterActive);
   };
 
   // Persist randomMode preference to localStorage
