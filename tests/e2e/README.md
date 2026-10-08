@@ -33,3 +33,15 @@ The command compiles the saved TypeScript spec to temporary JavaScript before
 launching Playwright, then removes it while preserving the test exit code.
 This avoids a Playwright TypeScript loader incompatibility with Bun.
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can select another installed Chromium binary.
+
+## Quiz order preference
+
+```sh
+bun run test:quiz-order
+```
+
+This read-only browser test starts with empty storage in an isolated context.
+It switches to **Acak**, then back to **Urutan Tetap**, checking the visible
+toggle and stored preference after each change, a full reload, a new same-origin
+tab, and return navigation through the home page's quiz link. It does not
+answer questions, record attempts, seed storage on reload, or modify the database.

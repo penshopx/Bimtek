@@ -7,7 +7,7 @@ const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
 // Use the existing development workflow, not a second Next.js server.
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: 'quiz-retry.built.spec.js',
+  testMatch: ['quiz-retry.built.spec.js', 'quiz-order-preference.built.spec.js'],
   fullyParallel: false,
   workers: 1,
   retries: 0,
