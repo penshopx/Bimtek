@@ -14,3 +14,9 @@ When saving a preparation checklist target into the profile, use the existing ca
 **Why:** the preparation checklist includes roles that the legacy personalization catalog does not cover. Saving a different catalog role would silently change the user's intended target.
 
 **How to apply:** keep round-trip selection exact. Catalog-only consumers must account for preserved titles instead of treating every noncatalog target as an empty profile.
+
+When correcting preparation-level selectors, do not silently convert a legacy label or level range into one numeric target; require an explicit fresh selection.
+
+**Why:** earlier expert labels used incorrect KKNI levels, while other choices combined several levels. Inferring a corrected number from those choices can change the learner's intended target without consent.
+
+**How to apply:** flag ambiguous or incompatible old selections for confirmation instead of guessing a replacement; keep the intended occupation intact and do not imply that selecting a level verifies an official LSP scheme.

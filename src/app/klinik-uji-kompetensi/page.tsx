@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { klinikJenjangOptions, validateKlinikTarget, matchesKlinikTarget, type KlinikTarget } from '@/lib/klinik-target';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Blueprint {
+  target: KlinikTarget;
   skorKesiapan: number;
   label: string;
   ringkasan: string;
@@ -58,7 +60,6 @@ function StepBar({ current }: { current: number }) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const jenjangOptions = ['Ahli Muda (L7)', 'Ahli Madya (L8)', 'Ahli Utama (L9)', 'Teknisi/Analis (L4-6)', 'Operator (L1-3)'];
 const pendidikanOptions = ['SMA/SMK', 'D3', 'D4 / Sarjana Terapan', 'S1 (Sarjana)', 'S2 (Magister)'];
 const pengalamanOptions = ['< 1 tahun', '1–2 tahun', '2–3 tahun', '3–5 tahun', '5–8 tahun', '8+ tahun'];
 
@@ -85,7 +86,7 @@ export default function KlinikPage() {
 
   // Dialog form
   const [jabatan, setJabatan] = useState('');
-  const [jenjang, setJenjang] = useState('');
+  const [jenjang, setJenjang] = useState<number | null>(null);
   const [pendidikan, setPendidikan] = useState('');
   const [pengalaman, setPengalaman] = useState('');
   const [ceritaProyek, setCeritaProyek] = useState('');
@@ -108,20 +109,22 @@ export default function KlinikPage() {
   }, []);
 
   const phaseIndex = { dialog: 0, 'loading-blueprint': 1, blueprint: 1, chatbot: 2, 'loading-ujian': 3, ujian: 3, keputusan: 4 }[phase] ?? 0;
+  const targetValidation = validateKlinikTarget(jabatan, jenjang);
 
   // Step 1 → 2: Submit dialog → get blueprint
   const submitDialog = async () => {
-    if (!jabatan.trim() || !jenjang || !pendidikan || !pengalaman) return;
+    if (!targetValidation.ok || !pendidikan || !pengalaman) return;
     setPhase('loading-blueprint');
     setError(null);
     try {
       const res = await fetch('/api/klinik', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'blueprint', jabatan, jenjang, pendidikan, pengalaman, ceritaProyek, materiSulit, kendala }),
+        body: JSON.stringify({ action: 'blueprint', ...targetValidation.target, pendidikan, pengalaman, ceritaProyek, materiSulit, kendala }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      if (!matchesKlinikTarget(data.target, targetValidation.target)) throw new Error('Target hasil AI tidak sesuai. Silakan coba lagi.');
       setBlueprint(data);
       setPhase('blueprint');
     } catch (e: any) {
@@ -132,7 +135,7 @@ export default function KlinikPage() {
 
   // Step 3: Chat companion
   const sendChat = async () => {
-    if (!chatInput.trim() || chatLoading) return;
+    if (!chatInput.trim() || chatLoading || !blueprint) return;
     const userMsg: ChatMsg = { role: 'user', content: chatInput };
     const newMsgs = [...chatMsgs, userMsg];
     setChatMsgs(newMsgs);
@@ -142,12 +145,15 @@ export default function KlinikPage() {
       const res = await fetch('/api/klinik', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'chat', messages: newMsgs, blueprint, jabatan }),
+        body: JSON.stringify({ action: 'chat', messages: newMsgs, blueprint, ...blueprint.target }),
       });
       const data = await res.json();
-      setChatMsgs(prev => [...prev, { role: 'assistant', content: data.content ?? '' }]);
-    } catch {
-      setChatMsgs(prev => [...prev, { role: 'assistant', content: '⚠️ AI tidak tersedia saat ini.' }]);
+      if (!res.ok) throw new Error(data.error || 'AI tidak tersedia saat ini.');
+      if (!matchesKlinikTarget(data.target, blueprint.target)) throw new Error('Target chat tidak sesuai dengan blueprint.');
+      if (typeof data.content !== 'string' || !data.content.trim()) throw new Error('Respons chat kosong.');
+      setChatMsgs(prev => [...prev, { role: 'assistant', content: data.content }]);
+    } catch (e) {
+      setChatMsgs(prev => [...prev, { role: 'assistant', content: e instanceof Error ? e.message : 'AI tidak tersedia saat ini.' }]);
     } finally {
       setChatLoading(false);
     }
@@ -155,6 +161,8 @@ export default function KlinikPage() {
 
   // Step 4: Load exam
   const startUjian = async () => {
+    if (!blueprint) return;
+    setError(null);
     setPhase('loading-ujian');
     setAnswers({});
     setRevealed({});
@@ -163,13 +171,16 @@ export default function KlinikPage() {
       const res = await fetch('/api/klinik', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ujian', jabatan, jenjang, gaps: blueprint?.gap }),
+        body: JSON.stringify({ action: 'ujian', ...blueprint.target, gaps: blueprint.gap }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memuat soal latihan');
+      if (!matchesKlinikTarget(data.target, blueprint.target)) throw new Error('Target latihan tidak sesuai dengan blueprint.');
+      if (!Array.isArray(data.questions) || data.questions.length !== 5) throw new Error('Hasil soal latihan tidak valid.');
       setQuestions((data.questions ?? []).slice(0, 5));
       setPhase('ujian');
-    } catch {
-      setError('Gagal memuat soal ujian');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal memuat soal latihan');
       setPhase('chatbot');
     }
   };
@@ -192,7 +203,7 @@ export default function KlinikPage() {
   const reset = () => {
     setPhase('dialog'); setBlueprint(null); setQuestions([]); setAnswers({}); setRevealed({});
     setChatMsgs([]); setError(null); setCurrentQ(0);
-    setJabatan(''); setJenjang(''); setPendidikan(''); setPengalaman('');
+    setJabatan(''); setJenjang(null); setPendidikan(''); setPengalaman('');
     setCeritaProyek(''); setMateriSulit(''); setKendala('');
   };
 
@@ -212,10 +223,16 @@ export default function KlinikPage() {
         </div>
 
         <StepBar current={phaseIndex} />
+        {blueprint && (
+          <p className="mb-5 rounded-xl border border-blue-400/30 bg-blue-500/10 p-3 text-sm text-blue-100">
+            Target latihan: {blueprint.target.jabatan} · {blueprint.target.jenjangLabel}.
+            {' '}Estimasi belajar, bukan keputusan sertifikasi resmi.
+          </p>
+        )}
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 text-sm text-center">
+          <div role="alert" className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm text-center">
             ⚠️ {error}
           </div>
         )}
@@ -227,8 +244,9 @@ export default function KlinikPage() {
             <p className="text-slate-400 text-sm mb-6">Jawab santai saja. Dari cerita ini AI menyusun blueprint kesiapan Anda.</p>
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Jabatan kerja SKK yang dituju *</label>
+                <label htmlFor="klinik-jabatan" className="block text-sm font-medium text-slate-300 mb-1">Jabatan kerja SKK yang dituju *</label>
                 <input
+                  id="klinik-jabatan"
                   type="text"
                   value={jabatan}
                   onChange={e => setJabatan(e.target.value)}
@@ -238,14 +256,18 @@ export default function KlinikPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Jenjang yang dituju *</label>
-                <div className="flex flex-wrap gap-2">
-                  {jenjangOptions.map(j => (
-                    <button key={j} onClick={() => setJenjang(j)}
-                      className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${jenjang === j ? 'border-amber-500 bg-amber-500/20 text-amber-300' : 'border-slate-600 text-slate-400 hover:border-slate-400'}`}>
-                      {j}
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Pilih jenjang KKNI">
+                  {klinikJenjangOptions.map(j => (
+                    <button type="button" key={j.value} aria-pressed={jenjang === j.value} onClick={() => setJenjang(j.value)}
+                      className={`px-3 py-1.5 rounded-lg border text-sm transition-all focus-visible:outline-2 focus-visible:outline-blue-300 ${jenjang === j.value ? 'border-amber-500 bg-amber-500/20 text-amber-300' : 'border-slate-600 text-slate-300 hover:border-slate-400'}`}>
+                      {j.label}
                     </button>
                   ))}
                 </div>
+                <p className="mt-2 text-xs text-slate-300">Pilih satu jenjang sesuai skema LSP yang dituju, bukan rentang. Pilihan ini tidak memastikan ketersediaan skema atau kelayakan sertifikasi.</p>
+                {jabatan.trim() && jenjang !== null && !targetValidation.ok && (
+                  <p role="alert" className="mt-2 text-sm text-red-300">{targetValidation.error}</p>
+                )}
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -297,7 +319,7 @@ export default function KlinikPage() {
             </div>
             <button
               onClick={submitDialog}
-              disabled={!jabatan.trim() || !jenjang || !pendidikan || !pengalaman}
+              disabled={!targetValidation.ok || !pendidikan || !pengalaman}
               className="mt-6 w-full py-3.5 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-semibold transition-colors"
             >
               🧠 Susun Blueprint Kesiapan →
