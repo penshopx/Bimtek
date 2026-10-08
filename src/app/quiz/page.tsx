@@ -10,6 +10,11 @@ import { getRelatedQuizCategories, getJabatanById } from '@/lib/skkData';
 import { useQuizJabatanFilter } from '@/lib/useQuizJabatanFilter';
 import { orderQuizQuestions } from '@/lib/quizQuestionOrder';
 
+type WrongQuestion = QuizQuestion & {
+  selectedChoice: number;
+  questionNumber: number;
+};
+
 function QuizContent() {
   const searchParams = useSearchParams();
   const requestedCategory = searchParams.get('category') || 'Semua';
@@ -37,7 +42,7 @@ function QuizContent() {
   const [showScore, setShowScore] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
-  const [wrongQuestions, setWrongQuestions] = useState<QuizQuestion[]>([]);
+  const [wrongQuestions, setWrongQuestions] = useState<WrongQuestion[]>([]);
   const [isRetrySession, setIsRetrySession] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +111,11 @@ function QuizContent() {
       setWrongQuestions((prev) => {
         // Avoid duplicates in case of retry-within-retry scenarios
         if (prev.some((q) => q.id === currentQ.id)) return prev;
-        return [...prev, currentQ];
+        return [...prev, {
+          ...currentQ,
+          selectedChoice: answerIndex,
+          questionNumber: currentQuestion + 1,
+        }];
       });
     }
     // Record per-question attempt for admin analytics (server derives correctness)
@@ -222,6 +231,42 @@ function QuizContent() {
               </button>
             </div>
           </div>
+          {wrongCount > 0 && (
+            <details className="mt-6 rounded-2xl bg-white shadow-lg">
+              <summary className="cursor-pointer rounded-2xl p-6 font-semibold text-slate-800 focus-visible:outline-2 focus-visible:outline-blue-600">
+                Tinjau Soal yang Salah ({wrongCount})
+              </summary>
+              <div className="space-y-6 px-6 pb-6">
+                <p className="text-sm text-slate-600">
+                  Pelajari jawaban benar sebelum mengulangi soal.
+                </p>
+                {wrongQuestions.map((wrongQuestion) => (
+                  <article key={wrongQuestion.id} className="border-t border-slate-200 pt-5">
+                    <p className="mb-2 text-sm text-slate-500">
+                      Soal {wrongQuestion.questionNumber} · {wrongQuestion.category}
+                    </p>
+                    <h3 className="mb-4 font-semibold text-slate-800">
+                      {wrongQuestion.question}
+                    </h3>
+                    <ul className="space-y-3">
+                      {[
+                        { index: wrongQuestion.selectedChoice, label: 'Jawaban Anda (salah)', style: 'border-red-300 bg-red-50 text-red-800' },
+                        { index: wrongQuestion.correct, label: 'Jawaban benar', style: 'border-green-300 bg-green-50 text-green-800' },
+                      ].map(({ index, label, style }) => (
+                        <li key={label} className={`rounded-xl border p-4 ${style}`}>
+                          <p className="mb-1 text-sm font-semibold">{label}</p>
+                          <p className="break-words">
+                            <span className="mr-2 font-medium">{String.fromCharCode(65 + index)}.</span>
+                            {wrongQuestion.options[index]}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
       </div>
     );
