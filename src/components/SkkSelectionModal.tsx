@@ -13,8 +13,8 @@ export function SkkSelectionModal() {
   const [kualifikasi, setKualifikasi] = useState<Kualifikasi | ''>('');
   const [saving, setSaving] = useState(false);
 
-  // Only show for logged-in users without a jabatan set; hide during auth init to prevent flash
-  if (isLoading || !user || user.jabatanSkk) return null;
+  // Only show for participants without a jabatan set; hide during auth init to prevent flash
+  if (isLoading || !user || user.jabatanSkk || user.role === 'admin' || user.role === 'instructor') return null;
 
   const jabatanList = bidang ? getJabatanByBidang(bidang as Bidang) : [];
 
