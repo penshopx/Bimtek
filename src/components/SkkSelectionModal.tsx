@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { SKK_JABATAN, BIDANG_OPTIONS, KUALIFIKASI_OPTIONS, getJabatanByBidang } from '@/lib/skkData';
 import type { Bidang, Kualifikasi } from '@/lib/skkData';
@@ -12,11 +12,37 @@ export function SkkSelectionModal() {
   const [jabatanId, setJabatanId] = useState('');
   const [kualifikasi, setKualifikasi] = useState<Kualifikasi | ''>('');
   const [saving, setSaving] = useState(false);
+  const [dismissal, setDismissal] = useState<{ userId: string; dismissed: boolean } | null>(null);
+  const dismissalKey = user ? `skk-setup-dismissed:${user.id}` : null;
 
-  // Only show for participants without a jabatan set; hide during auth init to prevent flash
-  if (isLoading || !user || user.jabatanSkk || user.role === 'admin' || user.role === 'instructor') return null;
+  useEffect(() => {
+    if (!user?.id || !dismissalKey) {
+      setDismissal(null);
+      return;
+    }
+    let dismissed = false;
+    try {
+      dismissed = window.sessionStorage.getItem(dismissalKey) === 'true';
+    } catch (error) {
+      console.warn('Tidak dapat membaca pilihan lewati jabatan untuk sesi ini.', error);
+    }
+    setDismissal({ userId: user.id, dismissed });
+  }, [user?.id, dismissalKey]);
+
+  // Wait for the session check too, so a dismissed modal never flashes on reload.
+  if (isLoading || !user || user.jabatanSkk || user.role === 'admin' || user.role === 'instructor'
+    || dismissal?.userId !== user.id || dismissal.dismissed) return null;
 
   const jabatanList = bidang ? getJabatanByBidang(bidang as Bidang) : [];
+
+  const handleSkip = () => {
+    try {
+      window.sessionStorage.setItem(dismissalKey!, 'true');
+    } catch (error) {
+      console.warn('Pilihan lewati jabatan tidak dapat disimpan; modal mungkin muncul kembali saat halaman dimuat ulang.', error);
+    }
+    setDismissal({ userId: user.id, dismissed: true });
+  };
 
   const handleSave = async () => {
     if (!bidang || !jabatanId || !kualifikasi) return;
@@ -185,6 +211,14 @@ export function SkkSelectionModal() {
         </div>
 
         <div className="px-6 pb-4 text-center">
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={saving}
+            className="mb-3 w-full py-2 text-slate-300 hover:text-white rounded-xl hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            Lewati untuk sekarang
+          </button>
           <p className="text-slate-500 text-xs">Anda dapat mengubah pilihan ini kapan saja di halaman Profil</p>
         </div>
       </div>

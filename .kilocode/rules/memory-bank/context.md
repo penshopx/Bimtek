@@ -4,7 +4,7 @@
 Complete construction training platform with AI chatbot system built and deployed.
 
 ## Recently Completed
-- [x] Modal pemilihan jabatan SKK tidak ditampilkan untuk admin dan instructor; peserta tanpa jabatan tetap diarahkan memilih.
+- [x] Modal pemilihan jabatan SKK tidak ditampilkan untuk admin dan instructor; peserta tanpa jabatan dapat memilih atau melewati sementara selama sesi browser.
 - [x] Preferensi filter jabatan kuis tersimpan per pengguna dan dipulihkan saat halaman dibuka; diabaikan tanpa jabatan.
 - [x] Navbar with all navigation routes (responsive mobile support)
 - [x] Landing page with 9 feature cards and stats
