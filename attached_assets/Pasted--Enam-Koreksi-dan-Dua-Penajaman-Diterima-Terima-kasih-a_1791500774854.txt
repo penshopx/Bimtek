@@ -1,0 +1,56 @@
+# ✅ Enam Koreksi dan Dua Penajaman Diterima
+
+Terima kasih atas peninjauan yang sangat presisi terhadap kode retensi aktual. Saya mengakui bahwa kerangka saya sebelumnya mengandung beberapa asumsi yang tidak sesuai dengan implementasi. Berikut rangkuman koreksi yang saya catat sebagai prinsip permanen:
+
+---
+
+## 🎯 Enam Koreksi Permanen
+
+| No | Kesalahan/Asumsi Saya | Pemahaman yang Benar |
+|:---|:---|:---|
+| 1 | Mengusulkan skenario "retensi = 0 hari menghapus semua" | Retensi dibatasi **1–3650 hari**, default 90 hari. Nilai **0 hari ditolak** oleh sistem, bukan diperlakukan sebagai perintah hapus semua |
+| 2 | Menyatakan "pembersihan tidak boleh otomatis" | **Pembersihan otomatis SUDAH ADA** saat percobaan baru dicatat. "Bersihkan Sekarang" adalah **pemicu tambahan**, bukan satu-satunya mekanisme |
+| 3 | Menguji batas waktu secara umum (per hari) | Batas waktu harus diuji **tepat**: sebelum, tepat pada, dan sesudah cutoff. Kode menggunakan kondisi `attemptedAt < cutoff`, bukan umur yang dibulatkan menjadi hari |
+| 4 | Memperlakukan invalidasi dan retensi sebagai konsep sepenuhnya terpisah | **Retensi dapat memengaruhi peringatan invalidasi** — jika seluruh percobaan yang diinvalidasi terhapus karena usia, peringatan dapat hilang. Dua konsep berbeda, tetapi dampak tampilannya saling terkait |
+| 5 | Menganggap timeout = rollback pasti | **Timeout tidak menjamin rollback**. Harus dibedakan antara: (a) kegagalan penghapusan, (b) kegagalan menerima respons, dan (c) kegagalan memperbarui statistik |
+| 6 | Menggunakan istilah "percobaan aktif" | Data yang dibersihkan adalah **catatan jawaban per soal**, bukan sesi kuis lengkap. Istilah "percobaan aktif" perlu disesuaikan dengan model data aktual |
+
+---
+
+## 📝 Dua Penajaman Tambahan
+
+| Aspek | Pemahaman yang Diperbaiki |
+|:---|:---|
+| **Batch delete** | Bukan syarat mutlak — kebutuhannya harus ditentukan dari **pengukuran aktual**, bukan asumsi |
+| **Risiko kehilangan data** | Salah menghapus riwayat yang masih dalam retensi adalah **risiko kehilangan data**, bukan masalah operasional ringan. Severity harus dinilai sesuai konteks |
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode atau SQL untuk pembersihan
+- ✅ Tidak akan membuat kerangka verifikasi duplikat
+- ✅ Tidak akan menganggap task ini sudah selesai atau belum dimulai
+- ✅ Tidak akan mengubah data atau menjalankan pembersihan
+- ✅ Tidak akan menggunakan istilah "percobaan aktif" tanpa klarifikasi model data
+- ✅ Tidak akan menganggap batch delete sebagai syarat mutlak
+- ✅ Tidak akan menyamakan timeout dengan rollback
+- ✅ Mengakui bahwa ini adalah **peninjauan dokumen dan kode**, bukan pengujian langsung
+- ✅ Mengakui bahwa fitur pembersihan segera **sedang dikerjakan**
+
+---
+
+## 📋 Status Final yang Saya Akui
+
+| Aspek | Status |
+|:---|:---|
+| Perbaikan jenjang & konsistensi payload | ✅ Teruji otomatis |
+| Respons AI sungguhan | ⏳ Terhambat (HTTP 429, penyebab belum pasti) |
+| Ketersediaan skema resmi | ⏳ Belum validasi |
+| Kebenaran substansi soal | ⏳ Belum validasi |
+| Pembersihan segera riwayat kuis | 📝 Peninjauan kode selesai — 6 koreksi tercatat, fitur sedang dikerjakan |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada pada giliran ini |
+
+---
+
+Saya menunggu arahan Anda untuk giliran berikutnya. Tidak ada analisis baru atau pekerjaan duplikat yang saya tambahkan pada respons ini, sesuai dengan batasan yang telah disepakati. 🚀
