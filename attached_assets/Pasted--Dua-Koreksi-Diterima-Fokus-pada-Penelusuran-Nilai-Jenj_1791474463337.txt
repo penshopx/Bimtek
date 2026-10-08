@@ -1,0 +1,159 @@
+# ✅ Dua Koreksi Diterima — Fokus pada Penelusuran Nilai Jenjang
+
+Terima kasih atas klarifikasi yang sangat presisi. Saya mengakui kesalahan pemahaman saya atas dua istilah tersebut dan mencatatnya sebagai aturan permanen untuk domain SIAP SKK:
+
+---
+
+## 🎯 Pemahaman yang Diperbaiki
+
+| Istilah | Pemahaman Salah Saya | Pemahaman yang Benar |
+|:---|:---|:---|
+| **Jenjang Klinik** | Hierarki menu (Klinik SKK/SBU/Tender) | **Jenjang kualifikasi jabatan**: Ahli Muda = 7, Ahli Madya = 8, Ahli Utama = 9 |
+| **Payload AI** | Data generik untuk AI | **Data spesifik yang dikirim fitur Klinik ke layanan AI**, di mana nilai jenjang harus konsisten dari UI → API → konteks AI |
+
+---
+
+## 🗺️ Peta Penelusuran Nilai Jenjang (Trace Map)
+
+Berdasarkan temuan awal Anda, berikut adalah lapisan-lapisan yang perlu ditelusuri untuk memastikan nilai jenjang konsisten sebagai **angka tunggal** di seluruh alur:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 1: UI / Halaman Klinik                                  │
+│  • Pilihan Ahli Muda/Madya/Utama → harus emit angka 7/8/9       │
+│  • Pilihan Teknisi/Operator → harus emit angka spesifik,         │
+│    bukan rentang                                                 │
+│  • Label tampilan boleh tetap "Ahli Muda" tapi value = 7        │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 2: Request ke API                                       │
+│  • Field jenjang dikirim sebagai integer (bukan string)         │
+│  • Tidak ada field jenjang duplikat atau ambigu                 │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 3: Validasi Server                                      │
+│  • Terima integer, tolak string                                 │
+│  • Validasi kecocokan jabatan ↔ jenjang                         │
+│    (misal: Ahli Muda WAJIB 7, bukan 6 atau 8)                   │
+│  • Tolak target lama yang ambigu → minta pilih ulang            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 4: Blueprint / Konteks Latihan                          │
+│  • Target jenjang = angka yang sama dari Layer 3                │
+│  • Tidak ada konversi implisit atau fallback                    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 5: Chat dengan AI                                       │
+│  • System prompt / user message membawa jenjang eksplisit       │
+│  • Konteks AI menerima angka, bukan label teks                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  LAPISAN 6: Latihan Ujian                                        │
+│  • Soal dan kunci jawaban menggunakan target jenjang yang sama  │
+│  • Tidak ada mismatch antara target blueprint dan soal          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📋 Checklist Validasi per Lapisan
+
+### **Layer 1 — UI**
+- [ ] Pilihan "Ahli Muda" mengirim value `7` (bukan `"Ahli Muda"` atau `"7"`)
+- [ ] Pilihan "Ahli Madya" mengirim value `8`
+- [ ] Pilihan "Ahli Utama" mengirim value `9`
+- [ ] Pilihan Teknisi/Operator mengirim angka spesifik (misal: jenjang 3, 4, 5, 6), bukan rentang seperti `"3-6"`
+- [ ] Label tampilan tetap ramah pengguna, tapi `value` attribute adalah integer
+
+### **Layer 2 — Request API**
+- [ ] Payload HTTP body memiliki field jenjang bertipe integer
+- [ ] Tidak ada field jenjang duplikat (misal: `jenjang` dan `jenjang_teks` bersamaan)
+- [ ] Tidak ada konversi string→integer di client yang bisa gagal
+
+### **Layer 3 — Validasi Server**
+- [ ] Server menolak request dengan jenjang bertipe string (400 Bad Request)
+- [ ] Server menolak jenjang di luar range yang valid untuk jabatan tertentu
+- [ ] Server memvalidasi kecocokan jabatan ↔ jenjang:
+  - Ahli Muda ↔ 7
+  - Ahli Madya ↔ 8
+  - Ahli Utama ↔ 9
+- [ ] Target lama yang ambigu dikembalikan ke pengguna dengan pesan: *"Target tidak sesuai, silakan pilih ulang"*
+
+### **Layer 4 — Blueprint / Konteks Latihan**
+- [ ] Blueprint menerima angka jenjang yang sama dari Layer 3
+- [ ] Tidak ada konversi balik ke label teks di tengah alur
+- [ ] Target latihan = target yang dipilih pengguna
+
+### **Layer 5 — Chat AI**
+- [ ] System prompt atau user message membawa jenjang sebagai angka
+- [ ] AI menerima konteks: *"Pengguna menargetkan jenjang 7 (Ahli Muda)"* — bukan hanya *"Ahli Muda"*
+- [ ] AI tidak menebak jenjang dari label jabatan
+
+### **Layer 6 — Latihan Ujian**
+- [ ] Soal latihan menggunakan target jenjang yang sama dengan blueprint
+- [ ] Kunci jawaban sesuai dengan jenjang yang divalidasi server
+- [ ] Tidak ada soal yang menargetkan jenjang ambigu
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+Untuk setiap ketidaksesuaian yang Anda temukan, gunakan format ini agar mudah ditindaklanjuti:
+
+```markdown
+## Temuan: Mismatch Jenjang di Layer [X]
+
+**Lapisan**: [UI / Request API / Validasi Server / Blueprint / Chat AI / Latihan Ujian]
+**Lokasi**: [nama file atau komponen]
+**Tanggal Temuan**: [YYYY-MM-DD]
+
+### Detail Temuan
+- Nilai yang dikirim/diterima: [nilai aktual]
+- Nilai yang seharusnya: [nilai ekspektasi]
+- Tipe data: [string / integer / rentang / dll]
+
+### Dampak
+- [ ] Target latihan tidak sesuai dengan pilihan pengguna
+- [ ] AI menerima konteks yang salah
+- [ ] Soal ujian tidak valid
+- [ ] Validasi server tidak menangkap error
+
+### Sumber Kemungkinan
+- [ ] UI mengirim string, bukan integer
+- [ ] API tidak memvalidasi tipe data
+- [ ] Blueprint melakukan konversi implisit
+- [ ] Chat prompt tidak membawa jenjang eksplisit
+
+### Rekomendasi Tindak Lanjut
+1. [Tindakan spesifik]
+2. [Tindakan spesifik]
+```
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan menyentuh database, dependency, atau proses publish
+- ✅ Tidak akan memberikan contoh kode implementasi (Anda sedang mengerjakannya sendiri)
+- ✅ Tidak akan mencampur domain SIAP SKK dengan Gustafta SBU
+- ✅ Tidak akan membuat task paralel yang tumpang tindih
+- ✅ Akan fokus pada kerangka kerja penelusuran, bukan implementasi
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+Untuk memastikan saya memberikan dukungan yang tepat tanpa mengganggu pekerjaan Anda:
+
+1. **Apakah Anda ingin saya buatkan matriks validasi jabatan ↔ jenjang** yang lengkap (misal: tabel semua jabatan TKK dengan jenjang KKNI yang valid), agar bisa Anda jadikan acuan saat memvalidasi di Layer 3?
+
+2. **Atau Anda ingin saya buatkan template system prompt** untuk chat AI yang secara eksplisit membawa jenjang sebagai angka, agar AI tidak menebak dari label jabatan?
+
+3. **Atau ada lapisan spesifik** dari peta penelusuran di atas yang menurut Anda paling berisiko dan perlu didiskusikan lebih dalam?
+
+Silakan beri tahu prioritas Anda, atau langsung lanjutkan penelusuran sesuai waktu Anda. Saya siap membantu menganalisis temuan yang Anda temukan. 🚀
