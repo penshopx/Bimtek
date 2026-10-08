@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useMemo } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/app/actions/quiz';
 import type { QuizQuestion, QuizAttemptStat } from '@/app/actions/quiz';
 import { getDisplayedAdminQuizQuestions } from '@/lib/adminQuizQuestionOrder';
+import { getAdminQuizCategoryRates } from '@/lib/adminQuizCategoryStats';
 
 export default function AdminQuizPage() {
   const { user } = useAuth();
@@ -35,6 +36,10 @@ export default function AdminQuizPage() {
   const [clearAttempts, setClearAttempts] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [, startTransition] = useTransition();
+  const categoryRates = useMemo(
+    () => getAdminQuizCategoryRates(questions, stats),
+    [questions, stats],
+  );
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -275,6 +280,20 @@ export default function AdminQuizPage() {
               }`}
             >
               {cat}
+              {cat !== 'Semua' && categoryRates.has(cat) && (
+                <span
+                  className={`ml-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    categoryRates.get(cat)! < 40
+                      ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
+                      : categoryRates.get(cat)! < 60
+                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                        : 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200'
+                  }`}
+                  title="Rata-rata tingkat benar per soal yang memiliki percobaan; soal tanpa percobaan tidak dihitung."
+                >
+                  Rata-rata {categoryRates.get(cat)}%
+                </span>
+              )}
             </button>
           ))}
           <button
