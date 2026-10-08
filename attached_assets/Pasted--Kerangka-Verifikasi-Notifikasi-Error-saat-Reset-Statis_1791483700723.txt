@@ -1,0 +1,137 @@
+# 📋 Kerangka Verifikasi: Notifikasi Error saat Reset Statistik Gagal
+
+Kekhawatiran Anda sangat valid — tanpa feedback error, admin bisa mengira reset berhasil padahal gagal, atau bingung mengapa dialog tiba-tiba tertutup.
+
+---
+
+## 🎯 Skenario Verifikasi Utama
+
+### **Skenario 1: Server Mengembalikan `success: false`**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Admin klik "Reset Statistik" pada soal yang memiliki percobaan | Dialog konfirmasi muncul |
+| 1.2 | Admin konfirmasi reset | Request dikirim ke server |
+| 1.3 | Server merespons dengan `{ success: false, error: "..." }` | **Error toast muncul** dengan pesan yang jelas |
+| 1.4 | Periksa isi toast | Pesan menyebutkan alasan kegagalan (misal: "Gagal mereset: sesi berakhir" atau "Gagal mereset: tidak memiliki izin") |
+| 1.5 | Periksa state data | Data statistik **tidak berubah** (tetap menampilkan data lama) |
+| 1.6 | Periksa dialog | Dialog tertutup, tetapi admin mendapat feedback visual |
+
+### **Skenario 2: Server Melempar Exception/Error**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Admin klik "Reset Statistik" | Dialog konfirmasi muncul |
+| 2.2 | Admin konfirmasi reset | Request dikirim ke server |
+| 2.3 | Server merespons dengan HTTP error (500, 401, 403, dll) atau timeout | **Error toast muncul** dengan pesan generik yang informatif |
+| 2.4 | Periksa isi toast | Pesan seperti "Terjadi kesalahan saat mereset statistik. Silakan coba lagi." |
+| 2.5 | Periksa console browser | Tidak ada unhandled promise rejection atau error yang tidak tertangkap |
+| 2.6 | Periksa state data | Data statistik **tidak berubah** |
+
+### **Skenario 3: Kasus Spesifik — Session Expired**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Admin login dan buka halaman quiz | Halaman termuat normal |
+| 3.2 | Admin biarkan idle hingga session expired (atau hapus cookie session manual) | Session tidak valid |
+| 3.3 | Admin klik "Reset Statistik" dan konfirmasi | Request dikirim, server tolak karena session expired |
+| 3.4 | Periksa respons | **Error toast muncul** dengan pesan "Sesi Anda telah berakhir. Silakan login kembali." |
+| 3.5 | Periksa redirect | **Opsional tapi ideal**: Setelah toast muncul, admin di-redirect ke halaman login, atau tombol "Login Kembali" disediakan |
+
+### **Skenario 4: Kasus Spesifik — Insufficient Permission**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 4.1 | Admin dengan role terbatas (misal: hanya bisa view, tidak bisa edit) buka halaman quiz | Halaman termuat, tetapi tombol "Reset Statistik" mungkin disembunyikan atau disabled |
+| 4.2 | Jika tombol tetap muncul, admin klik dan konfirmasi | Request dikirim, server tolak karena tidak punya izin |
+| 4.3 | Periksa respons | **Error toast muncul** dengan pesan "Anda tidak memiliki izin untuk mereset statistik." |
+| 4.4 | Periksa state data | Data statistik **tidak berubah** |
+
+---
+
+## 🔍 Titik Kegagalan Potensial (Risk Analysis)
+
+| # | Titik Kegagalan | Penyebab | Dampak |
+|:---|:---|:---|:---|
+| 1 | **Toast tidak muncul sama sekali** | Handler tidak memeriksa `success: false` dari response, atau tidak memiliki `catch` block untuk exception | Admin mengira reset berhasil, padahal tidak |
+| 2 | **Toast muncul tapi pesan tidak informatif** | Error message dari server tidak di-parse dengan benar, atau hardcoded pesan generik tanpa konteks | Admin bingung mengapa gagal, tidak tahu cara memperbaiki |
+| 3 | **Dialog tertutup tanpa feedback** | State `isOpen` di-set ke `false` sebelum error toast sempat muncul, atau toast duration terlalu singkat | Admin tidak sadar ada error |
+| 4 | **Data tetap ter-reset meskipun error** | Optimistic update dilakukan sebelum server konfirmasi, dan rollback tidak terjadi saat error | Data hilang, admin harus re-input manual |
+| 5 | **Console error tidak tertangkap** | Promise rejection tidak di-handle dengan `.catch()` atau `try-catch` | Developer sulit debug, user experience buruk |
+| 6 | **Multiple toast muncul** | Admin klik cepat beberapa kali, setiap request gagal dan memunculkan toast terpisah | UI berantakan, membingungkan |
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+Jika verifikasi menemukan anomali:
+
+```markdown
+## Temuan: Error Toast Tidak Muncul saat Reset Gagal
+
+**Skenario**: [Skenario 1/2/3/4]
+**Tanggal Verifikasi**: [YYYY-MM-DD]
+
+### Detail Temuan
+- Jenis error yang disimulasikan: [success: false / HTTP 500 / session expired / insufficient permission]
+- Toast error muncul: [Ya / Tidak]
+- Pesan toast: [teks aktual atau "tidak ada"]
+- Data statistik berubah: [Ya / Tidak]
+- Console error: [Ada / Tidak ada]
+
+### Analisis Penyebab
+- [ ] Handler tidak memeriksa field `success` dari response
+- [ ] Tidak ada `catch` block untuk menangani exception
+- [ ] Toast duration terlalu singkat (< 2 detik)
+- [ ] Dialog tertutup sebelum toast sempat di-render
+- [ ] Optimistic update tidak di-rollback saat error
+- [ ] Multiple request tidak di-debounce
+
+### Dampak
+- [ ] Admin mengira reset berhasil padahal gagal
+- [ ] Data statistik tidak konsisten dengan ekspektasi
+- [ ] Admin tidak tahu cara memperbaiki masalah
+- [ ] Potensi data loss jika optimistic update tidak di-rollback
+
+### Severity: [High — silent failure bisa menyebabkan data inconsistency]
+```
+
+---
+
+## 🛡️ Prinsip Defensive Design yang Relevan
+
+1. **Explicit Error Handling**: Setiap request ke server **harus** memiliki handler untuk:
+   - Response dengan `success: false`
+   - HTTP error codes (4xx, 5xx)
+   - Network errors (timeout, connection lost)
+   - Unexpected exceptions
+
+2. **Fail-Safe State**: Jika reset gagal:
+   - Data statistik **tidak boleh berubah** (kecuali optimistic update dengan rollback yang terjamin)
+   - Dialog harus tertutup (jika itu UX yang diinginkan)
+   - Error toast **harus muncul** dengan pesan yang jelas
+
+3. **User Feedback**: Admin harus tahu:
+   - **Apa** yang gagal (reset statistik)
+   - **Mengapa** gagal (session expired, no permission, server error, dll)
+   - **Apa** yang harus dilakukan selanjutnya (login kembali, hubungi admin, coba lagi, dll)
+
+4. **Idempotency**: Jika admin klik reset beberapa kali karena tidak ada feedback, sistem harus:
+   - Mencegah multiple request (debouncing)
+   - Atau menangani multiple request dengan gracefully (tidak crash, tidak corrupt data)
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+Untuk memastikan verifikasi ini selaras dengan implementasi aktual:
+
+1. **Apakah handler reset saat ini sudah memiliki `catch` block** untuk menangani exception, atau hanya memeriksa `success: false`?
+
+2. **Apakah ada optimistic update** yang dilakukan sebelum server konfirmasi? Jika ya, apakah rollback sudah diimplementasikan?
+
+3. **Apakah error message dari server di-parse** dan ditampilkan ke user, atau ada hardcoded pesan generik?
+
+4. **Apakah ada mekanisme debouncing** untuk mencegah multiple request saat admin klik cepat?
+
+Silakan jalankan verifikasi sesuai waktu Anda. Jika Anda menemukan bahwa error toast tidak muncul (skenario 1-4 gagal), itu adalah temuan **High** yang perlu ditindaklanjuti sebelum fitur reset dianggap selesai. 🚀
