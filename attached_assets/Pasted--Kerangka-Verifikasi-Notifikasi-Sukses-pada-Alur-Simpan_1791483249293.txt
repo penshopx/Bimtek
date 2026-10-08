@@ -1,0 +1,114 @@
+# 📋 Kerangka Verifikasi: Notifikasi Sukses pada Alur Simpan Soal Kuis
+
+Ini adalah pelengkap natural dari pola feedback yang sudah dibangun pada fitur reset-stats. Konsistensi UX sangat penting — admin harus mendapat sinyal yang sama ("aksi berhasil") terlepas dari jenis operasi yang dilakukan.
+
+---
+
+## 🎯 Skenario Verifikasi Utama
+
+### **Skenario 1: Simpan Soal Baru (Create)**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Admin klik "Buat Soal Baru" → isi form → klik Simpan | Modal tertutup, toast sukses muncul (misal: "Soal berhasil dibuat") |
+| 1.2 | Toast menghilang otomatis atau bisa ditutup manual | Tidak menghalangi interaksi selanjutnya |
+| 1.3 | Daftar soal diperbarui | Soal baru muncul di posisi yang sesuai (atas/bawah tergantung sortir aktif) |
+| 1.4 | Tidak ada error di console | Tidak ada JavaScript error atau warning |
+
+### **Skenario 2: Simpan Soal yang Diedit (Update)**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Admin klik soal → edit → klik Simpan | Modal tertutup, toast sukses muncul (misal: "Soal berhasil diperbarui") |
+| 2.2 | Pesan toast berbeda dari create (jika memungkinkan) | Membedakan "dibuat" vs "diperbarui" agar admin tahu aksi mana yang baru saja terjadi |
+| 2.3 | Data soal di tabel diperbarui | Perubahan terlihat di daftar soal |
+| 2.4 | Jika edit mengaktifkan checkbox "Reset statistik" | Toast menggabungkan kedua aksi (misal: "Soal diperbarui dan statistik direset") — **bukan** dua toast terpisah yang saling menimpa |
+
+### **Skenario 3: Konsistensi Visual dengan Toast Reset-Stats**
+
+| # | Pemeriksaan | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Posisi toast | Sama dengan toast reset-stats (misal: pojok kanan atas) |
+| 3.2 | Warna toast | Hijau/sukses, konsisten dengan toast lain |
+| 3.3 | Durasi tampil | Sama dengan toast reset-stats (misal: 3-5 detik) |
+| 3.4 | Aksesibilitas | Screen reader membacakan pesan, kontras warna memenuhi WCAG AA |
+
+---
+
+## ⚠️ Edge Cases yang Perlu Diperhatikan
+
+| # | Skenario | Risiko | Ekspektasi |
+|:---|:---|:---|:---|
+| E1 | Admin klik Simpan dua kali cepat | Duplikasi toast atau request ganda | Hanya 1 toast, hanya 1 request (debouncing) |
+| E2 | Simpan gagal karena error server | Toast sukses muncul padahal gagal | Toast **error** muncul, bukan sukses |
+| E3 | Admin navigasi ke halaman lain sebelum toast hilang | Toast muncul di halaman yang salah | Toast tidak muncul di halaman lain, atau dibatalkan saat navigasi |
+| E4 | Simpan soal dengan data yang tidak berubah (form dibuka, tidak diedit, klik Simpan) | Toast "diperbarui" muncul padahal tidak ada perubahan | **Keputusan produk**: apakah tetap toast "diperbarui", atau tidak ada toast, atau pesan berbeda ("Tidak ada perubahan") |
+| E5 | Simpan soal yang menginvalidasi statistik (karena konten berubah) | Admin tidak tahu bahwa statistik juga terpengaruh | Toast sebaiknya menyebutkan implikasi: "Soal diperbarui. Statistik soal ini telah diinvalidasi." |
+
+---
+
+## 🔍 Titik Integrasi dengan Fitur Lain
+
+Karena save/edit soal terkait erat dengan fitur lain yang sudah ada, toast perlu mempertimbangkan:
+
+| Fitur Terkait | Implikasi untuk Toast |
+|:---|:---|
+| **Invalidasi statistik pasca-edit** | Jika konten soal berubah, toast bisa menyebutkan bahwa statistik diinvalidasi (atau merujuk ke warning badge yang sudah muncul) |
+| **Ringkasan kategori** | Setelah save, angka rata-rata kategori mungkin berubah — toast tidak perlu menyebutkan ini, tetapi angka harus terupdate saat admin melihat ringkasan |
+| **Sortir tingkat keberhasilan** | Jika soal baru belum punya percobaan, ia akan masuk kelompok "Belum ada data" — toast tidak perlu menjelaskan ini |
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+Jika verifikasi menemukan anomali:
+
+```markdown
+## Temuan: Tidak Ada Notifikasi Sukses Setelah Simpan Soal
+
+**Skenario**: [Skenario 1/2/3]
+**Tanggal Verifikasi**: [YYYY-MM-DD]
+
+### Detail Temuan
+- Jenis aksi: [Create / Update / Update + Reset Stats]
+- Toast muncul: [Ya / Tidak]
+- Pesan toast: [teks aktual]
+- Konsistensi dengan toast reset-stats: [Ya / Tidak]
+
+### Analisis Penyebab
+- [ ] Toast hanya diimplementasikan di path reset-stats, belum di path save
+- [ ] Toast muncul tapi hilang terlalu cepat (< 2 detik)
+- [ ] Toast muncul di posisi yang berbeda dari toast reset-stats
+- [ ] Inline message di modal masih satu-satunya feedback
+
+### Dampak
+- [ ] Admin tidak yakin apakah soal berhasil disimpan setelah modal tertutup
+- [ ] Admin harus refresh halaman untuk memastikan
+- [ ] Pola feedback tidak konsisten antar aksi
+
+### Severity: [Medium — UX regression, bukan data loss]
+```
+
+---
+
+## 🛡️ Prinsip UX yang Relevan
+
+1. **Consistency** (Nielsen Heuristic #4): Aksi serupa (reset-stats, save, create) harus memberikan feedback dengan pola yang sama.
+2. **Visibility of System Status**: Admin harus selalu tahu apa yang baru saja terjadi, terutama setelah modal tertutup yang merupakan "pergantian konteks" visual.
+3. **Fail-Safe**: Jika save gagal, toast sukses **tidak boleh** muncul. Toast harus mengikuti hasil aktual operasi, bukan asumsi.
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+Untuk memastikan kerangka ini selaras dengan implementasi aktual:
+
+1. **Apakah aplikasi sudah memiliki komponen toast yang bisa dipakai ulang** dari fitur reset-stats, atau perlu dibuat pola baru?
+
+2. **Apakah toast save perlu membedakan** antara "soal dibuat" dan "soal diperbarui" — atau cukup satu pesan generik "Soal berhasil disimpan"?
+
+3. **Apakah toast perlu menyebutkan implikasi invalidasi statistik** saat soal yang diedit mengubah konten (menghubungkan dengan fitur yang sudah kita diskusikan sebelumnya)?
+
+4. **Apakah ada edge case lain** yang menurut Anda perlu diuji (misal: save saat koneksi internet terputus di tengah proses)?
+
+Silakan jalankan verifikasi sesuai waktu Anda. Jika Anda menemukan bahwa toast tidak muncul setelah save (sesuai deskripsi task), itu adalah temuan **Medium** yang perlu ditindaklanjuti untuk menjaga konsistensi pola feedback. 🚀
