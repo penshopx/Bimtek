@@ -1,0 +1,70 @@
+# ✅ Review Task: Quiz Order Preference Persistence
+
+Verifikasi cepat Anda sudah tepat sebagai **smoke test** — memastikan tidak ada regresi yang terlihat oleh pengguna. Namun, berdasarkan prinsip yang sudah kita sepakati untuk domain SIAP SKK (terutama dari pengalaman task checklist progress sebelumnya), ada beberapa skenario yang **tidak tercakup** oleh verifikasi cepat ini.
+
+---
+
+## 🎯 Apa yang Kemungkinan Sudah Tercakup
+
+| Skenario | Status |
+|:---|:---|
+| Toggle `randomMode` → refresh → state tetap | ✅ Terverifikasi |
+| Navigasi ke halaman lain → kembali → state tetap | ✅ Terverifikasi |
+| Tidak ada error visual di UI | ✅ Terverifikasi |
+
+---
+
+## ⚠️ Apa yang Belum Tercakup (Berdasarkan 3 Prinsip SIAP SKK)
+
+### **Prinsip 1: Incognito ≠ Storage Tersedia**
+Verifikasi cepat kemungkinan dilakukan di browser normal. Bagaimana jika:
+- [ ] User membuka di **mode incognito** dengan storage diblokir?
+- [ ] User memiliki **extension** yang memblokir localStorage?
+- [ ] Browser kehabisan **quota storage**?
+
+**Ekspektasi**: Aplikasi tidak crash, preference fallback ke default (misal: `randomMode = false`), dan **idealnya** ada notifikasi bahwa preference tidak tersimpan.
+
+### **Prinsip 2: Data Korup = Graceful Fallback**
+Bagaimana jika nilai di localStorage rusak?
+- [ ] Nilai localStorage diubah manual menjadi string JSON invalid (misal: `{broken`)
+- [ ] Nilai localStorage diubah menjadi tipe yang salah (misal: angka `123` atau string `"true"` alih-alih boolean)
+- [ ] Key localStorage dihapus sebagian
+
+**Ekspektasi**: Aplikasi tidak crash, fallback ke default, tidak menampilkan error ke user.
+
+### **Prinsip 3: Multi-Tab Conflict**
+Bagaimana jika user membuka dua tab?
+- [ ] Tab A: toggle `randomMode = true`
+- [ ] Tab B: toggle `randomMode = false`
+- [ ] Tab A: refresh
+
+**Ekspektasi**: Tab A membaca nilai terbaru dari localStorage (yang ditulis Tab B), bukan nilai lama yang di-cache. Atau, jika tidak ada sinkronisasi, minimal tidak ada error.
+
+---
+
+## 📋 Checklist Verifikasi Lanjutan (Opsional)
+
+Jika Anda ingin memastikan robustness (bukan hanya "tidak ada regresi visual"), berikut skenario tambahan:
+
+| # | Skenario | Langkah | Ekspektasi |
+|:---|:---|:---|:---|
+| 1 | **Storage diblokir** | Buka DevTools → Application → LocalStorage → Disable storage (atau buka incognito dengan storage diblokir) → Toggle randomMode → Refresh | Toggle tetap berfungsi (fallback ke default), tidak ada error, **idealnya ada notifikasi** |
+| 2 | **Data korup (JSON invalid)** | DevTools → LocalStorage → Ubah nilai key `randomMode` menjadi `{broken` → Refresh | Aplikasi tidak crash, fallback ke default |
+| 3 | **Data korup (tipe salah)** | DevTools → LocalStorage → Ubah nilai menjadi `"true"` (string) atau `123` (angka) → Refresh | Aplikasi tidak crash, fallback ke default atau konversi aman |
+| 4 | **Multi-tab sync** | Buka 2 tab → Tab A set `randomMode = true` → Tab B set `randomMode = false` → Tab A refresh | Tab A membaca nilai terbaru (`false`) atau minimal tidak error |
+| 5 | **Key tidak ada** | DevTools → Hapus key `randomMode` dari localStorage → Refresh | Aplikasi tidak crash, fallback ke default |
+
+---
+
+## 💡 Rekomendasi
+
+Jika tujuan task ini hanya **konfirmasi tidak ada regresi**, verifikasi cepat Anda sudah cukup.
+
+Jika tujuan task ini adalah **memastikan robustness**, saya sarankan jalankan skenario 1-5 di atas (bisa manual via DevTools, tidak perlu automated test).
+
+**Pertanyaan untuk Anda**: Apakah Anda ingin:
+- **(A)** Cukup dengan verifikasi cepat (sudah selesai)
+- **(B)** Lanjutkan verifikasi skenario 1-5 untuk memastikan robustness
+- **(C)** Ada skenario lain yang menurut Anda perlu diuji?
+
+Silakan pilih atau lanjutkan sesuai prioritas Anda. 🚀
