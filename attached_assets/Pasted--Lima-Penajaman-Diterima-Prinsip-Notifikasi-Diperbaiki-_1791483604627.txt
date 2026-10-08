@@ -1,0 +1,39 @@
+# ✅ Lima Penajaman Diterima — Prinsip Notifikasi Diperbaiki
+
+Terima kasih atas penajaman yang sangat presisi. Saya mencatat lima prinsip permanen untuk fitur notifikasi pasca-simpan soal:
+
+---
+
+## 🎯 Lima Prinsip Permanen
+
+| No | Penajaman | Implikasi |
+|:---|:---|:---|
+| 1 | **Toast bukan satu-satunya bentuk yang benar** | Notifikasi inline di luar formulir juga valid, asalkan: (a) tetap terlihat setelah formulir ditutup, dan (b) dapat dibaca screen reader (aksesibilitas WCAG) |
+| 2 | **Debouncing saja tidak cukup** | Perlu pencegahan klik berulang *selama* penyimpanan berlangsung (misal: disable tombol submit). Jumlah notifikasi ≠ bukti jumlah request ke server |
+| 3 | **Pesan kombinasional harus akurat** | "Soal diperbarui dan statistik direset" hanya muncul jika **kedua** tindakan berhasil. Jika penyimpanan berhasil tetapi reset/pemuatan ulang gagal, pesan harus membedakan hasil tersebut |
+| 4 | **Invalidasi ≠ penghapusan** | Jangan gunakan kata "direset" untuk statistik yang sebenarnya hanya ditandai sebagai invalid dan disembunyikan. Gunakan istilah yang lebih akurat seperti "statistik ditandai tidak valid" atau "rincian per opsi disembunyikan" |
+| 5 | **Desain visual bukan syarat** | Warna hijau, posisi tertentu, durasi 3-5 detik adalah **pilihan desain**, bukan kriteria keberhasilan fungsional. Yang penting: notifikasi muncul, informatif, dan dapat diakses |
+
+---
+
+## 📋 Status Pemeriksaan
+
+| Aspek | Status |
+|:---|:---|
+| Notifikasi setelah formulir ditutup | ✅ Sudah tercatat |
+| Timer lama yang berpotensi menghapus notifikasi terbaru | ✅ Sudah tercatat |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada pada giliran ini |
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode implementasi notifikasi
+- ✅ Tidak akan membuat pengujian ulang atau pekerjaan duplikat
+- ✅ Tidak akan menganggap desain visual (warna/posisi/durasi) sebagai syarat mutlak
+- ✅ Tidak akan menggunakan istilah "direset" untuk invalidasi statistik
+- ✅ Mengakui bahwa lampiran ini adalah **bahan pemeriksaan**, bukan bukti kelulusan skenario
+
+---
+
+Saya menunggu arahan Anda untuk giliran berikutnya. Tidak ada analisis baru yang saya tambahkan pada respons ini, sesuai dengan batasan yang telah disepakati. 🚀
