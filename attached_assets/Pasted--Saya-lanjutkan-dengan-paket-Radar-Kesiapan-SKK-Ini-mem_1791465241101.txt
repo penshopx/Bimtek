@@ -1,0 +1,107 @@
+**Saya lanjutkan dengan paket Radar Kesiapan SKK.** Ini memperkuat fitur Pantau SKK dan PKB yang sudah ada—bukan membuat dashboard paralel.
+
+**P0 belum terkonfirmasi selesai**, sehingga pekerjaan ini dimulai dengan pemeriksaan dependensi, bukan langsung menambah halaman.
+
+### Prompt Radar Kesiapan untuk Replit Agent
+
+```
+Perkuat pemantauan kesiapan peserta pada aplikasi BIMTEK / SIAP SKK
+existing sebagai Radar Kesiapan SKK.
+
+Aplikasi tetap mandiri. Jangan menghubungkan data, login, API,
+WhatsApp, atau pembayaran Gustafta.
+
+1. INSPEKSI
+Periksa:
+- Pantau SKK;
+- SIAP Index;
+- profil peserta;
+- Persiapan Dokumen;
+- Tracker PKB;
+- Ruang Bukti, bila sudah tersedia.
+
+Petakan fungsi yang dapat digunakan ulang.
+Jika master jenjang/skema masih salah, laporkan dan selesaikan P0 dahulu.
+Jangan membuat tabel/dashboard duplikatif.
+
+2. TAMPILKAN EMPAT AREA SECARA TERPISAH
+A. Dokumen:
+   kelengkapan catatan, lampiran, dan kebutuhan review.
+B. Masa berlaku:
+   tanggal kedaluwarsa yang tercatat dan sumber informasinya.
+C. Persiapan:
+   materi, latihan, dan bukti yang masih perlu dilengkapi.
+D. PKB:
+   estimasi, penilaian mandiri, dan nilai resmi bila tersedia
+   bukti penetapan; jangan digabung tanpa penjelasan.
+
+Jangan membuat satu skor yang seolah menjamin kelulusan atau
+kelayakan perpanjangan.
+
+3. SUMBER DAN STATUS
+Bedakan:
+- informasi yang dimasukkan peserta;
+- saran ekstraksi/OCR;
+- informasi yang sudah diperiksa internal;
+- hasil pemeriksaan resmi, hanya jika ada bukti.
+
+Tanggal hasil OCR harus dikonfirmasi pengguna.
+Tanggal kosong berarti “belum diketahui”, bukan “aktif” atau “kedaluwarsa”.
+Jangan mengklaim pemeriksaan langsung ke LPJK/LSP tanpa integrasi
+yang benar-benar tersedia dan diotorisasi.
+
+4. PENGINGAT INTERNAL
+Mulai dengan notifikasi dalam aplikasi.
+Sediakan ambang pengingat yang dapat dikonfigurasi, misalnya
+30 dan 7 hari sebelum tanggal tercatat.
+
+Labeli ambang tersebut sebagai kebijakan pengingat aplikasi,
+bukan tenggat hukum.
+
+- Gunakan perhitungan tanggal yang konsisten dan terdokumentasi.
+- Hindari notifikasi duplikat.
+- Perbarui pengingat ketika tanggal dikoreksi.
+- Hentikan pengingat untuk catatan yang diarsipkan.
+- Jangan menambahkan pengiriman email/WhatsApp berbayar pada tahap ini.
+
+5. TINDAK LANJUT
+Setiap temuan menyediakan aksi menuju fitur existing:
+- lengkapi profil;
+- periksa atau tambahkan bukti;
+- lanjutkan materi/latihan;
+- periksa kegiatan PKB;
+- koreksi tanggal atau informasi.
+
+Notifikasi tidak dianggap pengajuan resmi.
+Kelengkapan internal tidak diberi label “pasti lulus”,
+“resmi memenuhi syarat”, atau “perpanjangan disetujui”.
+
+6. AKSES DAN RIWAYAT
+Periksa sesi serta kepemilikan pada server.
+Peserta hanya mengakses catatan, bukti, dan notifikasinya sendiri.
+Catat koreksi informasi tanpa menampilkan data pribadi berlebihan
+dalam log.
+
+7. UJI PENERIMAAN
+Uji:
+- tanggal kosong, salah, mendatang, dan sudah lewat;
+- perubahan tanggal setelah pengingat dibuat;
+- notifikasi berulang;
+- lampiran hilang atau aksesnya dicabut;
+- perubahan target skema;
+- estimasi PKB tanpa nilai resmi;
+- peserta A mencoba mengakses data peserta B;
+- persistensi setelah reload;
+- regresi pada Pantau SKK, SIAP Index, dan Tracker PKB.
+
+8. HANDOFF
+Laporkan fitur existing yang diperluas, perubahan kode/schema,
+hasil tes, dependensi yang belum selesai, dan rollback.
+
+Jangan deploy produksi, mengubah kredit historis, melakukan
+migrasi destruktif, atau menambah layanan berbayar tanpa persetujuan.
+```
+
+**Targetnya:** peserta mengetahui **apa yang perlu diperiksa, kapan perlu bertindak, dan ke mana melanjutkan**—tanpa aplikasi mengklaim keputusan sertifikasi resmi.
+
+Setelah Radar ini teruji, penguatan berikutnya adalah **Lab Praktik per Kompetensi**, memakai materi dan latihan existing yang sudah dipetakan ke sumber.
