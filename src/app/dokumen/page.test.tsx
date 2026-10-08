@@ -512,6 +512,24 @@ afterAll(() => {
 });
 
 describe('/dokumen saved profile pre-selection', () => {
+  it('uses the profile-link target instead of the saved account default', async () => {
+    await login('MP001');
+    browser.location.href = 'http://dokumen.test/dokumen?jabatan=Project%20Manager%20Konstruksi&context=Data%20profil';
+    await mountPage();
+    expect(highlightedJabatan()).toEqual(['Manajer Proyek']);
+    expect(checklistRequests.map(request => request.id)).toEqual(['manajer-proyek']);
+    expect(document.body.textContent).toContain('Data dari Profil SKK');
+  });
+
+  it('shows unsupported profile-link targets without falling back to another jabatan', async () => {
+    await login('MP001');
+    browser.location.href = 'http://dokumen.test/dokumen?jabatan=Target%20lain';
+    await mountPage();
+    expect(highlightedJabatan()).toEqual([]);
+    expect(checklistRequests).toEqual([]);
+    expect(document.body.textContent).toContain('belum tersedia pada checklist ini');
+  });
+
   for (const mapping of mappings) {
     it(`logs in with ${mapping.profile}, activates ${mapping.bidang} and highlights ${mapping.name} without clicks`, async () => {
       const sessionId = await login(mapping.profile);

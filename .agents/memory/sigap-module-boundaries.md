@@ -7,6 +7,12 @@ Treat SIGAP SKK as the organization-facing LMS/learning-management layer. Organi
 
 Keep organization operations and formal workflows behind separate permissions and clear ownership. The platform supports preparation and coaching; it must not present its readiness status as an official competence verdict, issue SKPK on its own, or claim an automatic government verification. Competence decisions belong to authorized assessors/LSP; PKB credit decisions belong to the authorized review process.
 
+An imported account jabatan is preparation context, not evidence of an existing certificate. Keep intended/working jabatan separate from a user's self-reported current SKK; neither is a verified certification record.
+
+**Why:** a jabatan saved while preparing documents expresses the user's chosen role, not proof that an LSP has issued the corresponding SKK.
+
+**How to apply:** reuse account identity for preparation and coaching, but never automatically turn an intended role into a current or verified SKK.
+
 **Why:** the product direction is for organizations to subscribe to SIGAP LMS while members learn in SIAP SKK; the user has prioritized desktop learning improvements and deferred mobile work. The blueprint also distinguishes learning/readiness support from regulated assessor, LSP, association, LPJK, and SIJK responsibilities.
 
 **How to apply:** focus current SIAP work on the desktop learner journey; defer mobile. Keep the SIGAP organization portal and SIAP learner app distinct initially, then connect them through SSO and APIs for assignments, catalog, and progress; keep official status, credit estimates, review/audit trails, and organizational data separate and accurately labeled.

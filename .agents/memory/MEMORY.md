@@ -7,5 +7,6 @@
 - [Browser failure simulation](browser-failure-simulation.md) — block service workers when intercepting API requests to verify network and server failures.
 - [Construction catalog provenance](construction-catalog-provenance.md) — use new DJBK nomenclature; reconcile legacy targets explicitly, and distinguish general, ASN, and fresh-graduate paths.
 - [Bun auth-test isolation](bun-auth-test-isolation.md) — isolated database mocks also need isolated route instances when API handlers cache connections.
+- [Browser-local profile privacy](browser-local-profile-privacy.md) — keep personal details out of preparation URLs; read locally and require deliberate AI sharing.
 - [Multipart runtime compatibility](multipart-runtime-compatibility.md) — Bun and Next.js may parse valid file parts with different MIME parameters or File constructors.
 - [Multi-step form submission](multi-step-form-submit.md) — keep submit behavior stable across steps; React button reuse can unexpectedly submit during step navigation.

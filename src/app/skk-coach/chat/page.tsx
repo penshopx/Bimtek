@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ProfileToolContext from '@/components/ProfileToolContext';
+import { jabatanName } from '@/lib/professional-profile';
 
 const agents = [
   { id: 'kelayakan', icon: '🔍', name: 'Cek Kelayakan', short: 'Kelayakan & Gap KKNI', color: 'blue',
@@ -30,7 +32,10 @@ interface Msg { role: 'user' | 'assistant'; content: string; }
 function SKKCoachChatInner() {
   const searchParams = useSearchParams();
   const initialAgent = searchParams.get('agent') ?? 'kelayakan';
-  const initialContext = searchParams.get('context') ?? '';
+  const target = searchParams.get('jabatan');
+  const initialContext = searchParams.get('context') ?? (target
+    ? `Saya ingin mengecek kelayakan untuk ${jabatanName(target)}.${searchParams.get('jenjang') ? ` Target jenjang: ${searchParams.get('jenjang')}.` : ''}${searchParams.get('timeline') ? ` Target tanggal persiapan: ${searchParams.get('timeline')}.` : ''}`
+    : '');
   const [activeAgent, setActiveAgent] = useState(initialAgent);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState(initialContext);
@@ -83,6 +88,9 @@ function SKKCoachChatInner() {
         <span className="text-slate-500 text-sm hidden sm:block">— {agent.short}</span>
       </div>
 
+      <div className="mx-auto w-full max-w-6xl px-4 pt-4">
+        <ProfileToolContext onUseContext={context => setInput(context)} />
+      </div>
       <div className="flex flex-1 overflow-hidden max-w-6xl mx-auto w-full">
         {/* Agent sidebar */}
         <div className="hidden sm:flex flex-col w-56 border-r border-slate-700 py-4 gap-1 px-2 shrink-0">

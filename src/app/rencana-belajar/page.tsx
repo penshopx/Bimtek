@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import ProfileToolContext from '@/components/ProfileToolContext';
+import { jabatanName } from '@/lib/professional-profile';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -280,13 +282,18 @@ export default function RencanaBelajarPage() {
   const [jamPerHari, setJamPerHari] = useState(2);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [generated, setGenerated] = useState(false);
+  const [prefillError, setPrefillError] = useState('');
 
   // Load from localStorage
   useEffect(() => {
+    let previousJabatan = '';
+    let previousDate = '';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const d = JSON.parse(saved);
+        previousJabatan = d.jabatanId || '';
+        previousDate = d.ujianDate || '';
         if (d.jabatanId) setJabatanId(d.jabatanId);
         if (d.ujianDate) setUjianDate(d.ujianDate);
         if (d.jamPerHari) setJamPerHari(d.jamPerHari);
@@ -294,6 +301,35 @@ export default function RencanaBelajarPage() {
         if (d.generated) setGenerated(d.generated);
       }
     } catch {}
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('jabatan')?.trim();
+    const timeline = params.get('timeline');
+    if (requested) {
+      const name = jabatanName(requested);
+      // Only explicit equivalents: never silently substitute a different scheme.
+      const aliases: Record<string, string> = {
+        'Ahli K3 Konstruksi': 'k3-konstruksi',
+        'Manajer Proyek': 'manager-proyek',
+        'Project Manager Konstruksi': 'manager-proyek',
+      };
+      const match = jabatanList.find(j => j.id === requested || j.nama === name || j.id === aliases[name]);
+      if (match) {
+        setJabatanId(match.id);
+        if (match.id !== previousJabatan) {
+          setGenerated(false);
+          setChecked({});
+        }
+      } else {
+        setJabatanId('');
+        setGenerated(false);
+        setChecked({});
+        setPrefillError(`Rencana untuk "${name}" belum tersedia. Pilih jabatan yang sesuai sebelum membuat rencana; rencana tersimpan tidak dihapus.`);
+      }
+    }
+    if (timeline && /^\d{4}-\d{2}-\d{2}$/.test(timeline)) {
+      setUjianDate(timeline);
+      if (timeline !== previousDate) setGenerated(false);
+    }
   }, []);
 
   const save = (updates: object) => {
@@ -367,7 +403,7 @@ export default function RencanaBelajarPage() {
   const handleGenerate = () => {
     if (!jabatanId || !ujianDate) return;
     setGenerated(true);
-    save({ jabatanId, ujianDate, jamPerHari, generated: true });
+    save({ jabatanId, ujianDate, jamPerHari, checked, generated: true });
   };
 
   const handleReset = () => {
@@ -384,6 +420,8 @@ export default function RencanaBelajarPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
+        <ProfileToolContext />
+        {prefillError && <p role="status" className="rounded-xl border border-amber-400/30 p-4 text-amber-200">{prefillError}</p>}
 
         {/* Hero */}
         <div className="text-center">

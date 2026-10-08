@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import SiapIndexHistory from '@/components/SiapIndexHistory';
+import ProfileToolContext from '@/components/ProfileToolContext';
 import {
   SIAP_HISTORY_KEY, appendSiapHistory, mergeSiapHistory, parseSiapHistory,
   type DimensionId, type SiapHistoryEntry,
@@ -190,6 +191,10 @@ export default function SIAPIndexPage() {
   const submissionLocked = useRef(false);
 
   useEffect(() => {
+    const jenjang = Number(new URLSearchParams(window.location.search).get('jenjang'));
+    if (Number.isInteger(jenjang) && jenjang >= 1 && jenjang <= 9) {
+      setLevel(jenjang <= 4 ? '1-4' : jenjang <= 6 ? '5-6' : '7-9');
+    }
     try {
       setHistory(parseSiapHistory(localStorage.getItem(SIAP_HISTORY_KEY)));
     } catch {
@@ -289,6 +294,7 @@ export default function SIAPIndexPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
+        <ProfileToolContext />
 
         {/* Hero */}
         <div className="text-center">

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import ProfileToolContext from '@/components/ProfileToolContext';
+import { jabatanCode, jabatanName } from '@/lib/professional-profile';
 import { useAuth } from '@/components/AuthProvider';
 
 // ──────────────────────────────────────────────────────────────
@@ -449,6 +451,7 @@ export default function DokumenPage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [savingDefault, setSavingDefault] = useState(false);
   const [defaultError, setDefaultError] = useState<string | null>(null);
+  const [prefillError, setPrefillError] = useState<string | null>(null);
   const [defaultToast, setDefaultToast] = useState<string | null>(null);
   const manualSelection = useRef(false);
   const defaultSavePending = useRef(false);
@@ -487,6 +490,22 @@ export default function DokumenPage() {
 
   // On mount: pre-select jabatan from the authenticated user's profile
   useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('jabatan')?.trim();
+    if (requested) {
+      // An explicit profile link takes priority over the account default.
+      manualSelection.current = true;
+      const checklistId = PROFILE_TO_CHECKLIST_MAP[jabatanCode(requested)] ?? PROFILE_TO_CHECKLIST_MAP[jabatanName(requested)];
+      const match = JABATAN_LIST.find(j =>
+        j.id === requested || j.id === checklistId || j.name === requested
+        || CHECKLIST_TO_PROFILE_MAP[j.id] === requested,
+      );
+      if (match) {
+        setActiveBidang(match.bidang);
+        setActiveJabatan(match);
+      } else {
+        setPrefillError(`Jabatan "${requested}" belum tersedia pada checklist ini. Pilih jabatan yang sesuai; pilihan default akun tidak diubah.`);
+      }
+    }
     async function preSelectFromProfile() {
       try {
         const res = await fetch('/api/auth?action=me', {
@@ -707,6 +726,8 @@ export default function DokumenPage() {
         </div>
       )}
       <div className="max-w-5xl mx-auto">
+        <ProfileToolContext />
+        {prefillError && <p role="status" className="mb-6 rounded-xl border border-amber-400/30 p-4 text-amber-200">{prefillError}</p>}
 
         {/* Header */}
         <div className="text-center mb-10">

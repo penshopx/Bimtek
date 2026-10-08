@@ -12,6 +12,7 @@ const personas = [
 
 const tools: Record<string, { icon: string; name: string; desc: string; href: string }[]> = {
   asesi: [
+    { icon: '👤', name: 'Profil SKK', desc: 'Simpan identitas profesional, SKK saat ini, dan target persiapan dalam satu tempat', href: '/profil-skk' },
     { icon: '🧠', name: 'Diagnostik Kompetensi', desc: 'Analisis gap KKNI dari profil pendidikan & pengalaman', href: '/diagnostik-kompetensi' },
     { icon: '🔍', name: 'Cek Kelayakan SKK', desc: 'Jabatan SKK mana yang bisa diambil sekarang', href: '/skk-coach/chat?agent=kelayakan' },
     { icon: '📋', name: 'Cari Jabatan SKK', desc: '67+ jabatan dengan persyaratan lengkap', href: '/sertifikasi' },
