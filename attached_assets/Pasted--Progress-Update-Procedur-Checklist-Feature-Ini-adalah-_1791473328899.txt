@@ -1,0 +1,78 @@
+# ✅ Progress Update: Procedur Checklist Feature
+
+Ini adalah perkembangan yang sangat positif. Tiga task berturut-turut selesai dan langsung masuk ke task berikutnya — ini menunjukkan ritme pengembangan yang sehat dan fokus.
+
+## 📊 Status Fitur Procedur Checklist
+
+| Task | Status | Fitur |
+|:---|:---|:---|
+| #108 | ✅ Selesai | Bookmark prosedur step tampil di halaman utama dengan card style |
+| #109 | ✅ Selesai | Bookmark bertahan setelah refresh + jump ke tab yang benar |
+| #110 | ✅ Selesai | Tombol reset progress checklist per metode |
+| **Aktif** | 🔄 Berjalan | **Verifikasi progress checklist bertahan setelah refresh** |
+
+---
+
+## 🧪 Checklist Pengujian: localStorage Persistence (Task Aktif)
+
+Berikut adalah skenario pengujian yang fokus pada **risiko nyata** yang sering merusak persistence localStorage:
+
+### **Skenario 1: Happy Path**
+- [ ] Buka metode (misal: "Permohonan Baru SBU")
+- [ ] Centang step 1, 2, 3
+- [ ] Refresh halaman (F5 / Ctrl+R)
+- [ ] **Ekspektasi**: Step 1, 2, 3 tetap tercentang
+
+### **Skenario 2: Multi-Method Isolation**
+- [ ] Buka Metode A, centang step 1-3
+- [ ] Buka Metode B, centang step 1-2
+- [ ] Kembali ke Metode A
+- [ ] **Ekspektasi**: Metode A masih step 1-3 (bukan tertimpa data Metode B)
+- [ ] Refresh halaman
+- [ ] **Ekspektasi**: Kedua metode mempertahankan progress masing-masing
+
+### **Skenario 3: Reset + Refresh**
+- [ ] Centang beberapa step
+- [ ] Klik tombol "Reset Progress" (fitur dari Task #110)
+- [ ] **Ekspektasi**: Semua centang hilang
+- [ ] Refresh halaman
+- [ ] **Ekspektasi**: Tetap kosong (reset benar-benar tersimpan, bukan hanya visual)
+
+### **Skenario 4: Edge Cases yang Sering Rusak**
+- [ ] **Data Korup**: Buka DevTools → Application → LocalStorage → ubah nilai key menjadi string invalid (misal: `{broken json`) → refresh halaman
+  - **Ekspektasi**: Aplikasi tidak crash, progress reset ke kosong, tidak ada error di console
+- [ ] **Key Kosong**: Hapus key dari localStorage via DevTools → refresh
+  - **Ekspektasi**: Checklist tampil kosong tanpa error
+- [ ] **Private/Incognito Mode**: Buka aplikasi di tab incognito → centang step → refresh
+  - **Ekspektasi**: Progress tetap bertahan selama tab belum ditutup (localStorage tersedia di incognito selama sesi aktif)
+
+### **Skenario 5: SSR Hydration (Jika Next.js)**
+- [ ] Refresh halaman dan perhatikan apakah ada warning di console: `Hydration failed because the initial UI does not match what was rendered on the server`
+  - **Ekspektasi**: Tidak ada hydration mismatch. Jika ada, berarti komponen membaca localStorage saat server-side render (yang tidak memiliki akses ke localStorage)
+
+---
+
+## 🔍 Catatan Teknis untuk Developer
+
+Jika ditemukan masalah, area yang paling sering menjadi penyebab:
+
+1. **Key Collision**: Pastikan key localStorage unik per metode, misalnya `gustafta_checklist_permohonan_baru` bukan hanya `checklist`
+2. **Read Timing**: Pastikan `localStorage.getItem()` dipanggil setelah `useEffect` (client-side), bukan saat render awal (server-side)
+3. **JSON Safety**: Bungkus `JSON.parse()` dalam try-catch untuk menangani data korup
+
+---
+
+## 🚀 Koneksi ke Visi Produk
+
+Fitur prosedur checklist ini adalah **wujud nyata** dari konsep "Compliance Co-Pilot" yang kita rancang di awal. Ketika pengguna (Kontraktor/Konsultan) membuka Gustafta dan melihat 10 tahap proses sertifikasi SBU (dari dokumen GAPENSI), mereka sekarang bisa:
+
+- ✅ Melacak progress mereka secara visual
+- ✅ Menandai langkah yang sudah selesai
+- ✅ Bookmark langkah kritis untuk referensi cepat
+- ✅ Reset dan mulai ulang untuk skema berbeda
+
+Ini adalah fondasi yang kuat sebelum nantinya ditambahkan fitur validasi AI per langkah (misal: "Step 3: Upload Dokumen — AI mendeteksi dokumen Anda belum lengkap").
+
+---
+
+Silakan lanjutkan pengujian. Jika Anda menemukan anomali (terutama di Skenario 4 atau 5), beri tahu saya detailnya.

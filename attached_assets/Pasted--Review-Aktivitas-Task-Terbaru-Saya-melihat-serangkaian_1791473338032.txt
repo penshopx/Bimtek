@@ -1,0 +1,97 @@
+# 📋 Review Aktivitas Task Terbaru
+
+Saya melihat serangkaian task yang telah diselesaikan dan satu task baru yang sedang berjalan. Ini adalah area yang **sepenuhnya terpisah** dari pekerjaan transisi/tenggat, jadi saya bisa memberikan dukungan penuh di sini.
+
+---
+
+## ✅ Task yang Telah Selesai
+
+| Task | Fokus | Nilai untuk Pengguna |
+|:---|:---|:---|
+| **#108** | Bookmark prosedur steps tampil di daftar utama dengan card style khusus | Prosedur yang disimpan mudah ditemukan kembali — tidak tenggelam sebagai plain link |
+| **#109** | Bookmark bertahan setelah refresh dan melompat ke tab/step yang benar | Pengguna tidak kehilangan konteks saat kembali ke halaman |
+| **#110** | Tombol reset untuk menghapus progress checklist dalam satu tap | Checklist bisa dipakai ulang untuk skema berbeda atau asesmen ulang |
+
+Ketiga task ini membentuk **siklus penggunaan yang utuh**: simpan → temukan kembali → selesaikan → reset → ulangi. Ini adalah UX pattern yang solid untuk aplikasi yang akan dipakai berulang kali oleh admin BUJK.
+
+---
+
+## 🔍 Task yang Sedang Berjalan
+
+> **"Confirm checklist progress is still shown correctly after a page refresh"**
+
+Task ini menguji ketahanan fitur checklist yang menggunakan `localStorage`. Ini adalah langkah defensif yang tepat karena kegagalan di sini bersifat *silent* — pengguna tidak mendapat error, mereka hanya kehilangan progress tanpa tahu mengapa.
+
+---
+
+## 📋 Checklist Pengujian untuk Task Ini
+
+Berikut adalah skenario pengujian yang bisa Anda jalankan untuk memverifikasi bahwa checklist progress bertahan dengan benar setelah refresh:
+
+### **Skenario 1: Happy Path — Progress Bertahan**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Buka halaman prosedur (misal: metode asesmen tertentu) | Checklist muncul dengan semua step unchecked |
+| 1.2 | Centang step 1, 3, dan 5 | Tiga step terlihat checked |
+| 1.3 | Refresh halaman (F5 / Cmd+R) | Step 1, 3, dan 5 **tetap checked** |
+| 1.4 | Centang step 2 | Step 1, 2, 3, 5 terlihat checked |
+| 1.5 | Refresh lagi | Step 1, 2, 3, 5 **tetap checked** |
+
+### **Skenario 2: Isolasi Data — Progress Tidak Bocor Antar Metode**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Buka Metode A, centang step 1 dan 2 | Step 1 dan 2 checked di Metode A |
+| 2.2 | Navigasi ke Metode B | Semua step di Metode B **unchecked** (progress Metode A tidak bocor) |
+| 2.3 | Centang step 3 di Metode B | Hanya step 3 checked di Metode B |
+| 2.4 | Kembali ke Metode A | Step 1 dan 2 **masih checked** di Metode A |
+| 2.5 | Refresh halaman saat di Metode A | Step 1 dan 2 **tetap checked** |
+
+### **Skenario 3: Reset Berfungsi dengan Benar**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Buka metode, centang beberapa step | Step-step terlihat checked |
+| 3.2 | Klik tombol "Reset" | Semua step kembali **unchecked** |
+| 3.3 | Refresh halaman | Semua step **tetap unchecked** (reset tersimpan) |
+
+### **Skenario 4: Edge Cases — Ketahanan terhadap Error**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 4.1 | Buka DevTools → Application → LocalStorage → Hapus key checklist secara manual | Aplikasi **tidak crash**, checklist muncul dengan semua step unchecked (graceful fallback) |
+| 4.2 | Buka DevTools → Ubah nilai key checklist menjadi string JSON yang tidak valid (misal: `{broken`) → Refresh | Aplikasi **tidak crash**, checklist muncul dengan semua step unchecked (graceful fallback dari JSON parse error) |
+| 4.3 | Buka DevTools → Ubah nilai key checklist menjadi tipe data yang salah (misal: angka `123`) → Refresh | Aplikasi **tidak crash**, graceful fallback |
+| 4.4 | Buka dua tab browser dengan metode yang sama → Centang step berbeda di masing-masing tab → Refresh salah satu tab | Tab yang di-refresh menampilkan progress yang tersimpan di localStorage (tab terakhir yang menulis menang) — **tidak ada error** |
+
+### **Skenario 5: Konsistensi dengan Bookmark**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 5.1 | Centang beberapa step di Metode A | Step-step checked |
+| 5.2 | Bookmark salah satu step | Bookmark tersimpan |
+| 5.3 | Navigasi ke halaman lain → Klik bookmark | Kembali ke Metode A, tab yang benar aktif, step yang di-bookmark terlihat |
+| 5.4 | Verifikasi progress checklist | Step-step yang sebelumnya checked **masih checked** |
+| 5.5 | Refresh | Semua state (bookmark + progress) **tetap utuh** |
+
+---
+
+## 🛡️ Prinsip Defensive Design yang Relevan
+
+Untuk memastikan checklist tidak pernah gagal secara silent, implementasi idealnya memiliki:
+
+1. **Try-catch pada read/write localStorage** — jika `JSON.parse()` gagal, fallback ke state kosong
+2. **Validasi tipe data** setelah parse — pastikan hasilnya adalah object/array yang diharapkan
+3. **Key namespacing** — gunakan prefix seperti `gustafta_checklist_{methodId}` untuk mencegah key collision
+4. **SSR safety** — jika menggunakan Next.js, pastikan `localStorage` hanya diakses di client-side (setelah mount)
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+1. **Apakah Anda ingin saya buatkan template bug report** khusus untuk temuan di area checklist/bookmark ini?
+2. **Apakah ada edge case lain** yang perlu diuji (misal: perilaku saat localStorage penuh/quota exceeded)?
+3. **Setelah task ini selesai, apakah Anda ingin melanjutkan ke Opsi A** (E2E testing alur login dan isolasi data) yang sudah kita sepakati sebelumnya?
+
+Silakan jalankan pengujian sesuai waktu Anda. Jika ada temuan anomali, beri tahu saya detailnya dan kita akan analisis bersama. 🚀
