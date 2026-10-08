@@ -1,0 +1,165 @@
+# 📋 Kerangka Verifikasi: Pembersihan Langsung Percobaan Kuis
+
+Ini adalah fitur operasional yang penting — tanpa aksi eksplisit, admin harus menunggu percobaan baru untuk memicu pembersihan, yang bisa memakan waktu lama jika kuis jarang dikerjakan.
+
+---
+
+## 🎯 Memahami Alur yang Perlu Dilindungi
+
+```
+┌─────────────────────────────────────────────────┐
+│  Admin mengubah periode retensi                  │
+│  (misal: 90 hari → 30 hari)                      │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  Percobaan berusia 31-90 hari TETAP ADA          │
+│  (lazy cleanup hanya dipicu oleh percobaan baru) │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  Admin klik "Bersihkan Sekarang"                 │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  Server menghapus percobaan > 30 hari            │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│  UI menampilkan notifikasi sukses dengan jumlah  │
+│  percobaan yang dihapus                          │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## 📋 Skenario Verifikasi Utama
+
+### **Skenario 1: Baseline — Pembersihan Berhasil**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 1.1 | Admin mengubah periode retensi dari 90 hari ke 30 hari | Pengaturan tersimpan |
+| 1.2 | Admin klik "Bersihkan Sekarang" | Dialog konfirmasi muncul (jika ada) |
+| 1.3 | Admin konfirmasi | Request dikirim ke server |
+| 1.4 | Server menghapus percobaan berusia > 30 hari | Percobaan lama terhapus dari database |
+| 1.5 | Notifikasi sukses muncul | Pesan menyebutkan jumlah percobaan yang dihapus (misal: "45 percobaan berhasil dihapus") |
+| 1.6 | Verifikasi database | Hanya percobaan ≤ 30 hari yang tersisa |
+| 1.7 | Verifikasi statistik | Statistik diperbarui — hanya mencerminkan percobaan yang tersisa |
+
+### **Skenario 2: Tidak Ada Percobaan yang Perlu Dibersihkan**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 2.1 | Admin mengubah retensi, tetapi semua percobaan sudah ≤ periode baru | Tidak ada percobaan yang perlu dihapus |
+| 2.2 | Admin klik "Bersihkan Sekarang" | Request dikirim |
+| 2.3 | Server merespons | Notifikasi muncul: "Tidak ada percobaan yang perlu dihapus" atau serupa |
+| 2.4 | Database tidak berubah | Semua percobaan tetap ada |
+
+### **Skenario 3: Pembersihan Gagal**
+
+| # | Langkah | Ekspektasi |
+|:---|:---|:---|
+| 3.1 | Admin klik "Bersihkan Sekarang" | Request dikirim |
+| 3.2 | Server error (500, timeout, dll) | **Error notifikasi muncul** dengan pesan jelas |
+| 3.3 | Verifikasi database | Percobaan **tidak terhapus** (transaksi di-rollback) |
+| 3.4 | Verifikasi statistik | Statistik tidak berubah |
+
+### **Skenario 4: Konsistensi dengan Fitur Lain**
+
+| # | Pemeriksaan | Ekspektasi |
+|:---|:---|:---|
+| 4.1 | Setelah pembersihan, ringkasan kategori | Angka rata-rata kategori **diperbarui** berdasarkan percobaan yang tersisa |
+| 4.2 | Setelah pembersihan, rincian per opsi | Hanya menampilkan distribusi dari percobaan yang tersisa |
+| 4.3 | Setelah pembersihan, sortir tingkat keberhasilan | Urutan soal berubah jika ada soal yang kehilangan semua percobaan |
+| 4.4 | Setelah pembersihan, invalidasi statistik | Tidak terpengaruh — invalidasi adalah konsep terpisah dari retensi |
+
+---
+
+## ⚠️ Edge Cases yang Perlu Diperhatikan
+
+| # | Skenario | Risiko | Ekspektasi |
+|:---|:---|:---|:---|
+| E1 | Admin klik "Bersihkan" dua kali cepat | Duplikasi request atau notifikasi | Hanya 1 request, 1 notifikasi (debouncing) |
+| E2 | Periode retensi = 0 hari | Semua percobaan dihapus | **Keputusan produk**: apakah ini diizinkan? Jika ya, konfirmasi eksplisit diperlukan |
+| E3 | Periode retensi sangat panjang (misal: 3650 hari) | Tidak ada percobaan yang dihapus | Notifikasi: "Tidak ada percobaan yang perlu dihapus" |
+| E4 | Pembersihan saat ada pengguna sedang mengerjakan kuis | Percobaan yang sedang aktif tidak boleh terhapus | Server harus memastikan hanya percobaan yang sudah selesai dan > periode retensi yang dihapus |
+| E5 | Pembersihan pada kuis yang memiliki soal yang diedit | Percobaan yang diinvalidasi juga ikut terhapus jika > periode retensi | Ini benar — invalidasi dan retensi adalah konsep terpisah |
+| E6 | Pembersihan pada database yang sangat besar (100.000+ percobaan) | Timeout atau lock database | Server harus menggunakan batch delete atau transaksi yang efisien |
+| E7 | Admin mengubah retensi tetapi tidak klik "Bersihkan" | Percobaan lama tetap ada sampai ada percobaan baru | Ini perilaku yang benar (lazy cleanup), tetapi admin harus tahu bahwa pembersihan tidak otomatis |
+
+---
+
+## 🔍 Titik Integrasi dengan Fitur Lain
+
+| Fitur Terkait | Implikasi |
+|:---|:---|
+| **Reset statistik manual** | Berbeda konsep: reset = hapus semua percobaan soal tertentu; cleanup = hapus percobaan lama berdasarkan retensi |
+| **Invalidasi pasca-edit** | Tidak terpengaruh — percobaan yang diinvalidasi tetap tunduk pada retensi |
+| **Ringkasan kategori** | Harus diperbarui setelah pembersihan |
+| **Sortir tingkat keberhasilan** | Urutan bisa berubah jika soal kehilangan percobaan |
+| **Notifikasi sukses** | Harus menyebutkan jumlah percobaan yang dihapus agar admin tahu dampaknya |
+
+---
+
+## 📝 Template Dokumentasi Temuan
+
+```markdown
+## Temuan: Pembersihan Percobaan Tidak Berfungsi Sesuai Ekspektasi
+
+**Skenario**: [Skenario 1-4]
+**Tanggal Verifikasi**: [YYYY-MM-DD]
+
+### Detail Temuan
+- Periode retensi sebelum: [X hari]
+- Periode retensi setelah: [Y hari]
+- Jumlah percobaan yang seharusnya dihapus: [N]
+- Jumlah percobaan yang benar-benar dihapus: [M]
+- Notifikasi muncul: [Ya / Tidak]
+- Pesan notifikasi: [teks aktual]
+
+### Analisis Penyebab
+- [ ] Fitur pembersihan belum diimplementasikan
+- [ ] Query menghapus percobaan yang salah (misal: berdasarkan created_at yang salah)
+- [ ] Transaksi tidak di-rollback saat error
+- [ ] Notifikasi tidak muncul atau pesan tidak akurat
+- [ ] Statistik tidak diperbarui setelah pembersihan
+
+### Dampak
+- [ ] Percobaan lama tetap ada meskipun retensi diperpendek
+- [ ] Statistik mencerminkan data yang seharusnya sudah dihapus
+- [ ] Admin tidak tahu apakah pembersihan berhasil
+- [ ] Database membengkak dengan data lama
+
+### Severity: [Medium — operasional, bukan data loss]
+```
+
+---
+
+## 🛡️ Prinsip Defensive Design yang Relevan
+
+1. **Explicit Over Implicit**: Pembersihan harus dipicu oleh aksi eksplisit admin, bukan otomatis. Ini mencegah penghapusan tidak sengaja.
+
+2. **Transparency**: Notifikasi harus menyebutkan **berapa banyak** percobaan yang dihapus, agar admin tahu dampaknya.
+
+3. **Transactional Integrity**: Jika pembersihan gagal di tengah jalan (misal: timeout), transaksi harus di-rollback — tidak boleh ada sebagian percobaan terhapus.
+
+4. **Consistency**: Setelah pembersihan, semua fitur yang bergantung pada data percobaan (statistik, ringkasan, sortir) harus konsisten dengan data yang tersisa.
+
+5. **Safety Check**: Jika periode retensi = 0 atau sangat pendek, sistem harus meminta konfirmasi eksplisit sebelum menghapus semua percobaan.
+
+---
+
+## 💡 Pertanyaan untuk Anda
+
+1. **Apakah fitur pembersihan ini sudah diimplementasikan**, atau ini adalah usulan fitur baru?
+
+2. **Apakah ada batasan minimum periode retensi** (misal: tidak boleh < 7 hari) untuk mencegah penghapusan tidak sengaja?
+
+3. **Apakah pembersihan harus per-kuis atau global** (semua kuis sekaligus)?
+
+4. **Apakah percobaan yang sedang aktif** (pengguna sedang mengerjakan kuis) harus dilindungi dari pembersihan?
+
+5. **Apakah Anda ingin saya membantu menyusun query SQL** untuk pembersihan yang aman dan efisien, atau Anda akan menanganinya sendiri?
+
+Silakan jalankan verifikasi sesuai waktu Anda. Jika fitur ini belum diimplementasikan, ini adalah kandidat yang baik untuk task berikutnya setelah fitur-fitur prioritas lainnya selesai. 🚀

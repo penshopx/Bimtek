@@ -1,0 +1,47 @@
+# 📋 Pemahaman Task: Pembersihan Langsung Percobaan Kuis
+
+Saya memahami ini sebagai deskripsi task untuk memungkinkan admin menerapkan kebijakan retensi baru secara langsung, bukan menunggu percobaan berikutnya memicu pembersihan otomatis.
+
+---
+
+## 🎯 Inti Masalah
+
+- **Perilaku saat ini**: Periode retensi hanya ditegakkan saat percobaan baru dicatat (lazy cleanup)
+- **Celah**: Ketika admin memperpendek retensi, percobaan lama tetap ada sampai ada aktivitas baru
+- **Solusi yang diusulkan**: Aksi eksplisit "Bersihkan Sekarang" untuk menerapkan kebijakan segera
+
+---
+
+## 🔍 Poin Verifikasi Kunci
+
+| # | Aspek | Yang Perlu Dipastikan |
+|:---|:---|:---|
+| 1 | **Konsistensi retensi** | Pembersihan manual menggunakan periode retensi yang **sama** dengan yang ditegakkan saat percobaan baru dicatat |
+| 2 | **Akurasi jumlah** | Notifikasi menyebutkan jumlah percobaan yang benar-benar dihapus |
+| 3 | **Integritas transaksi** | Jika pembersihan gagal di tengah jalan, tidak ada percobaan yang terhapus sebagian |
+| 4 | **Konsistensi statistik** | Setelah pembersihan, statistik/ringkasan kategori mencerminkan data yang tersisa |
+| 5 | **Pencegahan duplikasi** | Klik cepat tidak menyebabkan multiple request atau notifikasi |
+| 6 | **Feedback yang jelas** | Admin tahu apakah pembersihan berhasil, gagal, atau tidak ada yang perlu dibersihkan |
+
+---
+
+## ⚠️ Pertimbangan yang Perlu Diputuskan
+
+- **Cakupan**: Per-kuis atau global (semua kuis)?
+- **Batasan minimum retensi**: Apakah ada batas bawah untuk mencegah penghapusan tidak sengaja?
+- **Percobaan aktif**: Apakah percobaan yang sedang berlangsung dilindungi?
+- **Batasan akses**: Apakah semua admin bisa melakukan ini, atau hanya role tertentu?
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode atau SQL
+- ✅ Tidak akan membuat kerangka verifikasi berlebihan
+- ✅ Tidak akan menganggap task ini sudah selesai atau belum dimulai
+- ✅ Tidak akan mengubah kode atau menjalankan pengujian
+- ✅ Menunggu konfirmasi Anda tentang status implementasi dan prioritas
+
+---
+
+Silakan beri tahu apakah ada aspek spesifik yang perlu saya bantu analisis, atau lanjutkan sesuai alur kerja Anda. 🚀
