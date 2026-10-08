@@ -1,0 +1,83 @@
+# ✅ Lima Perbedaan dan Dua Penajaman Diterima
+
+Terima kasih atas pencocokan yang sangat presisi antara kerangka analisis saya dan implementasi aktual. Saya mengakui bahwa kerangka saya sebelumnya mengandung asumsi yang tidak sesuai dengan kode yang sedang Anda periksa. Berikut rangkuman koreksi dan pemahaman yang diperbaiki:
+
+---
+
+## 🎯 Lima Perbedaan yang Mengubah Pemahaman
+
+| No | Asumsi Saya | Kondisi Aktual di Kode |
+|:---|:---|:---|
+| 1 | Invalidasi berdasarkan perbandingan waktu edit vs percobaan terakhir | Invalidasi **ditandai pada setiap catatan percobaan** secara individual |
+| 2 | Edit metadata / simpan tanpa perubahan tidak menginvalidasi | Jalur penyimpanan saat ini **tetap menginvalidasi percobaan**, belum membedakan perubahan konten vs metadata |
+| 3 | Rincian per opsi disembunyikan berdasarkan flag global | Server **mengecualikan percobaan yang diinvalidasi**; UI menyembunyikan rincian jika masih ada percobaan lama |
+| 4 | Persentase keberhasilan hanya mencakup percobaan valid | Persentase keberhasilan **masih mencakup seluruh percobaan termasuk yang diinvalidasi** — cakupan berbeda dari rincian per opsi |
+| 5 | Ada mekanisme ambang percobaan baru untuk menghilangkan peringatan otomatis | **Belum terlihat mekanisme ambang** untuk pemulihan otomatis |
+
+---
+
+## 📋 Dua Skenario yang Harus Di-reklasifikasi
+
+| Skenario di Checklist Saya | Status Sebenarnya |
+|:---|:---|
+| "Warning hilang setelah cukup percobaan baru terkumpul" | **Usulan perilaku** — bukan kemampuan yang sudah tersedia |
+| "Edit metadata tanpa perubahan konten tidak menginvalidasi" | **Usulan perilaku** — bukan kemampuan yang sudah tersedia |
+
+Kedua skenario ini tidak boleh dimasukkan sebagai "verifikasi fitur yang ada", melainkan sebagai **usulan pengembangan** jika memang diperlukan.
+
+---
+
+## 🔍 Dua Penajaman yang Saya Catat
+
+### **Penajaman 1: Distribusi Baru dengan Angka Sama ≠ Otomatis Kegagalan**
+
+Saya mengakui bahwa jika distribusi per-opsi setelah edit menunjukkan angka yang sama dengan sebelum edit, itu **bukan bukti otomatis** bahwa invalidasi gagal. Yang harus diperiksa adalah **asal percobaan** (apakah dari versi soal lama atau versi soal baru).
+
+**Implikasi**: Saya tidak boleh menyimpulkan "data lama masih tampil" hanya berdasarkan kemiripan angka. Perlu verifikasi sumber percobaan.
+
+### **Penajaman 2: Severity Tidak Otomatis Critical**
+
+Masalah statistik menyesatkan tidak otomatis berstatus Critical. Tingkat dampak harus dinilai berdasarkan:
+- Bagaimana admin menggunakan informasi tersebut
+- Cakupan keputusan yang diambil berdasarkan data tersebut
+- Apakah ada mekanisme koreksi setelahnya
+
+**Implikasi**: Saya tidak boleh langsung memberi label "Critical" pada temuan di area ini tanpa konteks penggunaan.
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode implementasi invalidasi
+- ✅ Tidak akan membuat pengujian ulang atau pekerjaan duplikat
+- ✅ Tidak akan menganggap skenario "pemulihan otomatis" dan "edit metadata tanpa invalidasi" sebagai fitur yang sudah ada
+- ✅ Tidak akan menyimpulkan kegagalan invalidasi hanya berdasarkan kemiripan angka distribusi
+- ✅ Tidak akan memberi label severity tanpa konteks penggunaan
+- ✅ Mengakui bahwa ini adalah **hasil pembacaan kode, bukan hasil pengujian langsung**
+- ✅ Menunggu hasil pengujian aktual Anda sebelum memberikan analisis lebih lanjut
+
+---
+
+## 📋 Status Final yang Saya Akui
+
+| Aspek | Status |
+|:---|:---|
+| Perbaikan jenjang & konsistensi payload | ✅ Teruji otomatis |
+| Respons AI sungguhan | ⏳ Terhambat (HTTP 429, penyebab belum pasti) |
+| Ketersediaan skema resmi | ⏳ Belum validasi |
+| Kebenaran substansi soal | ⏳ Belum validasi |
+| Invalidasi statistik pasca-edit | 📝 **Pembacaan kode selesai** — 5 perbedaan teridentifikasi, 2 usulan perilaku tercatat |
+| Pengujian langsung invalidasi | ⏳ Sedang dikerjakan oleh Anda |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada pada giliran ini |
+
+---
+
+## 💡 Posisi Saya Selanjutnya
+
+Saya menunggu hasil pengujian langsung Anda. Ketika Anda kembali dengan temuan aktual, saya siap membantu:
+
+1. **Menganalisis temuan** berdasarkan pemahaman yang sudah diperbaiki ini
+2. **Mendiskusikan dampak** dengan severity yang sesuai konteks
+3. **Membedakan** antara fitur yang sudah ada vs usulan pengembangan baru
+
+Silakan lanjutkan sesuai waktu Anda. 🚀
