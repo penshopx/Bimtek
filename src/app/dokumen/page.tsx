@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/components/AuthProvider';
 
 // ──────────────────────────────────────────────────────────────
 // Data: jabatan & document requirements
@@ -362,8 +363,8 @@ const JABATAN_LIST: Jabatan[] = [
   },
 ];
 
-// Explicit mapping from SKK_JABATAN profile IDs → JABATAN_LIST checklist IDs.
-// Only includes roles with a clear, validated correspondence. IDs not listed
+// Explicit mapping from saved profile values → JABATAN_LIST checklist IDs.
+// Only includes roles with an explicit correspondence. Values not listed
 // here produce no pre-selection (empty state / user picks manually).
 const PROFILE_TO_CHECKLIST_MAP: Record<string, string> = {
   // ── Manajemen Pelaksanaan ──────────────────────────────────────
@@ -376,7 +377,17 @@ const PROFILE_TO_CHECKLIST_MAP: Record<string, string> = {
   MP007: 'qs',               // Quantity Surveyor / Cost Estimator
   // ── Jalan (Sipil) ─────────────────────────────────────────────
   F001:  'ahli-sipil-madya', // Ahli Madya Teknik Jalan → Ahli Teknik Jalan – Madya
+  // These checklist roles have no exact ID in SKK_JABATAN. Preserve their
+  // explicit names rather than assigning an unrelated certification role.
+  'Pelaksana Lapangan Pekerjaan Jembatan': 'pelaks-jembatan',
+  'Teknisi Survey Pemetaan': 'surveyor',
+  'Drafter / Juru Gambar Sipil': 'drafter',
+  'Ahli K3 Konstruksi': 'k3',
 };
+
+const CHECKLIST_TO_PROFILE_MAP = Object.fromEntries(
+  Object.entries(PROFILE_TO_CHECKLIST_MAP).map(([profileId, checklistId]) => [checklistId, profileId]),
+);
 
 // Group jabatan by bidang
 const BIDANG_LIST = ['Sipil', 'Manajemen Pelaksanaan'];
@@ -422,6 +433,7 @@ function getAuthHeaders(): Record<string, string> {
 // ──────────────────────────────────────────────────────────────
 
 export default function DokumenPage() {
+  const { user, isLoading: authLoading, updateProfile } = useAuth();
   const [activeBidang, setActiveBidang] = useState<string>('Sipil');
   const [activeJabatan, setActiveJabatan] = useState<Jabatan | null>(null);
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({});
@@ -431,8 +443,45 @@ export default function DokumenPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedJabatan, setSavedJabatan] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [savingDefault, setSavingDefault] = useState(false);
+  const [defaultError, setDefaultError] = useState<string | null>(null);
+  const [defaultToast, setDefaultToast] = useState<string | null>(null);
+  const manualSelection = useRef(false);
+  const defaultSavePending = useRef(false);
 
   const jabatanInBidang = JABATAN_LIST.filter((j) => j.bidang === activeBidang);
+  const selectedProfileJabatan = activeJabatan ? CHECKLIST_TO_PROFILE_MAP[activeJabatan.id] : null;
+  const canSaveDefault = !!user && !authLoading && profileLoaded && manualSelection.current
+    && !!selectedProfileJabatan && selectedProfileJabatan !== savedJabatan;
+
+  useEffect(() => {
+    if (!defaultToast) return;
+    const timer = window.setTimeout(() => setDefaultToast(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [defaultToast]);
+
+  const saveDefaultJabatan = async () => {
+    if (!canSaveDefault || !activeJabatan || defaultSavePending.current) return;
+    const jabatanSkk = selectedProfileJabatan!;
+    const name = activeJabatan.name;
+    defaultSavePending.current = true;
+    setSavingDefault(true);
+    setDefaultError(null);
+    setDefaultToast(null);
+    try {
+      const success = await updateProfile({ jabatanSkk });
+      if (!success) throw new Error('Profile update failed');
+      setSavedJabatan(jabatanSkk);
+      setDefaultToast(`${name} berhasil disimpan sebagai jabatan default Anda.`);
+    } catch {
+      setDefaultError('Jabatan default belum tersimpan. Silakan coba lagi.');
+    } finally {
+      defaultSavePending.current = false;
+      setSavingDefault(false);
+    }
+  };
 
   // On mount: pre-select jabatan from the authenticated user's profile
   useEffect(() => {
@@ -444,15 +493,17 @@ export default function DokumenPage() {
         if (!res.ok) return;
         const data = await res.json();
         const jabatanSkk: string | null | undefined = data?.jabatanSkk ?? data?.user?.jabatanSkk;
+        setSavedJabatan(jabatanSkk?.trim() || null);
+        setProfileLoaded(true);
         if (!jabatanSkk) return;
 
-        // Look up the checklist entry via the explicit profile-id → checklist-id map.
-        // Unrecognised profile IDs produce no pre-selection (empty state).
+        // Look up the checklist entry via the explicit profile → checklist map.
+        // Unrecognised values produce no pre-selection (empty state).
         const checklistId = PROFILE_TO_CHECKLIST_MAP[jabatanSkk.trim()];
         if (!checklistId) return;
 
         const match = JABATAN_LIST.find((j) => j.id === checklistId);
-        if (match) {
+        if (match && !manualSelection.current) {
           setActiveBidang(match.bidang);
           setActiveJabatan(match);
         }
@@ -461,7 +512,7 @@ export default function DokumenPage() {
       }
     }
     preSelectFromProfile();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load saved state when jabatan changes
   const loadChecklist = useCallback(async (jabatan: Jabatan) => {
@@ -605,6 +656,11 @@ export default function DokumenPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
+      {defaultToast && (
+        <div role="status" className="fixed bottom-6 right-4 left-4 sm:left-auto z-50 max-w-lg rounded-xl border border-green-500/40 bg-slate-900 px-5 py-4 text-sm text-green-300 shadow-lg">
+          {defaultToast}
+        </div>
+      )}
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
@@ -630,6 +686,8 @@ export default function DokumenPage() {
             <button
               key={b}
               onClick={() => {
+                manualSelection.current = true;
+                setDefaultError(null);
                 setActiveBidang(b);
                 setActiveJabatan(null);
                 setCheckedMap({});
@@ -659,6 +717,8 @@ export default function DokumenPage() {
                   <button
                     key={j.id}
                     onClick={() => {
+                      manualSelection.current = true;
+                      setDefaultError(null);
                       if (activeJabatan?.id !== j.id) {
                         setActiveJabatan(j);
                         setCheckedMap({});
@@ -703,6 +763,17 @@ export default function DokumenPage() {
                       {activeJabatan.skema && (
                         <p className="text-slate-500 text-xs mt-0.5">{activeJabatan.skema}</p>
                       )}
+                      {canSaveDefault && (
+                        <button
+                          type="button"
+                          onClick={saveDefaultJabatan}
+                          disabled={savingDefault}
+                          className="mt-3 text-sm text-amber-300 underline underline-offset-4 hover:text-amber-200 disabled:opacity-50 disabled:cursor-wait"
+                        >
+                          {savingDefault ? 'Menyimpan jabatan...' : 'Jadikan jabatan default saya'}
+                        </button>
+                      )}
+                      {defaultError && <p role="alert" className="mt-2 text-sm text-red-300">{defaultError}</p>}
                     </div>
                     <div className="text-right">
                       <span className="text-3xl font-bold text-amber-400">{progressPct}%</span>

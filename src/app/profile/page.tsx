@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
   // Populate SKK fields from user profile when editing starts
   const startEditSkk = () => {
-    setSkkBidang((user?.bidang as Bidang) || '');
+    setSkkBidang(getJabatanById(user?.jabatanSkk || '')?.bidang || (user?.bidang as Bidang) || '');
     setSkkJabatanId(user?.jabatanSkk || '');
     setSkkKualifikasi((user?.kualifikasiSkk as Kualifikasi) || '');
     setEditingSkk(true);

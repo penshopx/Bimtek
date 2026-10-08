@@ -224,10 +224,35 @@ export async function POST(request: NextRequest) {
     
     case 'update': {
       const { userId, updates } = body;
-      
+      const sessionId = request.headers.get('x-session-id') || request.cookies.get('sessionId')?.value;
+      if (!sessionId) {
+        return NextResponse.json({ success: false, message: 'Silakan masuk kembali.' }, { status: 401 });
+      }
+      const [session] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, sessionId));
+      if (!session || new Date(session.expiresAt) <= new Date()) {
+        return NextResponse.json({ success: false, message: 'Sesi login tidak berlaku.' }, { status: 401 });
+      }
+      if (userId && userId !== session.userId) {
+        return NextResponse.json({ success: false, message: 'Tidak dapat mengubah profil pengguna lain.' }, { status: 403 });
+      }
+      const allowedFields = new Set([
+        'name', 'avatar', 'phone', 'company', 'position', 'bidang', 'jabatanSkk',
+        'kualifikasiSkk', 'skkCertificateLevel', 'skkIssuedAt',
+      ]);
+      if (!updates || typeof updates !== 'object' || Array.isArray(updates)
+        || Object.keys(updates).length === 0
+        || Object.entries(updates).some(([key, value]) =>
+          !allowedFields.has(key) || (value !== null && typeof value !== 'string')
+          || (key === 'name' && (typeof value !== 'string' || !value.trim())))) {
+        return NextResponse.json({ success: false, message: 'Data pembaruan profil tidak valid.' }, { status: 400 });
+      }
+      const [user] = await db.select().from(schema.users).where(eq(schema.users.id, session.userId));
+      if (!user) {
+        return NextResponse.json({ success: false, message: 'Pengguna tidak ditemukan.' }, { status: 401 });
+      }
       await db.update(schema.users)
         .set({ ...updates, updatedAt: new Date().toISOString() })
-        .where(eq(schema.users.id, userId));
+        .where(eq(schema.users.id, session.userId));
       
       return NextResponse.json({ success: true });
     }

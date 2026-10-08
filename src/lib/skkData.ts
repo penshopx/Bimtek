@@ -84,13 +84,22 @@ export const SUBKLASIFIKASI_LABELS: Record<string, string> = {
   LK: 'LKUT',
 };
 
+// Preparation targets absent from the legacy catalog. These are learning
+// preferences, not verified official schemes or catalog-ID aliases.
+const CHECKLIST_LEARNING_TARGETS: SkkJabatan[] = [
+  { id: 'Pelaksana Lapangan Pekerjaan Jembatan', name: 'Pelaksana Lapangan Pekerjaan Jembatan', level: 'Jenjang perlu dikonfirmasi sesuai skema LSP', subklasifikasi: 'Perlu konfirmasi', bidang: 'Sipil', relatedCategories: ['Jalan', 'Sipil Gedung', 'K3', 'Quality'] },
+  { id: 'Teknisi Survey Pemetaan', name: 'Teknisi Survey Pemetaan', level: 'Jenjang perlu dikonfirmasi sesuai skema LSP', subklasifikasi: 'Perlu konfirmasi', bidang: 'Sipil', relatedCategories: ['Jalan', 'Sipil Gedung', 'Digital'] },
+  { id: 'Drafter / Juru Gambar Sipil', name: 'Drafter / Juru Gambar Sipil', level: 'Jenjang perlu dikonfirmasi sesuai skema LSP', subklasifikasi: 'Perlu konfirmasi', bidang: 'Sipil', relatedCategories: ['Sipil Gedung', 'Digital'] },
+  { id: 'Ahli K3 Konstruksi', name: 'Ahli K3 Konstruksi', level: 'Jenjang perlu dikonfirmasi sesuai skema LSP', subklasifikasi: 'Perlu konfirmasi', bidang: 'Manajemen Pelaksanaan', relatedCategories: ['K3', 'Safety', 'Lingkungan'] },
+];
+
 export function getJabatanById(id: string): SkkJabatan | undefined {
-  return SKK_JABATAN.find(j => j.id === id);
+  return SKK_JABATAN.find(j => j.id === id) ?? CHECKLIST_LEARNING_TARGETS.find(j => j.id === id);
 }
 
 /** Filter jabatan by bidang */
 export function getJabatanByBidang(bidang: Bidang): SkkJabatan[] {
-  return SKK_JABATAN.filter(j => j.bidang === bidang);
+  return [...SKK_JABATAN, ...CHECKLIST_LEARNING_TARGETS].filter(j => j.bidang === bidang);
 }
 
 /** Given a jabatan id, return its related BIMTEK categories */

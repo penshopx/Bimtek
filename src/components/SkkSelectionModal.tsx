@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { SKK_JABATAN, BIDANG_OPTIONS, KUALIFIKASI_OPTIONS, getJabatanByBidang } from '@/lib/skkData';
+import { BIDANG_OPTIONS, KUALIFIKASI_OPTIONS, getJabatanByBidang, getJabatanById } from '@/lib/skkData';
 import type { Bidang, Kualifikasi } from '@/lib/skkData';
 
 export function SkkSelectionModal() {
@@ -55,7 +55,7 @@ export function SkkSelectionModal() {
     setSaving(false);
   };
 
-  const selectedJabatan = SKK_JABATAN.find(j => j.id === jabatanId);
+  const selectedJabatan = getJabatanById(jabatanId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">

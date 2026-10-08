@@ -161,6 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return false;
+    const sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) return false;
 
     const previousUser = user;
     const updatedUser = { ...user, ...updates };
@@ -170,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch('/api/auth?action=update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
         body: JSON.stringify({ userId: user.id, updates }),
       });
       if (!res.ok) {

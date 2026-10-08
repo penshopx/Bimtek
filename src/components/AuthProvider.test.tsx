@@ -38,10 +38,10 @@ function hashPassword(value: string) {
   return Math.abs(hash).toString(16);
 }
 
-async function request(action: string, body: Record<string, unknown>) {
+async function request(action: string, body: Record<string, unknown>, headers: HeadersInit = {}) {
   return POST(new NextRequest(`http://auth.test/api/auth?action=${action}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(headers)) },
     body: JSON.stringify(body),
   }));
 }
@@ -115,7 +115,7 @@ beforeEach(async () => {
     const action = url.searchParams.get('action')!;
     const body = JSON.parse(init!.body as string);
     requests.push({ action, body });
-    return request(action, body);
+    return request(action, body, init?.headers);
   }) as typeof fetch;
 });
 

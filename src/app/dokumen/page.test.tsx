@@ -8,6 +8,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import * as schema from '@/db/schema';
 import DokumenPage from './page';
+import { AuthProvider } from '@/components/AuthProvider';
+import { getJabatanById, getJabatanByBidang, getRelatedCategories, getRelatedQuizCategories } from '@/lib/skkData';
 
 // Use the real login and me handlers, with an isolated database, not .data/app.db.
 const client = createClient({ url: ':memory:' });
@@ -42,6 +44,8 @@ const mappings = [
 let browser: Window;
 let root: Root | undefined;
 let meFinished: boolean;
+let updateFailure: 'server' | 'network' | null;
+let updateRequests: Record<string, unknown>[];
 const checklistRequests: { id: string; sessionId: string | null }[] = [];
 const globalKeys = ['window', 'document', 'navigator', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT'] as const;
 const originalGlobals = new Map(globalKeys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
@@ -75,7 +79,7 @@ async function mountPage() {
   const container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
-  await act(async () => { root!.render(<DokumenPage />); });
+  await act(async () => { root!.render(<AuthProvider><DokumenPage /></AuthProvider>); });
   for (let attempt = 0; attempt < 100; attempt++) {
     if (meFinished && !document.body.textContent?.includes('Memuat checklist...')) break;
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 5)); });
@@ -138,11 +142,24 @@ beforeEach(async () => {
     Object.defineProperty(globalThis, key, { configurable: true, writable: true, value: globals[key] });
   }
   meFinished = false;
+  updateFailure = null;
+  updateRequests = [];
   checklistRequests.length = 0;
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://dokumen.test');
     const headers = new Headers(init?.headers);
     if (url.pathname === '/api/auth') {
+      if (init?.method === 'POST') {
+        const body = JSON.parse(init.body as string);
+        if (url.searchParams.get('action') === 'update') {
+          updateRequests.push(body);
+          if (updateFailure === 'server') return Response.json({ success: false }, { status: 500 });
+          if (updateFailure === 'network') throw new Error('Network unavailable');
+        } else {
+          expect(url.searchParams.get('action')).toBe('verify');
+        }
+        return POST(new NextRequest(url, { method: 'POST', headers, body: init.body }));
+      }
       expect(url.searchParams.get('action')).toBe('me');
       expect(headers.get('x-session-id')).toBe(localStorage.getItem('sessionId'));
       try {
@@ -161,6 +178,154 @@ beforeEach(async () => {
     // Checklist persistence is outside these pre-selection tests.
     return Response.json({ items: [] });
   }) as typeof fetch;
+});
+
+const defaultLabel = 'Jadikan jabatan default saya';
+
+function defaultButton() {
+  return Array.from(document.querySelectorAll('button'))
+    .find(button => button.textContent === defaultLabel);
+}
+
+async function clickButton(text: string) {
+  const button = Array.from(document.querySelectorAll('button'))
+    .find(button => button.textContent?.includes(text));
+  expect(button).toBeDefined();
+  await act(async () => { button!.click(); });
+}
+
+describe('/dokumen save default jabatan', () => {
+  it('only offers saving a different manually selected role, and keeps the new default after remount', async () => {
+    await login('MP001');
+    await mountPage();
+    expect(defaultButton()).toBeUndefined();
+    await clickButton('Pelaksana Lapangan Pekerjaan Jalan');
+    expect(defaultButton()).toBeDefined();
+    await clickButton(defaultLabel);
+    expect(updateRequests).toEqual([{ userId, updates: { jabatanSkk: 'MP002' } }]);
+    expect(document.querySelector('[role="status"]')?.textContent).toContain('berhasil disimpan');
+    expect(defaultButton()).toBeUndefined();
+    expect(JSON.parse(localStorage.getItem('user')!).jabatanSkk).toBe('MP002');
+    const [saved] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+    expect(saved.jabatanSkk).toBe('MP002');
+
+    await act(async () => { root!.unmount(); });
+    root = undefined;
+    meFinished = false;
+    await mountPage();
+    expect(highlightedJabatan()).toEqual(['Pelaksana Lapangan Pekerjaan Jalan']);
+    expect(defaultButton()).toBeUndefined();
+  });
+
+  it('hides the action when returning to the saved role, without saving on selection', async () => {
+    await login('MP001');
+    await mountPage();
+    await clickButton('Pelaksana Lapangan Pekerjaan Jalan');
+    expect(defaultButton()).toBeDefined();
+    await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+    expect(defaultButton()).toBeUndefined();
+    expect(updateRequests).toEqual([]);
+  });
+
+  it('never offers profile saving to guests', async () => {
+    await mountPage();
+    await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+    expect(defaultButton()).toBeUndefined();
+  });
+
+  for (const failure of ['server', 'network'] as const) {
+    it(`keeps the old default and permits retry after a ${failure} failure`, async () => {
+      await login('MP001');
+      await mountPage();
+      await clickButton('Pelaksana Lapangan Pekerjaan Jalan');
+      updateFailure = failure;
+      await clickButton(defaultLabel);
+      expect(document.querySelector('[role="alert"]')?.textContent).toContain('Silakan coba lagi');
+      expect(document.querySelector('[role="status"]')).toBeNull();
+      expect(defaultButton()).toBeDefined();
+      expect(JSON.parse(localStorage.getItem('user')!).jabatanSkk).toBe('MP001');
+      const [saved] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+      expect(saved.jabatanSkk).toBe('MP001');
+      updateFailure = null;
+      await clickButton(defaultLabel);
+      expect(defaultButton()).toBeUndefined();
+      expect(document.querySelector('[role="alert"]')).toBeNull();
+    });
+  }
+
+  for (const name of [
+    'Pelaksana Lapangan Pekerjaan Jembatan',
+    'Teknisi Survey Pemetaan',
+    'Drafter / Juru Gambar Sipil',
+    'Ahli K3 Konstruksi',
+  ]) {
+    it(`preserves the exact unmapped role ${name} rather than guessing a catalog ID`, async () => {
+      await login('MP001');
+      await mountPage();
+      if (name === 'Ahli K3 Konstruksi') await clickButton('Manajemen Pelaksanaan');
+      await clickButton(name);
+      expect(defaultButton()).toBeDefined();
+      await clickButton(defaultLabel);
+      expect(updateRequests[0]).toEqual({ userId, updates: { jabatanSkk: name } });
+      // These are the same resolvers used by profile, dashboard, BIMTEK and
+      // quiz; a saved target must remain visible and retain learning filters.
+      expect(getJabatanById(name)?.name).toBe(name);
+      expect(getRelatedCategories(name).length).toBeGreaterThan(0);
+      expect(getRelatedQuizCategories(name).length).toBeGreaterThan(0);
+      expect(getJabatanByBidang(getJabatanById(name)!.bidang).some(j => j.id === name)).toBe(true);
+      await act(async () => { root!.unmount(); });
+      root = undefined;
+      meFinished = false;
+      await mountPage();
+      expect(highlightedJabatan()).toEqual([name]);
+    });
+  }
+});
+
+describe('profile update ownership', () => {
+  async function update(body: Record<string, unknown>, sessionId?: string) {
+    return POST(new NextRequest('http://dokumen.test/api/auth?action=update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(sessionId ? { 'x-session-id': sessionId } : {}) },
+      body: JSON.stringify(body),
+    }));
+  }
+
+  it('requires a valid session, even when a real user ID is supplied', async () => {
+    const sessionId = await login('MP001');
+    for (const token of [undefined, 'invalid-session']) {
+      expect((await update({ userId, updates: { jabatanSkk: 'MP002' } }, token)).status).toBe(401);
+    }
+    await db.update(schema.sessions).set({ expiresAt: '2000-01-01T00:00:00.000Z' })
+      .where(eq(schema.sessions.id, sessionId));
+    expect((await update({ userId, updates: { jabatanSkk: 'MP002' } }, sessionId)).status).toBe(401);
+    const [saved] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+    expect(saved.jabatanSkk).toBe('MP001');
+  });
+
+  it('rejects a request to change a different user and leaves both profiles unchanged', async () => {
+    const sessionId = await login('MP001');
+    const now = new Date().toISOString();
+    await db.insert(schema.users).values({
+      id: 'other-user', name: 'Other Test', email: 'other@example.test',
+      passwordHash: 'unused', jabatanSkk: 'MP003', createdAt: now, updatedAt: now,
+    });
+    expect((await update({ userId: 'other-user', updates: { jabatanSkk: 'MP002' } }, sessionId)).status).toBe(403);
+    const users = await db.select().from(schema.users);
+    expect(users.find(u => u.id === userId)!.jabatanSkk).toBe('MP001');
+    expect(users.find(u => u.id === 'other-user')!.jabatanSkk).toBe('MP003');
+  });
+
+  it('derives ownership from the session when no user ID is supplied and rejects protected fields', async () => {
+    const sessionId = await login('MP001');
+    expect((await update({ updates: { jabatanSkk: 'MP002' } }, sessionId)).status).toBe(200);
+    for (const updates of [{ role: 'admin' }, { passwordHash: 'changed' }, { id: 'changed' }, { jabatanSkk: {} }, { name: null }]) {
+      expect((await update({ updates }, sessionId)).status).toBe(400);
+    }
+    const [saved] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+    expect(saved.jabatanSkk).toBe('MP002');
+    expect(saved.role).toBe('user');
+  });
 });
 
 afterEach(async () => {
