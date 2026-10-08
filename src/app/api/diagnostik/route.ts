@@ -23,10 +23,10 @@ PENGALAMAN KERJA:
 
 TARGET: ${target || 'Rekomendasikan jabatan SKK yang paling optimal'}
 
-Berdasarkan Permen PU No. 6/2025, KM PUPR No. 713/KPTS/M/2022, dan standar BNSP, lakukan analisis dan kembalikan HANYA JSON berikut:
+Gunakan SK DJBK 114/KPTS/Dk/2024 untuk rujukan nomenklatur jabatan dan jenjang. Ahli Muda=7, Ahli Madya=8, Ahli Utama=9; Teknisi/Analis=4-6; Operator=1-3. Permen PU 6/2025 mengatur standar/perizinan berusaha sektor PU, bukan standar kompetensi per jabatan. Hasil ini saran persiapan belajar, bukan penetapan kelayakan resmi. Jangan mengarang kode resmi, persyaratan pendidikan/pengalaman, biaya, ataupun unit/KUK. Bila sumber skema LSP tidak tersedia, nyatakan perlu konfirmasi LSP dan isi kode dengan string kosong. Kembalikan HANYA JSON berikut:
 
 {
-  "kkniLevel": 6,
+  "kkniLevel": 7,
   "kkniLabel": "Ahli Muda",
   "jabatanEligible": [
     { "nama": "...", "kode": "...", "alasan": "...", "match": 90 }
@@ -42,7 +42,7 @@ Berdasarkan Permen PU No. 6/2025, KM PUPR No. 713/KPTS/M/2022, dan standar BNSP,
     "Langkah 2: ...",
     "Langkah 3: ..."
   ],
-  "estimasiBiayaSKK": "Rp 2.500.000 – Rp 4.000.000",
+  "estimasiBiayaSKK": "Perlu konfirmasi biaya kepada LSP yang dituju",
   "catatanPenting": "..."
 }
 

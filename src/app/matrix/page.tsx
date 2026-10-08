@@ -240,6 +240,10 @@ export default function MatrixPage() {
           <p className="text-lg text-slate-600">
             Visualisasi subklasifikasi & unit kompetensi per jabatan SKK
           </p>
+          <p className="mt-3 text-sm text-slate-700">
+            Kelompok B–H dan kode pada matriks ini adalah pengelompokan belajar internal, bukan taksonomi resmi SK DJBK 114/2024.
+            {' '}<a href="/sertifikasi" className="text-blue-700 underline">Lihat katalog klasifikasi, subklasifikasi, dan jabatan dari lampiran SK DJBK.</a>
+          </p>
         </div>
 
         {/* Tabs */}

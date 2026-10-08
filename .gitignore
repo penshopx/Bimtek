@@ -3,6 +3,9 @@
 # dependencies
 /node_modules
 /.cache/
+/.pythonlibs/
+__pycache__/
+/.agents/outputs/
 /.pnp
 .pnp.*
 .yarn/*

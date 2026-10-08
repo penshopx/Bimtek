@@ -274,7 +274,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{currentModule.title}</h1>
           <div className="flex flex-wrap gap-4 text-sm">
-            <span className="bg-white/20 px-3 py-1 rounded-full">⏱️ {currentModule.duration}</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">Estimasi durasi: {currentModule.duration}</span>
             <span className="bg-white/20 px-3 py-1 rounded-full">📊 Level: {currentModule.level}</span>
           </div>
         </div>
@@ -284,24 +284,28 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">Progress Modul</h2>
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Progres Checklist Belajar</h2>
               <div className="w-full bg-slate-200 rounded-full h-3 mb-3">
                 <div 
                   className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-slate-500">{completedLessons.length} dari {lessons.length} lesson selesai</p>
+              <p className="text-sm text-slate-500">{completedLessons.length} dari {lessons.length} langkah ditandai sendiri</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">Materi Pembelajaran</h2>
+              <h2 className="text-xl font-semibold text-slate-800 mb-2">Checklist Belajar Mandiri</h2>
+              <p className="mb-4 text-sm text-slate-600">Daftar ini menandai aktivitas yang Anda lakukan sendiri, bukan membuka pelajaran atau membuktikan penguasaan materi. Materi terstruktur per langkah belum tersedia. Tanda selesai tidak memberikan kredit PKB resmi.</p>
               <div className="space-y-3">
                 {lessons.map((lesson) => (
-                  <div
+                  <button
                     key={lesson}
+                    type="button"
+                    aria-pressed={completedLessons.includes(lesson)}
+                    aria-label={`Tandai ${lesson} ${completedLessons.includes(lesson) ? 'belum selesai' : 'selesai'}`}
                     onClick={() => toggleLessonComplete(lesson)}
-                    className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all ${
+                    className={`w-full text-left flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all ${
                       completedLessons.includes(lesson)
                         ? 'bg-green-50 border-2 border-green-300'
                         : 'bg-slate-50 border-2 border-slate-200 hover:border-amber-300'
@@ -317,7 +321,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
                       </span>
                       <span className="font-medium text-slate-800">{lesson}</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

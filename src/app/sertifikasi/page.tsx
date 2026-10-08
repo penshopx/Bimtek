@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { certificationPositions as allPositions } from '@/lib/certificationPositions';
+import ConstructionCatalog from '@/components/ConstructionCatalog';
 
 const levels = ['Semua', 'Ahli Utama', 'Ahli Madya', 'Ahli', 'Supervisor', 'Manager', 'PJBU', 'PJT', 'PJKB', 'PJSKBBU', 'K3', 'Teknisi', 'Pelaksana'];
 const subklasifikasis = ['Semua', 'B - Gedung', 'C - Sipil', 'D - Mekanikal', 'E - Elektrikal', 'F - Jalan', 'G - Jembatan', 'H - Benda', 'MG - Personil Managerial', 'MP - Manajemen Pelaksanaan', 'PN - Pengadaan', 'LK - LKUT'];
@@ -17,6 +18,7 @@ const quickFilters = [
 ];
 
 export default function SertifikasiPage() {
+  const [catalogView, setCatalogView] = useState<'source' | 'legacy'>('source');
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState('Semua');
   const [subFilter, setSubFilter] = useState('Semua');
@@ -39,13 +41,23 @@ export default function SertifikasiPage() {
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-4">📋 Cari Jabatan SKK</h1>
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">Katalog Jabatan Kerja Konstruksi</h1>
           <p className="text-lg text-slate-600 mb-2">
-            Temukan jabatan SKK yang sesuai dan lihat persyaratan uji kompetensinya
+            Telusuri klasifikasi, subklasifikasi, jabatan kerja, dan jenjang kualifikasi
           </p>
-          <p className="text-sm text-slate-400">Berdasarkan KM PUPR No. 713/KPTS/M/2022 · {allPositions.length} jabatan tersedia</p>
+          <p className="text-sm text-slate-600">Rujukan katalog: lampiran SK DJBK Nomor 114/KPTS/Dk/2024</p>
         </div>
 
+        <div className="flex gap-3 mb-6" role="group" aria-label="Pilih katalog">
+          <button onClick={() => setCatalogView('source')} aria-pressed={catalogView === 'source'} className={`px-4 py-3 rounded-lg font-medium border ${catalogView === 'source' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}>Katalog SK DJBK 114/2024</button>
+          <button onClick={() => setCatalogView('legacy')} aria-pressed={catalogView === 'legacy'} className={`px-4 py-3 rounded-lg font-medium border ${catalogView === 'legacy' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}>Data internal lama</button>
+        </div>
+        {catalogView === 'source' ? <ConstructionCatalog /> : <>
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          Data lama dipertahankan untuk kompatibilitas. Kode dan pengelompokan di bawah adalah internal aplikasi, bukan kode resmi SK DJBK.
+          Persyaratan pendidikan, pengalaman, dan jenjang pada data lama belum direkonsiliasi dan tidak ditampilkan sebagai persyaratan sertifikasi.
+          Gunakan katalog SK DJBK untuk rujukan jabatan dan konfirmasikan skema terkini ke LSP.
+        </div>
         <div className="flex flex-wrap gap-2 justify-center mb-6">
           {quickFilters.map(qf => (
             <button
@@ -128,7 +140,7 @@ export default function SertifikasiPage() {
                   </span>
                   <div>
                     <h3 className="font-semibold text-slate-800">{pos.name}</h3>
-                    <p className="text-sm text-slate-500">Kode: {pos.id} • Subklasifikasi: {pos.subklasifikasi}</p>
+                    <p className="text-sm text-slate-500">ID internal: {pos.id} • Kelompok belajar internal: {pos.subklasifikasi}</p>
                   </div>
                 </div>
                 <span className="text-slate-400">
@@ -138,15 +150,7 @@ export default function SertifikasiPage() {
 
               {expandedId === pos.id && (
                 <div className="px-4 pb-4 border-t border-slate-100 pt-4">
-                  <h4 className="font-medium text-slate-700 mb-2">Persyaratan:</h4>
-                  <ul className="space-y-1">
-                    {pos.requirements.map((req, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                        <span className="text-amber-500">✓</span>
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-sm text-slate-700">Nama dan label ini berasal dari katalog internal lama, belum merupakan pemetaan resmi ke katalog baru. Persyaratan lengkap mengikuti skema LSP yang dituju.</p>
                   <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 mb-3">
                     <span className="font-medium">📋 Dokumen wajib untuk jabatan ini:</span> FR.APL.01 (formulir permohonan), FR.APL.02 (asesmen mandiri), bukti pengalaman kerja, ijazah, KTP.
                   </div>
@@ -170,6 +174,7 @@ export default function SertifikasiPage() {
         <div className="mt-6 text-center text-slate-500">
           Menampilkan {filteredPositions.length} dari {allPositions.length} jabatan SKK
         </div>
+        </>}
       </div>
     </div>
   );

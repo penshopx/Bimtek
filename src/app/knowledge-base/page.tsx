@@ -2,24 +2,26 @@
 
 import { useState } from 'react';
 
-const articles = [
+const articles: { id: number; title: string; category: string; content: string; sourceUrl?: string }[] = [
   {
     id: 101,
-    title: 'Permen PU No. 6 Tahun 2025 — Standar Kompetensi Tenaga Kerja Konstruksi',
-    category: 'SKK',
-    content: 'Peraturan Menteri Pekerjaan Umum terbaru yang menetapkan standar kompetensi tenaga kerja konstruksi Indonesia. Mengatur kualifikasi jabatan (Operator, Teknisi/Analis, Ahli Muda, Ahli Madya, Ahli Utama), persyaratan sertifikasi, dan mekanisme pengakuan kompetensi. Menjadi acuan utama bagi LSP dalam melaksanakan uji kompetensi SKK di seluruh bidang konstruksi.',
+    title: 'Permen PU No. 6 Tahun 2025 — Standar dan Pengawasan Perizinan Berusaha Sektor Pekerjaan Umum',
+    category: 'Regulasi',
+    content: 'Judul lengkap: Standar Kegiatan Usaha dan/atau Standar Produk/Jasa, Pelaksanaan Pengawasan, dan Pengenaan Sanksi pada Penyelenggaraan Perizinan Berusaha Berbasis Risiko Sektor Pekerjaan Umum. Regulasi ini bukan penetapan standar kompetensi per jabatan kerja. Untuk nomenklatur jabatan dan jenjang, lihat SK DJBK 114/KPTS/Dk/2024 beserta lampirannya dan skema LSP terkini.',
+    sourceUrl: 'https://binakonstruksi.pu.go.id/pengumuman/peraturan-menteri-pekerjaan-umum-republik-indonesia-nomor-6-tahun-2025/',
   },
   {
     id: 102,
     title: 'KM PUPR No. 713/KPTS/M/2022 — Jabatan dan Kualifikasi SKK',
     category: 'SKK',
-    content: 'Keputusan Menteri PUPR yang mengatur daftar jabatan kerja konstruksi beserta kualifikasinya. Mencakup 334+ jabatan di bidang Sipil, Arsitektur, Mekanikal, Elektrikal, Tata Lingkungan, dan Manajemen Pelaksanaan. Setiap jabatan dilengkapi kode jabatan, jenjang KKNI, dan persyaratan pendidikan serta pengalaman minimal.',
+    content: 'Rujukan terkait jabatan dan kualifikasi tenaga kerja konstruksi. Jangan menganggap pengelompokan atau kode internal aplikasi sebagai kode resmi keputusan ini. Katalog SIAP SKK kini menampilkan nomenklatur baru dari lampiran SK DJBK 114/KPTS/Dk/2024; persyaratan sertifikasi harus dicocokkan kembali dengan skema LSP yang berlaku.',
   },
   {
     id: 103,
     title: 'SK DJBK No. 114/KPTS/DK/2024 — Penetapan Jabatan Kerja dan Jenjang Kualifikasi',
     category: 'SKK',
     content: 'Keputusan Direktur Jenderal Bina Konstruksi tentang penetapan jabatan kerja dan jenjang kualifikasi tenaga kerja konstruksi. Gunakan daftar jabatan dan jenjang dalam keputusan beserta lampirannya untuk mencocokkan jabatan kerja dengan skema sertifikasi yang dituju. Keputusan ini bukan pedoman pelaksanaan Asesmen Jarak Jauh (AJJ); ketentuan metode asesmen perlu dikonfirmasi kepada LSP yang berwenang.',
+    sourceUrl: '/references/sk-djbk-114-2024.pdf',
   },
   {
     id: 104,
@@ -31,7 +33,8 @@ const articles = [
     id: 1,
     title: 'Peraturan Pemerintah No. 14 Tahun 2021',
     category: 'Regulasi',
-    content: 'Peraturan Pemerintah tentang Penyelenggaraan Perlindungan dan Pengelolaan Lingkungan Hidup yang mengatur tentang AMDAL, UKL-UPL, dan Izin Lingkungan untuk proyek konstruksi.',
+    content: 'Perubahan atas Peraturan Pemerintah Nomor 22 Tahun 2020 tentang Peraturan Pelaksanaan Undang-Undang Nomor 2 Tahun 2017 tentang Jasa Konstruksi. Rujukan ini terkait penyelenggaraan jasa konstruksi, termasuk persyaratan kompetensi tenaga kerja konstruksi; bukan regulasi utama AMDAL atau izin lingkungan.',
+    sourceUrl: '/references/sk-djbk-114-2024.pdf#page=125',
   },
   {
     id: 2,
@@ -199,6 +202,7 @@ export default function KnowledgeBase() {
                   <p className="text-slate-600 leading-relaxed">
                     {article.content}
                   </p>
+                  {article.sourceUrl && <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block text-blue-700 underline">Buka sumber rujukan</a>}
                 </div>
               )}
             </div>
