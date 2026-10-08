@@ -1,0 +1,123 @@
+**Paket berikutnya: Katalog Materi dan Toolkit.** Ini merapikan cara peserta menemukan modul, latihan, studi kasus, dan template yang sudah tersedia—**bukan membuat marketplace AI atau katalog paralel**.
+
+Implementasi paket sebelumnya belum terkonfirmasi. Mulai dengan inventarisasi konten dan sumbernya.
+
+### Prompt Katalog Materi dan Toolkit untuk Replit Agent
+
+```
+Perkuat katalog pembelajaran pada aplikasi BIMTEK / SIAP SKK existing.
+
+Tetap mandiri, tanpa integrasi Store, pembayaran, lisensi,
+akun, atau API Gustafta.
+
+1. INSPEKSI KONTEN EXISTING
+Periksa katalog BIMTEK, Quiz, Mock, Knowledge Base,
+Lab Praktik bila tersedia, dan template/generator dokumen.
+
+Petakan:
+- lokasi dan ID konten;
+- jenis konten;
+- sumber serta versi;
+- sasaran peserta;
+- hubungan dengan skema/unit;
+- status review;
+- fitur pembuka atau pengolah konten.
+
+Gunakan ulang data dan route yang sesuai.
+Jangan menggandakan konten hanya untuk memenuhi tampilan katalog.
+
+2. JENIS KONTEN
+Bedakan:
+- materi pembelajaran;
+- latihan/quiz;
+- kasus simulasi;
+- template draft;
+- referensi regulasi/standar.
+
+Generator dokumen ditampilkan sebagai alat, bukan file template
+yang seolah sudah tersedia.
+
+Konten yang belum tersedia harus ditandai, bukan diberi tombol
+yang tampak berfungsi.
+
+3. METADATA MINIMUM
+Setiap item memiliki:
+- judul dan deskripsi;
+- tujuan atau kegunaan;
+- jenis konten;
+- bidang/topik;
+- sumber dan versi, bila tersedia;
+- status review;
+- route atau berkas tujuan.
+
+Tambahkan skema, jenjang, dan unit hanya jika pemetaan telah diperiksa.
+Metadata belum diketahui tetap kosong atau ditandai.
+Jangan mengarang durasi, unit/KUK, atau kesesuaian jenjang.
+
+4. PENCARIAN DAN FILTER
+Sediakan pencarian judul/deskripsi serta filter jenis dan topik.
+
+Filter skema/jenjang hanya diaktifkan bila datanya tersedia.
+Jika relevansi ditentukan AI, labeli sebagai saran dan jelaskan dasar
+pemetaan; jangan menyatakannya sebagai pemetaan resmi.
+
+Tampilkan empty state yang membantu pengguna mengubah filter.
+Jangan membuat hasil pencarian palsu.
+
+5. DETAIL ITEM
+Tampilkan:
+- tujuan belajar;
+- prasyarat, bila memang diperlukan;
+- materi/latihan/template yang tersedia;
+- sumber dan status review;
+- tindakan membuka atau menggunakan;
+- batas penggunaan.
+
+Bedakan “sudah dibuka”, “ditandai selesai”, dan “latihan selesai”.
+Tidak satu pun otomatis menjadi hasil kompetensi atau SKPK resmi.
+
+6. TEMPLATE DAN HAK PAKAI
+Gunakan hanya materi/berkas milik proyek atau yang memiliki izin sesuai.
+
+Jangan menyalin produk berbayar, kode, ebook, atau aset Gustafta.
+Jangan membagikan naskah standar berlisensi tanpa hak distribusi.
+
+Template keluaran diberi label draft.
+Formulir resmi hanya digunakan jika identitas, versi, dan ketentuan
+penggunaannya telah diperiksa.
+
+7. STATUS DAN ADMINISTRASI
+Pisahkan status, misalnya:
+draft / perlu review / ditinjau / diarsipkan.
+
+Catat siapa yang meninjau, kapan, cakupan review, dan versi konten.
+“Ditinjau” tidak otomatis berarti seluruh ketentuannya berlaku
+untuk setiap proyek atau skema.
+
+Perubahan materi tidak boleh menghapus riwayat belajar peserta
+atau mengganti hasil latihan lama diam-diam.
+
+8. UJI PENERIMAAN
+Buktikan:
+- item existing dapat ditemukan tanpa duplikasi;
+- pencarian dan filter sesuai data sebenarnya;
+- metadata belum lengkap terlihat jelas;
+- link/berkas yang hilang tidak ditampilkan sebagai tersedia;
+- item privat tidak terbuka melalui katalog atau perubahan ID;
+- konten diarsipkan ditangani tanpa merusak riwayat;
+- template memiliki batas penggunaan dan informasi hak pakai;
+- tidak ada kredit PKB atau keputusan kompetensi otomatis;
+- navigasi dan katalog BIMTEK existing tidak mengalami regresi.
+
+9. HANDOFF
+Laporkan inventaris konten, perubahan kode/schema, hasil tes,
+pemetaan yang belum diperiksa, hak pakai yang belum jelas,
+dan langkah rollback.
+
+Jangan deploy produksi, melakukan migrasi destruktif,
+menambah pembayaran, atau membeli layanan tanpa persetujuan.
+```
+
+**Targetnya:** peserta menemukan **materi yang relevan, sumber yang jelas, dan alat yang benar-benar tersedia**—bukan sekadar melihat banyak kartu katalog.
+
+Dengan ini, paket adopsi yang relevan sudah tercakup: **Ruang Bukti, Bedah Dokumen, Portofolio, pembelajaran kontekstual, PKB, Radar Kesiapan, Lab Praktik, dan Katalog**. Langkah selanjutnya adalah menjalankan paket pertama serta memeriksa hasilnya, bukan menambah paket fitur lagi.

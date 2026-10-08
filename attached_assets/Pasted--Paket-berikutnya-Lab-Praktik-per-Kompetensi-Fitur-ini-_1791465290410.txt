@@ -1,0 +1,116 @@
+**Paket berikutnya: Lab Praktik per Kompetensi.** Fitur ini memperkuat materi, Quiz, dan Mock existing dengan latihan berbasis kasus—bukan membuat sistem asesmen resmi.
+
+**Implementasi sebelumnya belum terkonfirmasi.** Mulai dengan memeriksa pemetaan kompetensi dan layanan latihan yang tersedia.
+
+### Prompt Lab Praktik untuk Replit Agent
+
+```
+Perkuat latihan berbasis kasus pada aplikasi BIMTEK / SIAP SKK
+existing sebagai Lab Praktik per Kompetensi.
+
+Tetap mandiri, tanpa integrasi Gustafta.
+Jangan membuat bank soal, tutor, atau penyimpanan paralel jika
+kemampuan existing dapat diperluas.
+
+1. INSPEKSI DAN PRASYARAT
+Periksa BIMTEK, Quiz, Mock, simulator, tutor, master skema/unit,
+dan penyimpanan hasil latihan.
+
+Jika jenjang/skema masih salah atau sumber unit belum tersedia,
+laporkan penghambat. Jangan mengarang pemetaan untuk membuka fitur.
+
+2. MULAI DARI SATU PILOT
+Pilih satu kasus yang sesuai materi existing dan sumber tersedia,
+misalnya penanganan temuan mutu pekerjaan beton.
+
+Tentukan secara eksplisit:
+- sasaran peserta dan jenjang;
+- tujuan belajar;
+- unit terkait, jika sudah diverifikasi;
+- sumber serta versi;
+- data kasus;
+- tugas dan rubrik.
+
+Jangan mengklaim satu kasus mencakup seluruh skema.
+
+3. ALUR LATIHAN
+Kasus → tugas peserta → jawaban/hasil kerja →
+umpan balik → revisi → refleksi.
+
+Pisahkan fakta kasus dari asumsi.
+Contoh hipotetis harus diberi label “kasus simulasi”.
+Jangan memakai dokumen peserta lain atau data proyek privat
+sebagai bahan kasus tanpa izin.
+
+4. TUGAS YANG DAPAT DIUJI
+Untuk pilot, gunakan tugas terarah:
+- identifikasi masalah dan informasi yang belum tersedia;
+- usulkan pemeriksaan lanjutan;
+- susun tindakan koreksi;
+- tentukan bukti penyelesaian;
+- jelaskan alasan dan risiko.
+
+Template ITP, NCR, atau risk register boleh menjadi hasil latihan
+jika sumber dan rubriknya tersedia.
+
+Keluaran diberi label draft latihan, bukan dokumen proyek
+yang telah diperiksa atau disahkan.
+
+5. UMPAN BALIK DAN PENILAIAN
+Gunakan rubrik yang ditinjau sebelum dipublikasikan.
+Bedakan:
+- pemeriksaan deterministik, seperti kelengkapan isian;
+- penilaian berbantuan AI;
+- review manusia, bila tersedia.
+
+Umpan balik menunjukkan alasan, bagian jawaban yang dinilai,
+dan sumber pembahasan.
+
+Jika informasi tidak cukup atau layanan AI gagal, gunakan status
+“belum dapat dinilai”; jangan memberi nilai nol otomatis.
+
+Jangan menampilkan:
+- putusan kompeten resmi;
+- probabilitas lulus yang tidak tervalidasi;
+- kredit PKB otomatis;
+- kelayakan penggunaan hasil pada proyek nyata.
+
+6. PENYIMPANAN DAN KETERKAITAN
+Simpan jawaban awal, revisi, rubrik/versi kasus, umpan balik,
+dan refleksi.
+
+Hasil dapat dirujuk dari rencana belajar atau portofolio sebagai
+bukti aktivitas latihan—bukan disamakan dengan pengalaman kerja nyata.
+
+Perubahan rubrik tidak boleh mengubah nilai historis diam-diam.
+
+7. KEAMANAN DAN AI
+Periksa akses pada server untuk setiap hasil latihan.
+Dokumen dan jawaban peserta diperlakukan sebagai data, bukan
+instruksi yang dapat mengubah aturan tutor/penilai.
+
+Batasi panjang masukan, permintaan, dan biaya model.
+Jangan menyamarkan keluaran dummy sebagai penilaian berhasil.
+
+8. UJI PENERIMAAN
+Buktikan:
+- pilot memiliki sumber, tujuan, dan rubrik yang jelas;
+- jawaban dapat disimpan, direvisi, dan dibuka kembali;
+- jawaban kosong tidak dinilai sebagai selesai;
+- umpan balik tidak mengarang kutipan atau data kasus;
+- kegagalan AI ditampilkan dengan status yang jujur;
+- peserta tidak dapat membaca hasil peserta lain;
+- hasil latihan tidak menaikkan SKPK atau mengubah putusan kompetensi;
+- fitur Quiz, Mock, dan rencana belajar tidak mengalami regresi.
+
+9. HANDOFF
+Laporkan perubahan kode/schema, sumber kasus, hasil tes,
+keterbatasan penilaian, dan rollback.
+
+Jangan deploy produksi, memperluas ke banyak bidang,
+atau menambah layanan berbayar tanpa persetujuan.
+```
+
+**Target pertama cukup satu kasus yang lengkap dan teruji.** Setelah pilot diterima, pola yang sama dapat diperluas ke kasus lain sesuai sumber dan kebutuhan peserta.
+
+Berikutnya adalah **Katalog Materi dan Toolkit** untuk menemukan materi, kasus, dan template tersebut—tanpa menyalin marketplace atau skema lisensi AI Gustafta.
