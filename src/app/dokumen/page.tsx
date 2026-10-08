@@ -441,6 +441,8 @@ export default function DokumenPage() {
   const [noteMap, setNoteMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
+  const [savingCategory, setSavingCategory] = useState<string | null>(null);
+  const categorySavePending = useRef(false);
   const [savingNote, setSavingNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedJabatan, setSavedJabatan] = useState<string | null>(null);
@@ -552,7 +554,7 @@ export default function DokumenPage() {
   }, [activeJabatan, loadChecklist]);
 
   const toggleDoc = async (docId: string, currentVal: boolean) => {
-    if (!activeJabatan) return;
+    if (!activeJabatan || categorySavePending.current) return;
     const newVal = !currentVal;
     // Optimistic update
     setCheckedMap((prev) => ({ ...prev, [docId]: newVal }));
@@ -583,7 +585,7 @@ export default function DokumenPage() {
   };
 
   const toggleNA = async (docId: string, currentNA: boolean) => {
-    if (!activeJabatan) return;
+    if (!activeJabatan || categorySavePending.current) return;
     const newNA = !currentNA;
     // Capture prior checked value before optimistic update so we can restore it on failure
     const priorChecked = !!checkedMap[docId];
@@ -613,6 +615,49 @@ export default function DokumenPage() {
       setSaveError('Koneksi gagal. Perubahan tidak tersimpan.');
     } finally {
       setSaving(null);
+    }
+  };
+
+  const toggleCategoryNA = async (category: string, docs: DocItem[]) => {
+    if (!activeJabatan || saving || savingNote || categorySavePending.current) return;
+    const jabatanId = activeJabatan.id;
+    const newNA = !docs.every((doc) => naMap[doc.id]);
+    const previousChecked = { ...checkedMap };
+    const previousNA = { ...naMap };
+    categorySavePending.current = true;
+    setSavingCategory(category);
+    setSaveError(null);
+    setCheckedMap((prev) => ({
+      ...prev, ...Object.fromEntries(docs.map((doc) => [doc.id, false])),
+    }));
+    setNaMap((prev) => ({
+      ...prev, ...Object.fromEntries(docs.map((doc) => [doc.id, newNA])),
+    }));
+    try {
+      const results = await Promise.allSettled(docs.map(async (doc) => {
+        const response = await fetch('/api/dokumen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ jabatanId, documentId: doc.id, checked: false, na: newNA }),
+        });
+        if (!response.ok || !(await response.json()).success) {
+          throw new Error('Checklist save failed');
+        }
+      }));
+      const failedDocs = docs.filter((_, index) => results[index].status === 'rejected');
+      if (failedDocs.length) {
+        // Keep successful writes visible; restore only documents that failed.
+        setCheckedMap((prev) => ({
+          ...prev, ...Object.fromEntries(failedDocs.map((doc) => [doc.id, !!previousChecked[doc.id]])),
+        }));
+        setNaMap((prev) => ({
+          ...prev, ...Object.fromEntries(failedDocs.map((doc) => [doc.id, !!previousNA[doc.id]])),
+        }));
+        setSaveError(`Gagal menyimpan ${failedDocs.length} dokumen dalam kategori. Silakan coba lagi.`);
+      }
+    } finally {
+      categorySavePending.current = false;
+      setSavingCategory(null);
     }
   };
 
@@ -692,6 +737,7 @@ export default function DokumenPage() {
                 setActiveJabatan(null);
                 setCheckedMap({});
               }}
+              disabled={savingCategory !== null}
               className={`px-5 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                 activeBidang === b
                   ? 'bg-amber-500/20 border-amber-500 text-amber-300'
@@ -716,6 +762,7 @@ export default function DokumenPage() {
                 return (
                   <button
                     key={j.id}
+                    disabled={savingCategory !== null}
                     onClick={() => {
                       manualSelection.current = true;
                       setDefaultError(null);
@@ -822,16 +869,30 @@ export default function DokumenPage() {
                     color: 'text-slate-400',
                     bg: 'bg-slate-700/40 border-slate-600',
                   };
+                  const allNA = docs.every((doc) => !!naMap[doc.id]);
                   return (
                     <div key={cat} className="mb-5">
-                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold mb-3 ${meta.bg} ${meta.color}`}>
-                        {meta.label}
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold ${meta.bg} ${meta.color}`}>
+                          {meta.label}
+                        </div>
+                        <button
+                          type="button"
+                          aria-label={`${allNA ? 'Batalkan N/A Semua' : 'N/A Semua'} — ${meta.label}`}
+                          aria-pressed={allNA}
+                          disabled={savingCategory !== null || saving !== null || savingNote !== null}
+                          onClick={() => toggleCategoryNA(cat, docs)}
+                          title={allNA ? 'Kembalikan semua dokumen kategori ke status belum dicentang' : 'Tandai semua dokumen kategori sebagai Tidak Berlaku (N/A)'}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-500 text-slate-200 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-wait transition-colors"
+                        >
+                          {savingCategory === cat ? 'Menyimpan...' : allNA ? 'Batalkan N/A Semua' : 'N/A Semua'}
+                        </button>
                       </div>
                       <div className="space-y-2">
                         {docs.map((doc) => {
                           const isChecked = !!checkedMap[doc.id];
                           const isNA = !!naMap[doc.id];
-                          const isSaving = saving === doc.id;
+                          const isSaving = saving === doc.id || savingCategory !== null;
                           return (
                             <div
                               key={doc.id}
@@ -914,7 +975,7 @@ export default function DokumenPage() {
                                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                                     }}
                                     placeholder="📎 Lokasi file atau catatan (opsional)…"
-                                    disabled={isNA}
+                                    disabled={isNA || savingCategory !== null}
                                     className={`w-full text-xs rounded-lg px-2.5 py-1.5 border transition-colors outline-none ${
                                       isNA
                                         ? 'bg-slate-800/20 border-slate-700/30 text-slate-600 cursor-not-allowed'
@@ -926,6 +987,7 @@ export default function DokumenPage() {
 
                               {/* N/A toggle button */}
                               <button
+                                disabled={isSaving}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!isSaving) toggleNA(doc.id, isNA);
@@ -949,7 +1011,7 @@ export default function DokumenPage() {
 
                 {/* Save error banner */}
                 {saveError && (
-                  <div className="mt-3 flex items-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs">
+                  <div role="alert" className="mt-3 flex items-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs">
                     <span>⚠️</span>
                     <span>{saveError}</span>
                     <button
@@ -964,6 +1026,7 @@ export default function DokumenPage() {
                 {/* Reset all button */}
                 <div className="mt-4 flex justify-end">
                   <button
+                    disabled={savingCategory !== null}
                     onClick={async () => {
                       if (!activeJabatan) return;
                       const prevCheckedMap = { ...checkedMap };

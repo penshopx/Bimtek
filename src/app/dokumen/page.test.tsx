@@ -50,6 +50,7 @@ let root: Root | undefined;
 let meFinished: boolean;
 let updateFailure: 'server' | 'network' | null;
 let updateRequests: Record<string, unknown>[];
+let checklistFailure: 'server' | 'network' | null;
 const checklistRequests: { id: string; sessionId: string | null }[] = [];
 const globalKeys = ['window', 'document', 'navigator', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT'] as const;
 const originalGlobals = new Map(globalKeys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
@@ -155,6 +156,7 @@ beforeEach(async () => {
   }
   meFinished = false;
   updateFailure = null;
+  checklistFailure = null;
   updateRequests = [];
   checklistRequests.length = 0;
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -184,6 +186,10 @@ beforeEach(async () => {
     }
     expect(url.pathname).toBe('/api/dokumen');
     if (init?.method === 'POST') {
+      if (JSON.parse(init.body as string).documentId === 'foto') {
+        if (checklistFailure === 'server') return Response.json({ success: false }, { status: 500 });
+        if (checklistFailure === 'network') throw new Error('Network unavailable');
+      }
       return checklistRoute.POST(new NextRequest(url, { method: 'POST', headers, body: init.body }));
     }
     checklistRequests.push({
@@ -223,6 +229,77 @@ describe('/dokumen N/A persistence', () => {
     meFinished = false;
     await mountPage();
     if (guest) await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+  }
+
+  function identityCategoryButton() {
+    const button = document.querySelector<HTMLButtonElement>('button[aria-label$="— Identitas"]');
+    expect(button).not.toBeNull();
+    return button!;
+  }
+
+  for (const guest of [false, true]) {
+    it(`marks an entire mixed category N/A, preserves notes and other categories, and restores unchecked after reload (${guest ? 'guest' : 'signed in'})`, async () => {
+      if (!guest) await login('MP001');
+      await mountPage();
+      if (guest) await clickButton('Pelaksana Lapangan Pekerjaan Gedung');
+      const progressText = () => Array.from(document.querySelectorAll('p'))
+        .find(element => /^\d+ \/ \d+ dokumen$/.test(element.textContent ?? ''))!.textContent!;
+      const total = Number(progressText().match(/\/ (\d+)/)![1]);
+      const categoryButtons = document.querySelectorAll('button[aria-label^="N/A Semua —"]');
+      expect(categoryButtons.length).toBe(6);
+      await act(async () => { documentRow('KTP / Kartu Identitas').row.click(); });
+      await act(async () => { documentRow('Ijazah Pendidikan Terakhir').row.click(); });
+      // Give the first item a persisted note; category writes must not erase it.
+      const saved = (await db.select().from(schema.documentChecklist)).find(item => item.documentId === 'ktp')!;
+      await db.update(schema.documentChecklist).set({ note: 'Folder identitas' })
+        .where(eq(schema.documentChecklist.id, saved.id));
+      await act(async () => { documentRow('Pas Foto 3×4').row.querySelector('button')!.click(); });
+      await reopenPage(guest);
+      await act(async () => { identityCategoryButton().click(); });
+      expect(identityCategoryButton().getAttribute('aria-pressed')).toBe('true');
+      expect(progressText()).toBe(`1 / ${total - 2} dokumen`);
+      let items = await db.select().from(schema.documentChecklist);
+      for (const id of ['ktp', 'foto']) {
+        expect(items.find(item => item.documentId === id)?.na).toBe(true);
+        expect(items.find(item => item.documentId === id)?.checked).toBe(false);
+      }
+      expect(items.find(item => item.documentId === 'ktp')?.note).toBe('Folder identitas');
+      expect(items.find(item => item.documentId === 'ijazah')?.checked).toBe(true);
+      await reopenPage(guest);
+      expect(identityCategoryButton().getAttribute('aria-pressed')).toBe('true');
+      expect(progressText()).toBe(`1 / ${total - 2} dokumen`);
+      await act(async () => { identityCategoryButton().click(); });
+      expect(identityCategoryButton().getAttribute('aria-pressed')).toBe('false');
+      expect(progressText()).toBe(`1 / ${total} dokumen`);
+      await reopenPage(guest);
+      items = await db.select().from(schema.documentChecklist);
+      for (const id of ['ktp', 'foto']) {
+        expect(items.find(item => item.documentId === id)?.na).toBe(false);
+        expect(items.find(item => item.documentId === id)?.checked).toBe(false);
+      }
+      expect((documentRow('KTP / Kartu Identitas').row.querySelector('input') as HTMLInputElement).value)
+        .toBe('Folder identitas');
+      expect(progressText()).toBe(`1 / ${total} dokumen`);
+    });
+  }
+
+  for (const failure of ['server', 'network'] as const) {
+    it(`keeps successful category writes visible and lets users retry after a partial ${failure} failure`, async () => {
+      await login('MP001');
+      await mountPage();
+      await act(async () => { documentRow('Pas Foto 3×4').row.click(); });
+      checklistFailure = failure;
+      await act(async () => { identityCategoryButton().click(); });
+      expect(document.querySelector('[role="alert"]')?.textContent).toContain('Gagal menyimpan 1 dokumen');
+      expect(documentRow('KTP / Kartu Identitas').label.classList.contains('text-slate-500')).toBe(true);
+      expect(documentRow('Pas Foto 3×4').label.classList.contains('text-green-300')).toBe(true);
+      expect(identityCategoryButton().disabled).toBe(false);
+      checklistFailure = null;
+      await act(async () => { identityCategoryButton().click(); });
+      expect(document.querySelector('[role="alert"]')).toBeNull();
+      await reopenPage(false);
+      expect(identityCategoryButton().getAttribute('aria-pressed')).toBe('true');
+    });
   }
 
   for (const guest of [false, true]) {
