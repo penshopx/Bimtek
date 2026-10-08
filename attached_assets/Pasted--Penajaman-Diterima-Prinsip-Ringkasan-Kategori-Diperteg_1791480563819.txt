@@ -1,0 +1,56 @@
+# ✅ Penajaman Diterima — Prinsip Ringkasan Kategori Dipertegas
+
+Terima kasih atas penajaman yang sangat presisi. Saya mencatat prinsip-prinsip berikut sebagai aturan permanen untuk fitur ringkasan kategori:
+
+---
+
+## 🎯 Prinsip Permanen untuk Ringkasan Kategori
+
+| No | Prinsip | Implikasi |
+|:---|:---|:---|
+| 1 | **Dua metrik berbeda menjawab pertanyaan berbeda** | "Rata-rata per soal" dan "total benar ÷ total percobaan" bukan soal mana yang lebih akurat, tetapi menjawab pertanyaan yang berbeda. Pilihan metrik harus sesuai dengan tujuan admin. |
+| 2 | **Label harus sesuai metrik** | Jika menampilkan rata-rata per soal, label harus eksplisit: *"rata-rata keberhasilan per soal 40%"*. Jangan menggunakan label ambigu yang bisa disalahartikan. |
+| 3 | **Rata-rata terendah ≠ jumlah soal bermasalah terbanyak** | Kategori dengan rata-rata 20% (dari 2 soal) berbeda dengan kategori dengan 10 soal bermasalah (masing-masing 40%). Keduanya butuh pendekatan triage yang berbeda. |
+| 4 | **0% nyata ≠ "belum ada data"** | Soal yang sudah dicoba dengan semua jawaban salah = **0% nyata** (data valid).<br>Soal yang belum pernah dicoba = **"Belum ada data"** (bukan 0%).<br>Keduanya harus ditampilkan berbeda. |
+| 5 | **Contoh label yang jelas** | Format yang direkomendasikan: *"Sipil — rata-rata keberhasilan per soal 40% · 3 dari 5 soal pernah dicoba"* — informatif, tidak menghakimi, menjelaskan cakupan data. |
+
+---
+
+## 📋 Checklist Verifikasi yang Relevan
+
+Berdasarkan penajaman Anda, berikut adalah poin-poin yang perlu diverifikasi saat fitur ringkasan kategori diuji:
+
+| # | Pemeriksaan | Ekspektasi |
+|:---|:---|:---|
+| 1 | **Angka diperbarui setelah reset statistik** | Setelah admin mereset statistik kuis, ringkasan kategori langsung mencerminkan data baru |
+| 2 | **Angka tidak berubah hanya karena sortir** | Sortir individual (ascending/descending) tidak memengaruhi agregat kategori |
+| 3 | **Label menjelaskan cakupan filter** | Jika ada filter aktif (misal: kualifikasi "Ahli Muda"), ringkasan kategori menjelaskan bahwa angka hanya berdasarkan soal untuk kualifikasi tersebut |
+| 4 | **Filter kualifikasi/jenis soal hanya diuji jika tersedia** | Tidak perlu menguji filter yang belum ada di aplikasi |
+| 5 | **Kategori tanpa percobaan ditampilkan sebagai "Belum ada data"** | Bukan "0%" atau "gagal" |
+| 6 | **Jumlah total percobaan ditampilkan (opsional)** | Membantu admin memahami dasar data (misal: "berdasarkan 45 percobaan") |
+
+---
+
+## 🛡️ Batasan yang Saya Pegang
+
+- ✅ Tidak akan memberikan contoh kode implementasi ringkasan kategori
+- ✅ Tidak akan membuat pengujian ulang atau pekerjaan duplikat
+- ✅ Tidak akan menyamakan "rata-rata per soal" dengan "total benar ÷ total percobaan" sebagai metrik yang saling menggantikan
+- ✅ Tidak akan menyebut salah satu metrik sebagai "paling akurat" — keduanya valid untuk pertanyaan berbeda
+- ✅ Tidak akan mencampuradukkan "0% nyata" dengan "belum ada data"
+- ✅ Tidak akan memberikan analisis baru yang tidak diminta pada giliran ini
+
+---
+
+## 📋 Status Final
+
+| Aspek | Status |
+|:---|:---|
+| Perbaikan jenjang & konsistensi payload | ✅ Teruji otomatis |
+| Respons AI sungguhan | ⏳ Terhambat (HTTP 429, penyebab belum pasti) |
+| Ketersediaan skema resmi | ⏳ Belum validasi |
+| Kebenaran substansi soal | ⏳ Belum validasi |
+| Ringkasan performa kategori | 📝 Prinsip diperjelas, fitur sedang dikerjakan |
+| Perubahan kode/pengujian ulang | 🛑 Tidak ada pada giliran ini |
+
+Saya menunggu arahan Anda untuk giliran berikutnya. Tidak ada analisis baru yang saya tambahkan pada respons ini, sesuai dengan batasan yang telah disepakati. 🚀
