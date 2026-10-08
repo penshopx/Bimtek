@@ -18,6 +18,7 @@ const getStats = mock(async (sessionId: string | null) => {
 });
 const clearStale = mock(async (_questionId: number, _sessionId: string | null): Promise<{ success: boolean; message?: string }> => ({ success: true }));
 const resetAttempts = mock(async (_questionId: number, _sessionId: string | null): Promise<{ success: boolean; message?: string }> => ({ success: true }));
+const updateQuestion = mock(async (): Promise<{ success: boolean; message?: string }> => ({ success: true }));
 const confirmCleanup = mock(() => true);
 mock.module('@/components/AuthProvider', () => ({
   useAuth: () => ({ user: adminUser }),
@@ -27,7 +28,7 @@ mock.module('@/app/actions/quiz', () => ({
   getQuizCategories: async () => ['K3'],
   getQuizAttemptStats: getStats,
   createQuizQuestion: async () => ({ success: true }),
-  updateQuizQuestion: async () => ({ success: true }),
+  updateQuizQuestion: updateQuestion,
   deleteQuizQuestion: async () => ({ success: true }),
   reorderQuizQuestions: async () => ({ success: true }),
   resetQuizAttempts: resetAttempts,
@@ -58,6 +59,8 @@ beforeEach(() => {
   clearStale.mockImplementation(async () => ({ success: true }));
   resetAttempts.mockReset();
   resetAttempts.mockImplementation(async () => ({ success: true }));
+  updateQuestion.mockReset();
+  updateQuestion.mockImplementation(async () => ({ success: true }));
   confirmCleanup.mockReset();
   confirmCleanup.mockImplementation(() => true);
 });
@@ -196,10 +199,41 @@ async function startReset(path: 'table' | 'edit') {
   }
 }
 
+test('successful edit closes the form and shows a save success notice without resetting attempts', async () => {
+  await renderStat(staleStat);
+  await clickButton('Edit');
+  await clickButton('Simpan');
+  expect(updateQuestion).toHaveBeenCalledWith(question.id, {
+    question: question.question, category: question.category,
+    options: question.options, correct: question.correct,
+  }, 'admin-stats-test-session');
+  expect(container.querySelector('[role="status"]')?.textContent).toContain('Soal berhasil diperbarui');
+  expect(container.querySelector('#clear-attempts-checkbox')).toBeNull();
+  expect(resetAttempts).not.toHaveBeenCalled();
+  expect(getStats).toHaveBeenCalledTimes(2);
+});
+
+test.each(['rejected', 'thrown'])('failed edit keeps the form and inline error without a success toast: %s', async (mode) => {
+  updateQuestion.mockImplementation(async () => {
+    if (mode === 'thrown') throw new Error('network');
+    return { success: false, message: 'Penyimpanan ditolak.' };
+  });
+  await renderStat(staleStat);
+  await clickButton('Edit');
+  await clickButton('Simpan');
+  expect(container.querySelector('[role="status"]')).toBeNull();
+  expect(container.querySelector('#clear-attempts-checkbox')).not.toBeNull();
+  expect(container.textContent).toContain(mode === 'thrown' ? 'Terjadi kesalahan.' : 'Penyimpanan ditolak.');
+  expect(getStats).toHaveBeenCalledTimes(1);
+});
+
 test.each(['table', 'edit'] as const)('successful %s reset shows a dismissible success notice', async (path) => {
   await startReset(path);
   expect(resetAttempts).toHaveBeenCalledWith(question.id, 'admin-stats-test-session');
   expect(container.querySelector('[role="status"]')?.textContent).toContain(resetSuccessMessage);
+  if (path === 'edit') {
+    expect(container.querySelector('[role="status"]')?.textContent).toContain('Soal berhasil diperbarui');
+  }
   expect(container.textContent).not.toContain('Hapus juga riwayat percobaan');
   expect(getStats).toHaveBeenCalledTimes(2);
   await act(async () => {
@@ -238,5 +272,6 @@ test('saving an edit without clearing attempts does not announce a reset', async
   await clickButton('Edit');
   await clickButton('Simpan');
   expect(resetAttempts).not.toHaveBeenCalled();
-  expect(container.querySelector('[role="status"]')).toBeNull();
+  expect(container.querySelector('[role="status"]')?.textContent).toContain('Soal berhasil diperbarui');
+  expect(container.querySelector('[role="status"]')?.textContent).not.toContain(resetSuccessMessage);
 });

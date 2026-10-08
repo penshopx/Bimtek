@@ -125,11 +125,14 @@ export default function AdminQuizPage() {
             loadData();
             return;
           }
-          showToast('Riwayat percobaan berhasil dihapus.');
         }
         setMessage(editingId !== null ? 'Soal berhasil diperbarui.' : 'Soal berhasil ditambahkan.');
         loadData();
         closeForm();
+        showToast(
+          (editingId !== null ? 'Soal berhasil diperbarui' : 'Soal berhasil ditambahkan')
+          + (clearAttempts && editingId !== null ? '. Riwayat percobaan berhasil dihapus.' : '')
+        );
       } else {
         setMessage(result.message || 'Gagal menyimpan soal.');
       }
