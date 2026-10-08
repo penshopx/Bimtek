@@ -1,0 +1,136 @@
+**Tahap kelima: pengelolaan kegiatan PKB dan dashboard penyelenggara.** Fokusnya membuat kegiatan, peserta, bukti, laporan, dan riwayat penilaian dapat ditelusuri—bukan otomatis memberikan kredit resmi.
+
+**Pelaksanaan tahap sebelumnya belum terkonfirmasi.** Prompt ini harus memeriksa fitur existing dan aturan yang berlaku sebelum implementasi.
+
+### Prompt tahap kelima untuk Replit Agent
+
+```
+Perluas pengelolaan PKB pada aplikasi BIMTEK / SIAP SKK existing.
+Tetap mandiri, tanpa integrasi Gustafta atau pengiriman otomatis
+ke SIJK/LPJK yang belum memiliki otorisasi dan koneksi terverifikasi.
+
+1. INSPEKSI DAN VALIDASI ATURAN
+- Periksa Tracker PKB, kegiatan BIMTEK, akun/peran, Ruang Bukti,
+  penyimpanan, laporan, dan perhitungan kredit existing.
+- Gunakan Permen PUPR 12/2021 sebagai baseline, lalu periksa
+  perubahan dan ketentuan pelaksanaan yang berlaku.
+- Pisahkan aturan yang bersumber dari regulasi dari kebijakan
+  internal penyelenggara.
+- Jangan membangun tracker atau storage kedua jika fungsi yang
+  sama dapat diperluas.
+
+2. PERAN DAN KEWENANGAN
+Bedakan:
+- peserta;
+- penyelenggara;
+- reviewer internal;
+- administrator aplikasi.
+
+Peran aplikasi tidak otomatis berarti pihak tersebut berwenang
+memverifikasi kegiatan atau menetapkan kredit secara resmi.
+
+Periksa akses pada server untuk setiap operasi, termasuk ekspor.
+Peserta hanya melihat data miliknya; penyelenggara hanya mengakses
+kegiatan dan data peserta sesuai kewenangan serta kebutuhan.
+
+3. SIKLUS KEGIATAN
+Sediakan atau perluas:
+- draft kegiatan;
+- informasi penyelenggara;
+- judul, tujuan, materi, jadwal, lokasi/metode, durasi;
+- kategori/subkegiatan dan sumber aturan;
+- peserta dan peran dalam kegiatan;
+- bukti pelaksanaan/kehadiran;
+- laporan kegiatan;
+- riwayat koreksi dan hasil review.
+
+Pisahkan status internal, misalnya:
+draft → siap ditinjau → berlangsung → selesai →
+laporan disusun → laporan ditinjau internal.
+
+Status tersebut bukan bukti kegiatan terverifikasi resmi.
+
+Catat status eksternal secara terpisah hanya bila tersedia bukti,
+nomor referensi, tanggal, dan pihak berwenang yang dapat ditelusuri.
+
+4. BUKTI DAN KEHADIRAN
+- Gunakan Ruang Bukti existing.
+- Hubungkan bukti ke kegiatan dan peserta yang sesuai.
+- Catat sumber serta perubahan data kehadiran.
+- Jangan menyamakan pendaftaran, centang manual, atau klik hadir
+  dengan bukti partisipasi yang telah disahkan.
+- Jangan membuat sertifikat, tanda tangan, atau bukti resmi fiktif.
+- Jika menerbitkan dokumen internal, labeli sesuai penerbit dan
+  kewenangannya; jangan menyatakan pengakuan resmi otomatis.
+
+5. PERHITUNGAN PKB
+Pisahkan:
+- estimasi aplikasi;
+- penilaian mandiri;
+- hasil review internal;
+- nilai yang ditetapkan pihak berwenang.
+
+Perhitungan harus menampilkan kategori/subkegiatan, nilai dasar,
+bobot yang relevan, asumsi, sumber, dan versi aturan.
+Jangan memakai satu rumus bobot universal untuk semua subkegiatan.
+
+Gunakan jenjang dan subklasifikasi peserta yang sesuai.
+Jangan memberi target tahunan universal atau menerapkan target
+ahli kepada seluruh operator/teknisi.
+
+Uji komposisi kredit sebagai dimensi terpisah, bukan kategori
+yang dijumlah menjadi 100%.
+
+Kegiatan selesai atau total kredit tercapai tidak otomatis berarti
+seluruh persyaratan perpanjangan SKK telah terpenuhi.
+
+6. TENGGAT DAN LAPORAN
+- Terapkan tenggat hanya berdasarkan aturan yang telah diperiksa.
+- Bedakan hari kerja dari hari kalender.
+- Catat zona waktu, sumber aturan, dan kebijakan hari libur.
+- Jika kalender kerja belum tersedia, jangan menampilkan tanggal
+  hasil hitung seolah pasti.
+- Pengingat tidak dianggap pengajuan atau pelaporan resmi.
+- Penanganan laporan terlambat mengikuti aturan yang berlaku;
+  jangan mempertahankan status resmi tanpa dasar.
+
+7. DASHBOARD
+Peserta melihat:
+- kegiatan dan bukti miliknya;
+- nilai menurut status;
+- komposisi kredit dan kekurangan;
+- catatan yang perlu dilengkapi.
+
+Penyelenggara melihat:
+- kegiatan, peserta, kelengkapan bukti, dan laporan;
+- pekerjaan yang perlu ditindaklanjuti;
+- tenggat dengan dasar yang jelas;
+- hasil review dan status eksternal yang memiliki bukti.
+
+Jangan menggabungkan estimasi dan nilai resmi menjadi satu angka
+tanpa penjelasan.
+
+8. UJI PENERIMAAN
+Buktikan:
+- isolasi data antar-peserta dan antar-penyelenggara;
+- kegiatan dapat ditelusuri hingga peserta, bukti, dan laporan;
+- perubahan nilai memiliki riwayat;
+- status internal tidak berubah menjadi resmi otomatis;
+- bukti/kehadiran yang belum lengkap ditandai;
+- perhitungan dapat dijelaskan dan diulang;
+- total cukup tetapi komposisi tidak memenuhi ditampilkan jelas;
+- tenggat hari kerja/kalender ditangani sesuai konfigurasi;
+- ekspor tidak membuka data pribadi yang tidak diperlukan;
+- tidak ada pengiriman eksternal tanpa otorisasi.
+
+9. HANDOFF
+Laporkan perubahan kode/schema, sumber aturan, hasil tes,
+keterbatasan perhitungan, dependensi, dan langkah rollback.
+
+Jangan melakukan migrasi destruktif, mengubah kredit historis,
+menambah layanan berbayar, atau deploy produksi tanpa persetujuan.
+```
+
+**Target tahap ini:** peserta dan penyelenggara memiliki catatan PKB yang tertata dan dapat diaudit, dengan batas jelas antara **pencatatan internal, estimasi, dan penetapan resmi**.
+
+Setelah itu, tahap terakhir sebelum produksi adalah **pengujian end-to-end, keamanan, pemulihan data, dan kesiapan operasional**—bukan penambahan fitur lagi.

@@ -1,0 +1,142 @@
+**Tahap keenam: pengujian menyeluruh dan kesiapan produksi.** Jangan tambah fitur baru dahulu. Pastikan alur yang sudah dirancang benar-benar bekerja, aman, dan tidak menyajikan status resmi tanpa dasar.
+
+**Enam tahap ini masih merupakan instruksi pengembangan; pelaksanaannya belum terkonfirmasi.** Prompt berikut harus memeriksa kondisi proyek yang nyata.
+
+### Prompt tahap keenam untuk Replit Agent
+
+```
+Lakukan audit kesiapan rilis aplikasi BIMTEK / SIAP SKK existing.
+Jangan menambah fitur baru atau deploy produksi pada tahap ini.
+
+1. INVENTARISASI KONDISI NYATA
+Periksa implementasi:
+- koreksi regulasi dan jenjang;
+- diagnostik serta mock AI;
+- Ruang Bukti;
+- Bedah Dokumen;
+- Portofolio;
+- pemetaan unit, rencana belajar, dan tutor;
+- pengelolaan PKB serta dashboard penyelenggara.
+
+Beri status setiap fitur:
+belum dibuat / parsial / terimplementasi / telah diuji.
+
+Jangan menandai selesai berdasarkan keberadaan halaman atau tombol saja.
+
+2. UJI END-TO-END PERSIAPAN UJIKOM
+Dengan akun uji dan data sintetis:
+- masuk;
+- pilih target skema/jenjang;
+- lengkapi profil;
+- unggah bukti;
+- analisis dokumen;
+- susun dan koreksi portofolio;
+- buka rencana belajar;
+- gunakan tutor dan latihan;
+- lihat ringkasan kesiapan;
+- keluar, masuk kembali, dan periksa persistensi.
+
+Pastikan tidak ada fakta pengalaman yang direka atau hasil latihan
+yang berubah menjadi putusan kompetensi resmi.
+
+3. UJI END-TO-END PKB
+Dengan akun peserta dan penyelenggara:
+- buat kegiatan;
+- catat peserta/peran;
+- tambahkan bukti;
+- susun laporan;
+- lakukan review internal;
+- periksa estimasi, penilaian mandiri, dan nilai resmi bila
+  memang tersedia bukti penetapan;
+- periksa komposisi dan kebutuhan tindak lanjut;
+- ekspor hasil sesuai kewenangan.
+
+Pastikan kegiatan selesai, bukti diunggah, atau review internal
+tidak otomatis menghasilkan status terverifikasi resmi.
+
+4. UJI KONTROL AKSES
+Uji pada server, bukan hanya UI:
+- pengguna tanpa login;
+- peserta A terhadap data peserta B;
+- penyelenggara A terhadap kegiatan penyelenggara B;
+- akses reviewer/admin di luar kewenangannya;
+- perubahan ID pada URL atau payload;
+- preview, download, ekspor, hasil AI, dan indeks pencarian.
+
+Periksa juga session expiration dan pencabutan akses.
+Jangan menggunakan data pribadi produksi untuk pengujian.
+
+5. UJI BERKAS DAN AI
+Uji:
+- tipe berkas tidak diizinkan;
+- ukuran berlebih;
+- berkas rusak atau teks kosong;
+- PDF scan tanpa dukungan OCR;
+- unggah terputus;
+- pemrosesan berulang;
+- timeout/rate limit provider;
+- keluaran AI tidak valid;
+- dokumen dengan instruksi manipulatif;
+- kutipan atau lokasi sumber yang tidak cocok.
+
+Pastikan gagal tidak ditampilkan sebagai sukses.
+Periksa bahwa penghapusan/revokasi dokumen juga membatasi akses
+ke hasil ekstraksi, indeks, dan konteks AI terkait.
+
+6. UJI ATURAN DAN DATA
+- Jenjang konsisten lintas halaman.
+- Skema/unit dan regulasi memiliki sumber serta versi.
+- Data belum diverifikasi ditandai jelas.
+- Poin belajar terpisah dari SKPK.
+- Perhitungan kredit dapat diulang.
+- Komposisi tidak memenuhi tidak diberi status memenuhi.
+- Perubahan target peserta tidak mencampur hasil antar-skema.
+- Perubahan master tidak mengubah riwayat secara diam-diam.
+
+7. UJI PENGALAMAN PENGGUNA
+Periksa desktop dan ponsel:
+- navigasi;
+- keyboard dan fokus;
+- label formulir;
+- kontras;
+- loading, empty state, dan pesan gagal;
+- retry;
+- konfirmasi tindakan berisiko;
+- kelengkapan hasil ekspor.
+
+Jangan menyatakan memenuhi WCAG hanya berdasarkan pemeriksaan
+otomatis sebagian halaman.
+
+8. PEMULIHAN DAN OPERASIONAL
+- Periksa pengelolaan secret tanpa menampilkannya.
+- Periksa logging yang tidak membocorkan data pribadi.
+- Periksa pembatasan permintaan dan biaya AI.
+- Pastikan backup mencakup database, berkas, dan metadata penting.
+- Lakukan uji restore di lingkungan terpisah.
+- Dokumentasikan rollback serta dampak perubahan schema.
+- Periksa pemantauan kegagalan dan prosedur penanganannya.
+
+Jangan menganggap backup berhasil hanya karena jadwalnya tersedia.
+
+9. LAPORAN RILIS
+Serahkan:
+- versi/commit yang diuji;
+- lingkungan dan konfigurasi penting yang disanitasi;
+- daftar fitur beserta status nyata;
+- skenario, hasil, dan bukti pengujian;
+- masalah terbuka dan tingkat risikonya;
+- batas layanan/parser/model;
+- hasil restore dan rencana rollback;
+- rekomendasi: belum siap / siap pilot terbatas / kandidat rilis.
+
+Masalah yang membuat data lintas pengguna terbuka, keputusan resmi
+menyesatkan, data hilang, atau alur inti gagal harus menjadi
+penghambat rilis.
+
+10. BATAS AKHIR
+Jangan deploy produksi, memindahkan data nyata, mengubah kredit
+historis, atau menambah layanan berbayar tanpa persetujuan.
+Jika bukti pengujian belum cukup, nyatakan belum cukup.
+```
+
+**Hasil yang kita perlukan sekarang adalah laporan pengujian proyek**, bukan prompt fitur tambahan. Dari laporan itu kita dapat menentukan apakah aplikasi layak masuk **pilot terbatas** atau masih memerlukan perbaikan.

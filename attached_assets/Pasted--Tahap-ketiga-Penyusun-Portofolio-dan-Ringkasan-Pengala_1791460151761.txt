@@ -1,0 +1,101 @@
+**Tahap ketiga: Penyusun Portofolio dan Ringkasan Pengalaman.** Gunakan bukti yang sama dari Ruang Bukti; hasil Bedah Dokumen hanya membantu mengisi draft, bukan dianggap fakta yang sudah disahkan.
+
+Tahap sebelumnya **belum terkonfirmasi selesai**, jadi mulai dengan pemeriksaan prasyarat.
+
+### Prompt tahap ketiga untuk Replit Agent
+
+```
+Kembangkan Penyusun Portofolio pada aplikasi BIMTEK / SIAP SKK existing.
+Tetap mandiri, tanpa integrasi akun, storage, atau API Gustafta.
+
+1. PERIKSA FITUR EXISTING
+- Periksa Ruang Bukti, Bedah Dokumen, profil peserta, master skema/unit,
+  dan Generator APL.02.
+- Perluas kemampuan yang sudah ada; jangan membuat portofolio atau
+  penyimpanan paralel.
+- Jika akses berkas belum aman, hentikan fitur yang bergantung padanya
+  dan laporkan penghambat.
+- Portofolio manual dapat berjalan tanpa AI jika penyimpanan aman.
+
+2. MASUKAN PENGALAMAN
+Sediakan formulir untuk:
+- nama proyek/kegiatan;
+- periode;
+- jabatan dan peran nyata peserta;
+- tugas serta kontribusi;
+- hasil pekerjaan;
+- pembelajaran;
+- berkas bukti terkait.
+
+Izinkan penyimpanan draft yang belum lengkap, dengan penanda kekurangan.
+Jangan memaksa peserta mengisi informasi yang tidak diketahui.
+
+3. PENGGUNAAN HASIL AI
+- Pengguna memilih hasil analisis yang akan digunakan.
+- Setiap isian yang berasal dari AI ditandai sebagai saran dan
+  dapat ditelusuri ke dokumen/lokasi sumber.
+- Pengguna menerima, mengoreksi, atau menolak saran sebelum ekspor.
+- Jangan mengarang proyek, periode, jabatan, capaian, tanda tangan,
+  sertifikat, atau bukti pengalaman.
+- Jangan mengubah kontribusi anggota tim menjadi kontribusi pribadi.
+
+4. PEMETAAN KOMPETENSI
+- Kaitkan pengalaman dengan skema/unit hanya jika master dan sumber
+  standarnya tersedia.
+- Bedakan “unit dipilih pengguna” dari “keterkaitan disarankan AI”.
+- Jangan menyebut keterkaitan tersebut sebagai bukti kompetensi resmi.
+- Jika sumber unit belum tersedia, simpan pengalaman tanpa pemetaan
+  dan tampilkan alasan; jangan membuat unit/KUK fiktif.
+
+5. KELUARAN
+Sediakan:
+- daftar pengalaman/proyek;
+- ringkasan pengalaman per proyek;
+- matriks pengalaman–bukti–unit, bila pemetaan tersedia;
+- daftar informasi/bukti yang belum dilengkapi;
+- ekspor draft dengan format yang didukung proyek.
+
+Cantumkan:
+“Draft portofolio untuk persiapan. Bukan putusan kompetensi,
+penetapan kredit PKB, atau formulir resmi yang telah disahkan.”
+
+Jangan menghasilkan template resmi LSP tanpa template dan ketentuan
+yang telah diperiksa. Integrasi dengan APL.02 tidak boleh otomatis
+mencentang kompeten atau menandatangani asesmen mandiri.
+
+6. PISAHKAN DARI PKB
+- Pengalaman kerja atau portofolio tidak otomatis menjadi kegiatan PKB.
+- Ringkasan pengalaman tidak otomatis menghasilkan SKPK.
+- Jika bukti yang sama dirujuk pada kegiatan PKB, pertahankan konteks
+  dan status penilaiannya secara terpisah.
+
+7. KEAMANAN DAN RIWAYAT
+- Periksa kepemilikan pada server untuk baca, edit, ekspor, dan hapus.
+- Simpan perubahan draft serta referensi versi bukti.
+- Tandai tautan bukti yang hilang atau aksesnya dicabut.
+- Jangan memasukkan data pribadi yang tidak diperlukan ke model,
+  ekspor, atau log.
+- Jangan membagikan portofolio secara publik secara default.
+
+8. UJI PENERIMAAN
+Buktikan:
+- draft dapat disimpan dan dibuka kembali;
+- fakta belum lengkap tetap ditandai, bukan diisi oleh AI;
+- saran AI memiliki sumber dan memerlukan review pengguna;
+- pengguna tidak dapat mengakses portofolio peserta lain;
+- pemetaan tidak tersedia ditampilkan secara jujur;
+- ekspor sesuai draft yang telah ditinjau;
+- bukti yang berubah/hilang terdeteksi;
+- tidak ada perubahan otomatis pada keputusan kompetensi atau SKPK;
+- fitur APL.02 existing tidak mengalami regresi.
+
+9. HANDOFF
+Laporkan perubahan kode/schema, hasil pengujian, batas ekspor/AI,
+dependensi yang belum selesai, dan langkah rollback.
+Jangan melakukan migrasi destruktif, menambah layanan berbayar,
+atau deploy produksi tanpa persetujuan.
+```
+
+**Target tahap ini:** peserta memiliki draft portofolio yang dapat ditelusuri dari **pengalaman → kontribusi → bukti → keterkaitan kompetensi**.
+
+Setelah itu, kita perkuat **pemetaan unit, rencana belajar, dan tutor existing**—bukan membuat Klinik atau chatbot baru.
