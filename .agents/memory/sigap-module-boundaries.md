@@ -16,3 +16,9 @@ Do not turn unchecked blueprint credit formulas or module-completion points into
 **Why:** the uploaded blueprint is a product concept, not proof that a learning module or manually entered activity already has recognized credit.
 
 **How to apply:** preserve personal records, but separate estimates from verified credit and avoid pass/renewal claims from checklist completion or a points total.
+
+When correcting expert-level labels, do not automatically promote generic job records (such as field supervisors or QC) to an expert level. Flag the job's exact scheme as needing confirmation if its authoritative mapping is unavailable.
+
+**Why:** correcting an inconsistent label is not proof that the underlying job belongs to an expert scheme; automatic numeric replacement could silently reclassify the occupation.
+
+**How to apply:** apply confirmed expert rank mappings to explicit expert records; obtain the authoritative job/qualification mapping before classifying generic job titles.

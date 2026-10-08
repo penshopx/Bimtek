@@ -17,15 +17,15 @@ const articles = [
   },
   {
     id: 103,
-    title: 'SK DJBK No. 114/KPTS/DK/2024 — Pedoman Asesmen Jarak Jauh (AJJ)',
+    title: 'SK DJBK No. 114/KPTS/DK/2024 — Penetapan Jabatan Kerja dan Jenjang Kualifikasi',
     category: 'SKK',
-    content: 'Surat Keputusan Direktur Jenderal Bina Konstruksi yang mengatur pelaksanaan Asesmen Jarak Jauh (AJJ) untuk uji kompetensi SKK. Menetapkan: persyaratan teknis video call, tata cara verifikasi identitas Asesi, prosedur pelaksanaan portofolio dan wawancara online, kewajiban LSP dalam AJJ, dan standar keamanan data. AJJ memungkinkan Asesi mengikuti uji kompetensi dari lokasi manapun.',
+    content: 'Keputusan Direktur Jenderal Bina Konstruksi tentang penetapan jabatan kerja dan jenjang kualifikasi tenaga kerja konstruksi. Gunakan daftar jabatan dan jenjang dalam keputusan beserta lampirannya untuk mencocokkan jabatan kerja dengan skema sertifikasi yang dituju. Keputusan ini bukan pedoman pelaksanaan Asesmen Jarak Jauh (AJJ); ketentuan metode asesmen perlu dikonfirmasi kepada LSP yang berwenang.',
   },
   {
     id: 104,
-    title: 'Permen PU No. 12 Tahun 2021 — Standar & Pedoman Pengadaan Jasa Konstruksi',
+    title: 'Permen PUPR No. 12 Tahun 2021 — Pelaksanaan Pengembangan Keprofesian Berkelanjutan',
     category: 'SKK',
-    content: 'Peraturan Menteri PU yang mengatur standar dan pedoman pengadaan pekerjaan konstruksi, termasuk kewajiban penyedia jasa memiliki tenaga kerja bersertifikat SKK. Mewajibkan kontraktor untuk menempatkan tenaga ahli bersertifikat SKK sesuai jabatan dan kualifikasi yang ditentukan. Pelanggaran dapat berdampak pada sanksi kontrak dan perizinan usaha.',
+    content: 'Peraturan Menteri PUPR tentang pelaksanaan Pengembangan Keprofesian Berkelanjutan (PKB). Rujukan ini berkaitan dengan pelaksanaan kegiatan pengembangan keprofesian, bukan pedoman pengadaan jasa konstruksi. Pengakuan kegiatan dan kredit PKB harus mengikuti ketentuan yang berlaku serta pemeriksaan pihak berwenang; catatan belajar di SIAP SKK tidak otomatis menjadi kredit resmi.',
   },
   {
     id: 1,

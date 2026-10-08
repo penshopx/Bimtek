@@ -144,7 +144,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'pelaks-gedung',
     name: 'Pelaksana Lapangan Pekerjaan Gedung',
     bidang: 'Sipil',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Sipil',
     docs: [
       ...COMMON_DOCS,
@@ -158,7 +158,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'pelaks-jalan',
     name: 'Pelaksana Lapangan Pekerjaan Jalan',
     bidang: 'Sipil',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Sipil',
     docs: [
       ...COMMON_DOCS,
@@ -172,7 +172,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'pelaks-jembatan',
     name: 'Pelaksana Lapangan Pekerjaan Jembatan',
     bidang: 'Sipil',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Sipil',
     docs: [
       ...COMMON_DOCS,
@@ -222,7 +222,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'ahli-sipil-madya',
     name: 'Ahli Teknik Jalan – Madya',
     bidang: 'Sipil',
-    kualifikasi: 'Ahli Madya (L6)',
+    kualifikasi: 'Ahli Madya (L8)',
     skema: 'SKK Konstruksi – Sipil',
     docs: [
       ...COMMON_DOCS,
@@ -243,7 +243,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'manajer-proyek',
     name: 'Manajer Proyek',
     bidang: 'Manajemen Pelaksanaan',
-    kualifikasi: 'Ahli Madya (L6)',
+    kualifikasi: 'Ahli Madya (L8)',
     skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
     docs: [
       ...COMMON_DOCS,
@@ -257,7 +257,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'manajer-lapangan',
     name: 'Manajer Lapangan Pekerjaan Gedung',
     bidang: 'Manajemen Pelaksanaan',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
     docs: [
       ...COMMON_DOCS,
@@ -285,7 +285,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'qs',
     name: 'Quantity Surveyor',
     bidang: 'Manajemen Pelaksanaan',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
     docs: [
       ...COMMON_DOCS,
@@ -310,7 +310,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'qc',
     name: 'Quality Control (QC) Konstruksi',
     bidang: 'Manajemen Pelaksanaan',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Jenjang perlu dikonfirmasi sesuai skema LSP',
     skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
     docs: [
       ...COMMON_DOCS,
@@ -334,7 +334,7 @@ const JABATAN_LIST: Jabatan[] = [
     id: 'k3',
     name: 'Ahli K3 Konstruksi',
     bidang: 'Manajemen Pelaksanaan',
-    kualifikasi: 'Ahli Muda (L5)',
+    kualifikasi: 'Ahli Muda (L7)',
     skema: 'SKK Konstruksi – Manajemen Pelaksanaan',
     docs: [
       ...COMMON_DOCS,

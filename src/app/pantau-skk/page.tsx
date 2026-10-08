@@ -12,12 +12,11 @@ interface SKKEntry {
 }
 
 const jenjangOptions = [
-  'Operator / Teknisi (L1-L3)',
-  'Analis / Teknisi Madya (L4)',
-  'Ahli Pertama (L4)',
-  'Ahli Muda (L5)',
-  'Ahli Madya (L6)',
-  'Ahli Utama (L7)',
+  'Operator (L1-L3)',
+  'Teknisi / Analis (L4-L6)',
+  'Ahli Muda (L7)',
+  'Ahli Madya (L8)',
+  'Ahli Utama (L9)',
 ];
 
 function addMonths(date: Date, months: number): Date {

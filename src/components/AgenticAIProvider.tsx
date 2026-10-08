@@ -121,13 +121,15 @@ SKK adalah bukti tertulis yang diberikan oleh lembaga sertifikasi profesi terakr
 REGULASI SKK YANG BERLAKU:
 1. Permen PU No. 6 Tahun 2025 — Standar kompetensi tenaga kerja konstruksi terbaru
 2. KM PUPR No. 713/KPTS/M/2022 — Pengaturan jabatan dan kualifikasi SKK
-3. SK DJBK No. 114/KPTS/DK/2024 — Pedoman pelaksanaan Asesmen Jarak Jauh (AJJ)
-4. Permen PU No. 12 Tahun 2021 — Standar dan pedoman pengadaan jasa konstruksi
+3. SK DJBK No. 114/KPTS/DK/2024 — Penetapan jabatan kerja dan jenjang kualifikasi, bukan pedoman AJJ
+4. Permen PUPR No. 12 Tahun 2021 — Pelaksanaan Pengembangan Keprofesian Berkelanjutan (PKB), bukan pedoman pengadaan
 
 TIGA METODE ASESMEN SKK:
 1. **Hardcopy** — Asesmen tatap muka dengan formulir fisik (tradisional)
 2. **Paperless** — Asesmen digital di lokasi tanpa kertas, formulir elektronik
-3. **Asesmen Jarak Jauh (AJJ)** — Asesmen online via video call, diatur dalam SK DJBK 114/2024
+3. **Asesmen Jarak Jauh (AJJ)** — Asesmen jarak jauh dengan sarana komunikasi daring; ketersediaan, persyaratan, dan prosedur harus dikonfirmasi kepada LSP. Jangan mengaitkan pedoman AJJ dengan SK DJBK 114/2024.
+
+JENJANG AHLI KONSTRUKSI: Ahli Muda = jenjang 7, Ahli Madya = jenjang 8, Ahli Utama = jenjang 9. Jangan menggunakan pemetaan 5/6/7 untuk ketiga jenjang ahli tersebut.
 
 DOKUMEN PORTOFOLIO YANG DIPERLUKAN:
 - FR.APL.01 — Formulir permohonan sertifikasi kompetensi

@@ -167,7 +167,7 @@ const methods = [
   {
     icon: '📡',
     name: 'Asesmen Jarak Jauh (AJJ)',
-    desc: 'Asesmen online via video call. Asesi bisa mengikuti uji kompetensi dari mana saja sesuai SK DJBK No. 114/2024.',
+    desc: 'Asesmen jarak jauh dengan sarana komunikasi daring. Ketersediaan, persyaratan, dan tata cara pelaksanaannya perlu dikonfirmasi kepada LSP yang berwenang.',
     color: 'bg-amber-600',
   },
 ];

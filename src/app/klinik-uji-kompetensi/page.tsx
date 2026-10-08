@@ -58,7 +58,7 @@ function StepBar({ current }: { current: number }) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const jenjangOptions = ['Ahli Pertama (L4)', 'Ahli Muda (L5)', 'Ahli Madya (L6)', 'Ahli Utama (L7)', 'Teknisi/Analis (L4)', 'Operator (L1-3)'];
+const jenjangOptions = ['Ahli Muda (L7)', 'Ahli Madya (L8)', 'Ahli Utama (L9)', 'Teknisi/Analis (L4-6)', 'Operator (L1-3)'];
 const pendidikanOptions = ['SMA/SMK', 'D3', 'D4 / Sarjana Terapan', 'S1 (Sarjana)', 'S2 (Magister)'];
 const pengalamanOptions = ['< 1 tahun', '1–2 tahun', '2–3 tahun', '3–5 tahun', '5–8 tahun', '8+ tahun'];
 
