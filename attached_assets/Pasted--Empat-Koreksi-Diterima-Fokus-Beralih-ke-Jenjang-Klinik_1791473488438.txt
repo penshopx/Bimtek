@@ -1,0 +1,48 @@
+# ✅ Empat Koreksi Diterima — Fokus Beralih ke Jenjang Klinik & Payload AI
+
+Saya memahami sepenuhnya bahwa SIAP SKK dan Gustafta SBU Accelerator adalah **dua domain yang berbeda** dan tidak boleh dicampur. Berikut rangkuman koreksi yang saya catat sebagai aturan permanen untuk SIAP SKK:
+
+---
+
+## 🎯 4 Aturan Permanen untuk Domain SIAP SKK
+
+| No | Koreksi | Implikasi |
+|:---|:---|:---|
+| 1 | **Pemisahan domain** | SIAP SKK = persiapan kompetensi TKK. Tidak boleh ada referensi Gustafta, sertifikasi SBU, atau admin BUJK |
+| 2 | **Incognito ≠ storage tersedia** | Perlu deteksi eksplisit: `try/catch` pada `localStorage.setItem()` untuk menangkap `QuotaExceededError` atau `SecurityError` saat storage diblokir |
+| 3 | **Transparansi kegagalan simpan** | Jika `localStorage` gagal, UI harus menampilkan pesan jelas: *"Progres Anda tidak tersimpan karena penyimpanan browser tidak tersedia"* — bukan menampilkan centang yang menipu |
+| 4 | **Konflik multi-tab bukan "tidak crash"** | Perilaku "penulis terakhir menang" adalah **silent data loss** — perlu strategi yang lebih baik (misal: `storage` event listener untuk sinkronisasi antar tab, atau peringatan saat tab lain memodifikasi data) |
+
+---
+
+## 🎯 Prioritas Selanjutnya: Koreksi Jenjang Klinik → Payload AI
+
+Anda menyatakan prioritas berikutnya adalah **"koreksi jenjang Klinik hingga payload AI"**. Saya memahami ini sebagai area yang sedang Anda kerjakan dan membutuhkan dukungan spesifik.
+
+Untuk memberikan bantuan yang tepat tanpa tumpang tindih, saya perlu klarifikasi:
+
+### Pertanyaan untuk Anda
+
+1. **Apakah "jenjang Klinik" merujuk pada struktur klasifikasi/bagian di dalam aplikasi SIAP SKK** (misal: Klinik SKK, Klinik SBU, Klinik Tender, dll.) yang perlu dikoreksi hierarkinya?
+
+2. **Apakah "payload AI" merujuk pada data yang dikirim ke model AI** (misal: OpenAI/Anthropic) saat pengguna berkonsultasi di fitur Klinik, yang perlu disesuaikan agar:
+   - Sesuai dengan konteks SIAP SKK (bukan Gustafta SBU)
+   - Memuat informasi jenjang/kategori yang benar
+   - Tidak mencampur domain yang berbeda
+
+3. **Apakah Anda ingin saya membantu dengan:**
+   - **(A)** Review struktur data jenjang Klinik yang sudah ada dan identifikasi inkonsistensi?
+   - **(B)** Penyusunan skema payload AI yang memisahkan konteks SIAP SKK dari Gustafta SBU?
+   - **(C)** System prompt untuk AI agar tetap fokus pada domain kompetensi TKK?
+   - **(D)** Atau ada aspek lain yang lebih spesifik?
+
+---
+
+## 🚫 Batasan yang Saya Pegang
+
+- ✅ Tidak akan mencampur domain SIAP SKK dengan Gustafta SBU
+- ✅ Tidak akan mengulang checklist pengujian yang sudah ada
+- ✅ Tidak akan memberikan contoh kode yang tidak diminta
+- ✅ Akan fokus pada prioritas yang Anda nyatakan
+
+Silakan beri tahu aspek mana dari "jenjang Klinik hingga payload AI" yang ingin Anda diskusikan lebih dalam, dan saya akan langsung memberikan dukungan yang relevan. 🚀
