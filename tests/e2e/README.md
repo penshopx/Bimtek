@@ -45,3 +45,31 @@ It switches to **Acak**, then back to **Urutan Tetap**, checking the visible
 toggle and stored preference after each change, a full reload, a new same-origin
 tab, and return navigation through the home page's quiz link. It does not
 answer questions, record attempts, seed storage on reload, or modify the database.
+
+## Admin edit and clear attempt history
+
+```sh
+bun run test:quiz-edit-clear
+```
+
+Development only, against the existing workflow and local `.data/app.db`.
+The command deliberately unsets `REPLIT_DEV_DOMAIN` for the browser runner so
+it reaches that same local workflow over loopback, not a different host or the
+HTTPS preview (whose certificate may not be trusted by the test runner).
+The suite registers a unique temporary account, promotes only that account to
+admin, and logs in through the real login form. It seeds three temporary
+questions with valid/stale, zero, and unrelated control attempts. No server
+actions or authentication responses are mocked.
+
+Coverage:
+- Editing question text and checking the clear-history checkbox saves the text
+  and physically deletes all its attempts (confirmed directly in the database).
+- The row shows `Belum ada data`, with no attempt count or `Reset stats` button,
+  immediately after save and after reload.
+- The control question retains its attempts.
+- Reopening the cleared question and editing an initially unattempted question
+  both hide the checkbox.
+
+Cleanup runs even after a failed assertion and deletes only this run's questions,
+attempts, temporary account, and sessions. Browser contexts are isolated;
+the test does not use or change any existing admin account.

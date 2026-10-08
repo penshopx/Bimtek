@@ -14,6 +14,7 @@
     "test:quiz": "bun test src/app/actions/quiz.integration.test.ts",
     "test:quiz-stats": "bun test src/app/actions/quiz.integration.test.ts && bun test src/app/admin/quiz/page.test.tsx",
     "test:quiz-order": "bun build tests/e2e/quiz-order-preference.spec.ts --target=bun --packages=external --outfile=tests/e2e/quiz-order-preference.built.spec.js && bun --bun x playwright test quiz-order-preference --config=playwright.config.ts; status=$?; rm -f tests/e2e/quiz-order-preference.built.spec.js; exit $status",
+    "test:quiz-edit-clear": "bun build tests/e2e/quiz-edit-clear-attempts.spec.ts --target=bun --packages=external --outfile=tests/e2e/quiz-edit-clear-attempts.built.spec.js && env -u REPLIT_DEV_DOMAIN bun --bun x playwright test quiz-edit-clear-attempts --config=playwright.config.ts; status=$?; rm -f tests/e2e/quiz-edit-clear-attempts.built.spec.js; exit $status",
     "test:quiz-retry": "bun build tests/e2e/quiz-retry.spec.ts --target=bun --packages=external --outfile=tests/e2e/quiz-retry.built.spec.js && bun --bun x playwright test --config=playwright.config.ts; status=$?; rm -f tests/e2e/quiz-retry.built.spec.js; exit $status",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",

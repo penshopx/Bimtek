@@ -17,3 +17,16 @@ temporary. Preserve the test exit status during cleanup. Prefer the supplied
 Chromium when available, and fall back to normal Playwright browser discovery
 outside this environment. Do not replace the application's runtime just to
 launch browser tests.
+
+Browser suites that directly seed the local development database must target
+the same local workflow rather than inheriting a remote preview hostname.
+
+**Why:** The preview HTTPS certificate can be untrusted by Playwright's request
+client even when the local app works. Mixing local fixtures with a different
+host can also exercise the wrong database. Disabling TLS verification globally
+would hide the cause.
+
+**How to apply:** For local-database fixture suites, scope host selection to the
+runner (for example, unset `REPLIT_DEV_DOMAIN` just for its process to use the
+existing loopback fallback). Keep shared browser configuration usable for tests
+that intentionally exercise the proxy.
