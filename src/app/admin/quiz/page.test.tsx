@@ -17,6 +17,7 @@ const getStats = mock(async (sessionId: string | null) => {
   return stats;
 });
 const clearStale = mock(async (_questionId: number, _sessionId: string | null): Promise<{ success: boolean; message?: string }> => ({ success: true }));
+const resetAttempts = mock(async (_questionId: number, _sessionId: string | null): Promise<{ success: boolean; message?: string }> => ({ success: true }));
 const confirmCleanup = mock(() => true);
 mock.module('@/components/AuthProvider', () => ({
   useAuth: () => ({ user: adminUser }),
@@ -29,7 +30,7 @@ mock.module('@/app/actions/quiz', () => ({
   updateQuizQuestion: async () => ({ success: true }),
   deleteQuizQuestion: async () => ({ success: true }),
   reorderQuizQuestions: async () => ({ success: true }),
-  resetQuizAttempts: async () => ({ success: true }),
+  resetQuizAttempts: resetAttempts,
   resetStaleAttempts: clearStale,
 }));
 const { default: AdminQuizPage } = await import('./page');
@@ -55,6 +56,8 @@ beforeEach(() => {
   getStats.mockClear();
   clearStale.mockReset();
   clearStale.mockImplementation(async () => ({ success: true }));
+  resetAttempts.mockReset();
+  resetAttempts.mockImplementation(async () => ({ success: true }));
   confirmCleanup.mockReset();
   confirmCleanup.mockImplementation(() => true);
 });
@@ -168,4 +171,72 @@ test('cleanup with no remaining attempts shows the empty state', async () => {
   expect(container.textContent).toContain('Belum ada data');
   expect(container.textContent).not.toContain(warning);
   expect(container.querySelectorAll(optionTracks)).toHaveLength(0);
+});
+
+const resetSuccessMessage = 'Riwayat percobaan berhasil dihapus.';
+
+async function clickButton(text: string) {
+  const button = [...container.querySelectorAll('button')]
+    .find(button => button.textContent?.trim() === text);
+  expect(button).toBeDefined();
+  await act(async () => button!.click());
+}
+
+async function startReset(path: 'table' | 'edit') {
+  await renderStat(staleStat);
+  if (path === 'table') {
+    await clickButton('Reset stats');
+    await clickButton('Ya, Reset');
+  } else {
+    await clickButton('Edit');
+    await act(async () => {
+      container.querySelector<HTMLInputElement>('#clear-attempts-checkbox')!.click();
+    });
+    await clickButton('Simpan');
+  }
+}
+
+test.each(['table', 'edit'] as const)('successful %s reset shows a dismissible success notice', async (path) => {
+  await startReset(path);
+  expect(resetAttempts).toHaveBeenCalledWith(question.id, 'admin-stats-test-session');
+  expect(container.querySelector('[role="status"]')?.textContent).toContain(resetSuccessMessage);
+  expect(container.textContent).not.toContain('Hapus juga riwayat percobaan');
+  expect(getStats).toHaveBeenCalledTimes(2);
+  await act(async () => {
+    container.querySelector<HTMLButtonElement>('[aria-label="Tutup notifikasi"]')!.click();
+  });
+  expect(container.querySelector('[role="status"]')).toBeNull();
+});
+
+test.each([
+  { path: 'table', mode: 'rejected' },
+  { path: 'table', mode: 'thrown' },
+  { path: 'edit', mode: 'rejected' },
+  { path: 'edit', mode: 'thrown' },
+] as const)('failed $path reset ($mode) never shows success', async ({ path, mode }) => {
+  resetAttempts.mockImplementation(async () => {
+    if (mode === 'thrown') throw new Error('network');
+    return { success: false, message: 'Reset ditolak.' };
+  });
+  await startReset(path);
+  expect(container.querySelector('[role="status"]')).toBeNull();
+  expect(container.textContent).not.toContain(resetSuccessMessage);
+  expect(container.textContent).toContain(mode === 'rejected'
+    ? 'Reset ditolak.'
+    : path === 'table' ? 'Terjadi kesalahan saat mereset statistik.' : 'Terjadi kesalahan.');
+});
+
+test('reset success notice disappears automatically after three seconds', async () => {
+  await startReset('table');
+  expect(container.querySelector('[role="status"]')).not.toBeNull();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 3100)); });
+  expect(container.querySelector('[role="status"]')).toBeNull();
+});
+
+test('saving an edit without clearing attempts does not announce a reset', async () => {
+  await renderStat(staleStat);
+  await clickButton('Edit');
+  await clickButton('Simpan');
+  expect(resetAttempts).not.toHaveBeenCalled();
+  expect(container.querySelector('[role="status"]')).toBeNull();
 });

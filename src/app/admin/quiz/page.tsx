@@ -45,8 +45,13 @@ export default function AdminQuizPage() {
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
   };
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     if (user?.role === 'admin') loadData();
@@ -120,6 +125,7 @@ export default function AdminQuizPage() {
             loadData();
             return;
           }
+          showToast('Riwayat percobaan berhasil dihapus.');
         }
         setMessage(editingId !== null ? 'Soal berhasil diperbarui.' : 'Soal berhasil ditambahkan.');
         loadData();
@@ -158,7 +164,7 @@ export default function AdminQuizPage() {
       setResetConfirmId(null);
       loadData();
       if (result.success) {
-        showToast('✅ Statistik soal berhasil direset.');
+        showToast('Riwayat percobaan berhasil dihapus.');
       } else {
         showToast(result.message || 'Gagal mereset statistik.', 'error');
       }
@@ -258,6 +264,7 @@ export default function AdminQuizPage() {
       {/* Toast notification */}
       {toast && (
         <div
+          role={toast.type === 'success' ? 'status' : 'alert'}
           className={`fixed bottom-6 right-6 z-[100] flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-xs transition-all
             ${toast.type === 'success'
               ? 'bg-green-600 text-white'
