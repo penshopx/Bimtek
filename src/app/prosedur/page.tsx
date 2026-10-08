@@ -364,6 +364,7 @@ const comparisons = [
 export default function ProsedurPage() {
   const [activeTab, setActiveTab] = useState<Method>('hardcopy');
   const [checkedSteps, setCheckedSteps] = useState<boolean[]>([]);
+  const [resetNotice, setResetNotice] = useState<{ text: string; error: boolean } | null>(null);
   const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
   const didRestoreRef = useRef(false);
   const [targetStep, setTargetStep] = useState<{ method: Method; index: number } | null>(null);
@@ -372,6 +373,7 @@ export default function ProsedurPage() {
 
   // Load per-method checklist from localStorage whenever the active tab changes
   useEffect(() => {
+    setResetNotice(null);
     const stored = localStorage.getItem(`prosedur-checklist-${activeTab}`);
     const methodSteps = stepsMap[activeTab];
     if (stored) {
@@ -388,12 +390,24 @@ export default function ProsedurPage() {
 
   const handleToggleCheck = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    setResetNotice(null);
     setCheckedSteps(prev => {
       const next = [...prev];
       next[index] = !next[index];
       localStorage.setItem(`prosedur-checklist-${activeTab}`, JSON.stringify(next));
       return next;
     });
+  };
+
+  const handleResetChecklist = () => {
+    const cleared = new Array(steps.length).fill(false);
+    try {
+      localStorage.setItem(`prosedur-checklist-${activeTab}`, JSON.stringify(cleared));
+      setCheckedSteps(cleared);
+      setResetNotice({ text: 'Checklist metode ini telah direset. Silakan mulai ulang.', error: false });
+    } catch {
+      setResetNotice({ text: 'Checklist belum direset karena penyimpanan browser gagal. Silakan coba lagi.', error: true });
+    }
   };
 
   const completedCount = checkedSteps.filter(Boolean).length;
@@ -529,9 +543,21 @@ export default function ProsedurPage() {
                 ? '🎉 Semua langkah selesai!'
                 : `${completedCount}/${totalCount} langkah selesai`}
             </span>
-            <span className={`text-sm font-bold ${completedCount === totalCount && completedCount > 0 ? 'text-green-400' : 'text-slate-400'}`}>
-              {progressPct}%
-            </span>
+            <div className="flex items-center gap-3">
+              {completedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetChecklist}
+                  title="Kosongkan checklist metode ini saja"
+                  className="text-xs font-semibold text-slate-200 border border-slate-600 rounded-lg px-2 py-1 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-amber-400"
+                >
+                  Mulai ulang
+                </button>
+              )}
+              <span className={`text-sm font-bold ${completedCount === totalCount && completedCount > 0 ? 'text-green-400' : 'text-slate-400'}`}>
+                {progressPct}%
+              </span>
+            </div>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
             <div
@@ -547,6 +573,11 @@ export default function ProsedurPage() {
           {completedCount > 0 && completedCount < totalCount && (
             <p className="text-xs text-slate-500 mt-2">
               {totalCount - completedCount} langkah tersisa
+            </p>
+          )}
+          {resetNotice && (
+            <p role={resetNotice.error ? 'alert' : 'status'} className={`text-xs mt-2 ${resetNotice.error ? 'text-red-300' : 'text-green-300'}`}>
+              {resetNotice.text}
             </p>
           )}
         </div>
