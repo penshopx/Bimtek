@@ -68,7 +68,7 @@ const packages = [
       'Akses Knowledge Base regulasi',
     ],
     cta: 'Mulai Gratis',
-    href: '/skk-coach/chat?agent=kelayakan',
+    href: '/siap-certify/mulai',
     highlight: false,
   },
   {
@@ -201,6 +201,12 @@ export default function SIAPCertifyPage() {
           <p className="text-slate-400 max-w-2xl mx-auto text-base">
             Dari cek kelayakan hingga dokumen siap — SIAP mendampingi proses administrasi sertifikasi SKK konstruksi Anda secara terstruktur dan akuntabel.
           </p>
+          <Link
+            href="/siap-certify/mulai"
+            className="inline-flex items-center justify-center mt-6 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-950/30 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300"
+          >
+            Mulai Sekarang <span aria-hidden="true" className="ml-2">→</span>
+          </Link>
         </div>
 
         {/* Important Disclaimer */}
