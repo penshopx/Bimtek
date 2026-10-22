@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { adminFetch } from '@/lib/adminRequest';
 
 interface SystemStats {
   totalUsers: number;
@@ -30,6 +31,7 @@ export function AnalyticsDashboard() {
     avgQuizScore: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAnalytics();
@@ -38,11 +40,11 @@ export function AnalyticsDashboard() {
   const loadAnalytics = async () => {
     try {
       const [usersRes, eventsRes, certsRes, progressRes, quizRes] = await Promise.all([
-        fetch('/api/admin?action=allUsers'),
-        fetch('/api/admin?action=allEvents'),
-        fetch('/api/admin?action=allCertificates'),
-        fetch('/api/admin?action=allProgress'),
-        fetch('/api/admin?action=allQuizScores'),
+        adminFetch('/api/admin?action=allUsers'),
+        adminFetch('/api/admin?action=allEvents'),
+        adminFetch('/api/admin?action=allCertificates'),
+        adminFetch('/api/admin?action=allProgress'),
+        adminFetch('/api/admin?action=allQuizScores'),
       ]);
 
       const usersData = await usersRes.json();
@@ -51,7 +53,6 @@ export function AnalyticsDashboard() {
       const progressData = await progressRes.json();
       const quizData = await quizRes.json();
 
-      const users = usersData.users || [];
       const events = eventsData.events || [];
       const certs = certsData.certificates || [];
       const progress = progressData.progress || [];
@@ -61,16 +62,9 @@ export function AnalyticsDashboard() {
         ? Math.round(quizScores.reduce((acc: number, q: any) => acc + (q.score / q.totalQuestions * 100), 0) / quizScores.length)
         : 0;
 
-      const activeLast30 = users.filter((u: any) => {
-        const created = new Date(u.createdAt);
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        return created > thirtyDaysAgo;
-      }).length;
-
       setStats({
-        totalUsers: users.length,
-        activeUsers: activeLast30,
+        totalUsers: usersData.total,
+        activeUsers: usersData.recentUsers,
         totalEvents: events.length,
         totalRegistrations: events.reduce((acc: number, e: any) => acc + (e.registered || 0), 0),
         certificatesIssued: certs.length,
@@ -79,7 +73,7 @@ export function AnalyticsDashboard() {
         avgQuizScore: avgScore,
       });
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : 'Gagal memuat analitik.');
     }
     setLoading(false);
   };
@@ -101,6 +95,8 @@ export function AnalyticsDashboard() {
   if (loading) {
     return <div className="text-center py-12 text-slate-500">Memuat analytics...</div>;
   }
+
+  if (error) return <p role="alert" className="rounded-lg bg-red-100 p-3 text-red-900">{error}</p>;
 
   return (
     <div className="space-y-6">

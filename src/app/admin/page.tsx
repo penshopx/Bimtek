@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import Link from 'next/link';
+import { adminFetch } from '@/lib/adminRequest';
 
 interface AdminStats {
   users: number;
@@ -32,6 +33,10 @@ export default function AdminPage() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userOffset, setUserOffset] = useState(0);
+  const [userTotal, setUserTotal] = useState(0);
+  const [roleSaving, setRoleSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'events' | 'activities' | 'analytics'>('dashboard');
 
   useEffect(() => {
@@ -40,13 +45,15 @@ export default function AdminPage() {
     }
   }, [user]);
 
-  const loadData = async () => {
+  const loadData = async (offset = 0) => {
+    setError('');
+    setLoading(true);
     try {
       const [statsRes, usersRes, eventsRes, activitiesRes] = await Promise.all([
-        fetch('/api/admin?action=stats'),
-        fetch('/api/admin?action=allUsers'),
-        fetch('/api/admin?action=allEvents'),
-        fetch('/api/admin?action=allActivities'),
+        adminFetch('/api/admin?action=stats'),
+        adminFetch(`/api/admin?action=allUsers&limit=25&offset=${offset}`),
+        adminFetch('/api/admin?action=allEvents'),
+        adminFetch('/api/admin?action=allActivities'),
       ]);
       
       const statsData = await statsRes.json();
@@ -56,37 +63,41 @@ export default function AdminPage() {
       
       setStats(statsData.stats);
       setUsers(usersData.users || []);
+      setUserOffset(usersData.offset);
+      setUserTotal(usersData.total);
       setEvents(eventsData.events || []);
       setActivities(activitiesData.activities || []);
     } catch (e) {
-      console.error(e);
+      setUsers([]);
+      setStats(null);
+      setEvents([]);
+      setActivities([]);
+      setError(e instanceof Error ? e.message : 'Gagal memuat data admin.');
     }
     setLoading(false);
   };
 
   const updateRole = async (userId: string, role: string) => {
-    await fetch('/api/auth?action=updateUserRole', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, role }),
-    });
-    loadData();
-  };
-
-  const deleteUser = async (userId: string) => {
-    if (confirm('Yakin hapus user ini? Semua datanya akan hilang.')) {
-      await fetch('/api/auth?action=deleteUser', {
+    if (roleSaving || !confirm('Yakin mengubah peran pengguna ini?')) return;
+    setRoleSaving(true);
+    setError('');
+    try {
+      await adminFetch('/api/auth?action=updateUserRole', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, role }),
       });
-      loadData();
+      await loadData(userOffset);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal mengubah peran.');
+    } finally {
+      setRoleSaving(false);
     }
   };
 
   const deleteEvent = async (eventId: string) => {
     if (confirm('Yakin hapus event ini?')) {
-      await fetch('/api/admin?action=deleteEvent', {
+      await adminFetch('/api/admin?action=deleteEvent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventId }),
@@ -111,6 +122,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {error && <p role="alert" className="mb-4 rounded-lg bg-red-100 p-3 text-red-900">{error}</p>}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
@@ -214,6 +226,7 @@ export default function AdminPage() {
                           <td className="px-6 py-4">
                             <select
                               value={u.role}
+                              disabled={roleSaving || u.id === user.id || u.role === 'admin'}
                               onChange={(e) => updateRole(u.id, e.target.value)}
                               className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 u.role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
@@ -231,16 +244,24 @@ export default function AdminPage() {
                           </td>
                           <td className="px-6 py-4">
                             <button
-                              onClick={() => deleteUser(u.id)}
-                              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-lg"
+                              disabled
+                              title="Penghapusan akun dinonaktifkan sementara"
+                              className="px-3 py-1 bg-slate-500 text-white text-xs rounded-lg opacity-60 cursor-not-allowed"
                             >
-                              Hapus
+                              Hapus dinonaktifkan
                             </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className="flex items-center justify-between gap-4 p-4 text-slate-700 dark:text-slate-200">
+                  <button disabled={loading || userOffset === 0} onClick={() => loadData(Math.max(0, userOffset - 25))}
+                    className="rounded border px-3 py-2 disabled:opacity-50">Sebelumnya</button>
+                  <span>{userTotal ? `${userOffset + 1}–${userOffset + users.length}` : '0'} dari {userTotal} pengguna</span>
+                  <button disabled={loading || userOffset + users.length >= userTotal} onClick={() => loadData(userOffset + 25)}
+                    className="rounded border px-3 py-2 disabled:opacity-50">Berikutnya</button>
                 </div>
               </div>
             )}

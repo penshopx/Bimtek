@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
   
   const { db, schema } = dbData;
-  const { eq } = await import('drizzle-orm');
+  const { eq, ne } = await import('drizzle-orm');
   
   switch (action) {
     case 'getProgress': {
@@ -129,12 +129,16 @@ export async function POST(request: NextRequest) {
     case 'getActivities': {
       const activities = await db.select()
         .from(schema.activities)
+        .where(ne(schema.activities.type, 'admin-audit'))
         .orderBy(schema.activities.timestamp);
       return NextResponse.json({ activities: activities.slice(-100).reverse() });
     }
     
     case 'addActivity': {
       const { type, title, description, metadata } = body;
+      if (type === 'admin-audit') {
+        return NextResponse.json({ success: false, message: 'Jenis aktivitas tidak diizinkan.' }, { status: 403 });
+      }
       await db.insert(schema.activities).values({
         id: `act-${Date.now()}-${userId}`,
         type,

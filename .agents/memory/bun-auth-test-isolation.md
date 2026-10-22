@@ -14,3 +14,9 @@ For presentation-only tests, prefer passing account state into a pure view inste
 **Why:** Bun's module mocks can replace the provider used by a real login integration suite in the same process, even if each file passes separately.
 
 **How to apply:** keep authentication in a thin production wrapper and exercise the view with supplied account props; run related suites together to catch cross-file interference.
+
+For libsql integration tests that use transactions, use a shared-cache in-memory database rather than a plain `:memory:` connection.
+
+**Why:** the local libsql client detaches its current connection when opening a transaction. Subsequent operations can open a different connection; plain in-memory tables then disappear even though the fixture client was never closed.
+
+**How to apply:** use an isolated shared-cache in-memory fixture (for example `file::memory:?cache=shared`) for transaction tests. Do not connect test fixtures to the application's file database.

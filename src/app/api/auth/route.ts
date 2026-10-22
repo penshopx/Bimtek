@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { changeAdminUserRole, disabledAccountDeletion, listAdminUsers } from '@/server/adminUsers';
 
 let db: any;
 let schema: any;
@@ -258,29 +259,15 @@ export async function POST(request: NextRequest) {
     }
     
     case 'getAllUsers': {
-      const allUsers: any[] = await db.select().from(schema.users);
-      return NextResponse.json({ users: allUsers.map((u: any) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        company: u.company,
-        position: u.position,
-        createdAt: u.createdAt,
-      }))});
+      return listAdminUsers(request, db, body);
     }
     
     case 'updateUserRole': {
-      const { userId, role } = body;
-      await db.update(schema.users).set({ role }).where(eq(schema.users.id, userId));
-      return NextResponse.json({ success: true });
+      return changeAdminUserRole(request, db, body);
     }
     
     case 'deleteUser': {
-      const { userId } = body;
-      await db.delete(schema.users).where(eq(schema.users.id, userId));
-      await db.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
-      return NextResponse.json({ success: true });
+      return disabledAccountDeletion(request, db);
     }
     
     default:

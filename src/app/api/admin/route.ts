@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/server/adminAuthorization';
+import { listAdminUsers } from '@/server/adminUsers';
 
 let db: any;
 let schema: any;
@@ -27,6 +29,9 @@ export async function GET(request: NextRequest) {
   }
   
   const { db, schema } = dbData;
+  if (action === 'allUsers' || action === 'searchUsers') return listAdminUsers(request, db);
+  const authorization = await requireAdmin(request, db);
+  if (!authorization.actor) return authorization.response;
   const { eq, sql, count } = await import('drizzle-orm');
   
   switch (action) {
@@ -48,11 +53,6 @@ export async function GET(request: NextRequest) {
           activities: activityCount?.count || 0,
         }
       });
-    }
-    
-    case 'allUsers': {
-      const users = await db.select().from(schema.users);
-      return NextResponse.json({ users });
     }
     
     case 'allEvents': {
@@ -88,16 +88,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ activities });
     }
     
-    case 'searchUsers': {
-      const query = searchParams.get('q')?.toLowerCase() || '';
-      const users = await db.select().from(schema.users);
-      const filtered = users.filter((u: any) => 
-        u.name.toLowerCase().includes(query) || 
-        u.email.toLowerCase().includes(query)
-      );
-      return NextResponse.json({ users: filtered });
-    }
-    
     default:
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
@@ -116,6 +106,8 @@ export async function POST(request: NextRequest) {
   }
   
   const { db, schema } = dbData;
+  const authorization = await requireAdmin(request, db);
+  if (!authorization.actor) return authorization.response;
   const { eq } = await import('drizzle-orm');
   
   switch (action) {

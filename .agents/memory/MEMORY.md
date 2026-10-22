@@ -12,3 +12,4 @@
 - [Multi-step form submission](multi-step-form-submit.md) — keep submit behavior stable across steps; React button reuse can unexpectedly submit during step navigation.
 - [Bun browser-test runner](bun-browser-test-runner.md) — compile browser specs before Playwright under Bun; use supplied Chromium when downloaded binaries are absent.
 - [Quiz statistics performance](quiz-statistics-performance.md) — indeks question_id saja tidak menjamin agregasi lebih cepat; ukur dengan distribusi riwayat realistis.
+- [Kebijakan hapus akun](account-deletion-policy.md) — pengguna memilih menonaktifkan sementara hapus akun pada tahap pengamanan admin.
