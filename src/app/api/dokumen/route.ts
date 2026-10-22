@@ -21,7 +21,7 @@ async function getDb() {
  *
  * Priority:
  * 1. Authenticated user → userId from the sessions table (via x-session-id header or sessionId cookie).
- * 2. Guest device → device-scoped ID sent by the client as x-device-id (must start with "guest-").
+ * 2. Without a session, guest device → device-scoped ID sent by the client as x-device-id (must start with "guest-").
  *
  * Returns null when neither can be established, which callers treat as 401.
  */
@@ -31,9 +31,13 @@ async function resolveUserId(request: NextRequest, dbData: any): Promise<string 
     const { db, schema } = dbData;
     const { eq } = await import('drizzle-orm');
     const sessions = await db.select().from(schema.sessions).where(eq(schema.sessions.id, sessionId));
-    if (sessions[0]) {
-      return sessions[0].userId;
+    const session = sessions[0];
+    const expiresAt = session ? new Date(session.expiresAt).getTime() : NaN;
+    if (session && Number.isFinite(expiresAt) && expiresAt > Date.now()) {
+      return session.userId;
     }
+    // An explicitly supplied invalid session must not fall back to guest access.
+    return null;
   }
   // Fall back to a device-scoped guest ID supplied by the client
   const deviceId = request.headers.get('x-device-id');
