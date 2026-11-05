@@ -24,6 +24,7 @@ const navItems = [
   { href: '/biaya-skk', label: 'Biaya SKK', icon: '💰' },
   { href: '/hari-h', label: 'Hari-H Asesmen', icon: '📅' },
   { href: '/rencana-belajar', label: 'Rencana Belajar', icon: '📅' },
+  { href: '/alur-belajar', label: 'Alur Belajar', icon: '→' },
   { href: '/glosarium', label: 'Glosarium SKK', icon: '📖' },
   { href: '/faq-skk', label: 'FAQ SKK', icon: '❓' },
   { href: '/tips-lolos', label: 'Tips Lolos', icon: '🏆' },

@@ -15,3 +15,4 @@
 - [Kebijakan hapus akun](account-deletion-policy.md) — pengguna memilih menonaktifkan sementara hapus akun pada tahap pengamanan admin.
 - [Kompatibilitas kata sandi](password-upgrade-policy.md) — penguatan kata sandi harus mempertahankan login akun lama, tanpa reset massal atau pembaruan hash tanpa verifikasi.
 - [Transisi token sesi](session-token-transition.md) — perkuat token sesi baru tanpa mencabut massal sesi aktif; token lama tidak otomatis menjadi lebih kuat.
+- [Kepemilikan progres belajar](learning-progress-ownership.md) — jangan impor catatan browser tanpa pemilik ke akun aktif; alur kategori bukan skema sertifikasi resmi.

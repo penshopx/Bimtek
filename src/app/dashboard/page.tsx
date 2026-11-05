@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { getJabatanById, getRelatedCategories } from '@/lib/skkData';
 import { bimtekModules } from '@/lib/bimtekCatalog';
+import { LearningJourney } from '@/components/learning/LearningJourney';
+import { readJourneyProgress } from '@/lib/learning-journey-storage';
 
 interface DashboardStats {
   completedModules: number;
@@ -138,8 +140,8 @@ export default function DashboardPage() {
         }
       }
 
-      const savedCompleted = localStorage.getItem('bimtekCompleted');
-      const completed = savedCompleted ? JSON.parse(savedCompleted) : [];
+      const completed = Object.entries(user ? readJourneyProgress(user.id).progress.modules : {})
+        .filter(([, item]) => item.completed).map(([id]) => id);
 
       const savedQuizScores = localStorage.getItem('quizBestScores');
       const quizScoresData = savedQuizScores ? JSON.parse(savedQuizScores) : {};
@@ -315,6 +317,10 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
+
+            <div className="mb-6">
+              <LearningJourney compact />
+            </div>
 
             {showAssessorSuggestion && (
               <div className="relative mb-6 overflow-hidden rounded-2xl border border-purple-500/35 bg-gradient-to-br from-purple-950/70 via-slate-800/80 to-blue-950/60 p-5 sm:p-6">

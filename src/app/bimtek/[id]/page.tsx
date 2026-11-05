@@ -4,6 +4,10 @@ import { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getBimtekModule, type BimtekModule } from '@/lib/bimtekCatalog';
+import { useAuth } from '@/components/AuthProvider';
+import { useJourneyProgress } from '@/lib/useJourneyProgress';
+import { JOURNEY_LESSONS } from '@/lib/learning-journey';
+import { saveJourneyLesson } from '@/lib/learning-journey-storage';
 
 const bimtekModuleDetails: Record<string, { title: string; category: string; pkb: number; duration: string; level: string; content: string; mentor: string }> = {
   // === ORIGINAL MODULES ===
@@ -197,23 +201,30 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
     [resolvedParams.id],
   );
   
-  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const { user } = useAuth();
+  const { progress: journeyProgress, warning: journeyWarning } = useJourneyProgress(user?.id);
+  const [guestLessons, setCompletedLessons] = useState<string[]>([]);
+  const [progressError, setProgressError] = useState<string | null>(null);
+  const completedLessons = user
+    ? journeyProgress.modules[resolvedParams.id]?.lessons ?? []
+    : guestLessons;
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`bimtek-lessons-${resolvedParams.id}`);
-    if (saved) {
+    if (!user) {
       try {
-        setCompletedLessons(JSON.parse(saved));
-      } catch (e) {
-        // ignore
+        const saved = localStorage.getItem(`bimtek-lessons-${resolvedParams.id}`);
+        const parsed: unknown = saved ? JSON.parse(saved) : [];
+        setCompletedLessons(Array.isArray(parsed) ? parsed.filter(lesson => JOURNEY_LESSONS.includes(lesson)) : []);
+      } catch {
+        setProgressError('Checklist tamu tidak dapat dibaca dari penyimpanan browser.');
       }
     }
     setIsInitialized(true);
-  }, [resolvedParams.id]);
+  }, [resolvedParams.id, user]);
 
   useEffect(() => {
     if (isInitialized) {
@@ -224,12 +235,22 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
   }, [isInitialized, currentModule]);
 
   const toggleLessonComplete = (lesson: string) => {
+    if (user) {
+      const result = saveJourneyLesson(user.id, resolvedParams.id, lesson);
+      setProgressError(result.error);
+      return;
+    }
     const newCompleted = completedLessons.includes(lesson)
       ? completedLessons.filter(l => l !== lesson)
       : [...completedLessons, lesson];
     
-    setCompletedLessons(newCompleted);
-    localStorage.setItem(`bimtek-lessons-${resolvedParams.id}`, JSON.stringify(newCompleted));
+    try {
+      localStorage.setItem(`bimtek-lessons-${resolvedParams.id}`, JSON.stringify(newCompleted));
+      setCompletedLessons(newCompleted);
+      setProgressError(null);
+    } catch {
+      setProgressError('Checklist belum tersimpan. Izinkan penyimpanan browser, lalu coba lagi.');
+    }
   };
 
   const sendMessage = () => {
@@ -252,14 +273,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
     }, 500);
   };
 
-  const lessons = [
-    'Pengenalan Materi',
-    'Teori dan Konsep Dasar',
-    'Studi Kasus',
-    'Praktik dan Aplikasi',
-    'Standar dan Regulasi',
-    'Quiz dan Evaluasi',
-  ];
+  const lessons = JOURNEY_LESSONS;
 
   const progress = (completedLessons.length / lessons.length) * 100;
 
@@ -281,6 +295,14 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Link href="/alur-belajar" className="mb-5 inline-flex rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+          Kembali ke Alur Belajar
+        </Link>
+        {(progressError || journeyWarning) && (
+          <p role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+            {progressError || journeyWarning}
+          </p>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">

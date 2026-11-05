@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { getJabatanById, getRelatedCategories } from '@/lib/skkData';
 import { bimtekCategories, bimtekModules } from '@/lib/bimtekCatalog';
+import { useJourneyProgress } from '@/lib/useJourneyProgress';
+import { saveJourneyModule } from '@/lib/learning-journey-storage';
 
 const categories = ['Semua', ...bimtekCategories];
 
@@ -13,6 +15,8 @@ function BimtekContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { progress: journeyProgress, warning: journeyWarning } = useJourneyProgress(user?.id);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Personalization: get jabatan info
   const jabatan = user?.jabatanSkk ? getJabatanById(user.jabatanSkk) : null;
@@ -22,19 +26,22 @@ function BimtekContent() {
   const initialCategory = searchParams.get('category') || 'Semua';
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [showOnlyRelevant, setShowOnlyRelevant] = useState(false);
-  const [completedModules, setCompletedModules] = useState<string[]>([]);
+  const [guestCompletedModules, setCompletedModules] = useState<string[]>([]);
+  const completedModules = user
+    ? Object.keys(journeyProgress.modules).filter(id => journeyProgress.modules[id].completed)
+    : guestCompletedModules;
 
   useEffect(() => {
-    const saved = localStorage.getItem('bimtekCompleted');
-    if (saved) {
+    if (!user) {
       try {
-        const completed = JSON.parse(saved);
-        setCompletedModules(completed);
-      } catch (e) {
-        // ignore
+        const saved = localStorage.getItem('bimtekCompleted');
+        const completed: unknown = saved ? JSON.parse(saved) : [];
+        setCompletedModules(Array.isArray(completed) ? completed.filter(id => typeof id === 'string') : []);
+      } catch {
+        setSaveError('Progres tamu tidak dapat dibaca dari penyimpanan browser.');
       }
     }
-  }, []);
+  }, [user]);
 
   // Apply filters
   let filteredModules = selectedCategory === 'Semua'
@@ -54,11 +61,21 @@ function BimtekContent() {
 
   const toggleComplete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (user) {
+      const result = saveJourneyModule(user.id, id, !completedModules.includes(id));
+      setSaveError(result.error);
+      return;
+    }
     const newCompleted = completedModules.includes(id)
       ? completedModules.filter(m => m !== id)
       : [...completedModules, id];
-    setCompletedModules(newCompleted);
-    localStorage.setItem('bimtekCompleted', JSON.stringify(newCompleted));
+    try {
+      localStorage.setItem('bimtekCompleted', JSON.stringify(newCompleted));
+      setCompletedModules(newCompleted);
+      setSaveError(null);
+    } catch {
+      setSaveError('Penandaan belum tersimpan. Izinkan penyimpanan browser, lalu coba lagi.');
+    }
   };
 
   const getCategoryColor = (category: string) => {
@@ -93,7 +110,15 @@ function BimtekContent() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-800 mb-4">🎓 BIMTEK - Pelatihan Konstruksi</h1>
           <p className="text-lg text-slate-600">{bimtekModules.length} modul pembelajaran untuk memperkuat pengetahuan konstruksi</p>
+          <Link href="/alur-belajar" className="mt-4 inline-block rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800">
+            Buka Alur Belajar Terarah
+          </Link>
         </div>
+        {(saveError || journeyWarning) && (
+          <p role="alert" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+            {saveError || journeyWarning}
+          </p>
+        )}
 
         {/* Personalization banner */}
         {jabatan ? (
