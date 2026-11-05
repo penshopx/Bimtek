@@ -225,3 +225,59 @@ test('audit entries are not exposed or forgeable through the regular activity AP
   expect(forged.status).toBe(403);
   expect(await snapshot()).toEqual(before);
 });
+
+test('two admins changing the same user concurrently cannot corrupt roles or bypass admin protection', async () => {
+  const id = 'concurrent-target';
+  await db.insert(schema.users).values({
+    id, name: 'Concurrent Fixture', email: 'concurrent@example.invalid',
+    passwordHash: 'fixture-only', role: 'user', createdAt: now, updatedAt: now,
+  });
+  const sessionsBefore = await db.select().from(schema.sessions);
+  const results = await Promise.allSettled([
+    invoke('updateUserRole', 'admin', { userId: id, role: 'admin' }),
+    invoke('updateUserRole', 'admin2', { userId: id, role: 'instructor' }),
+  ]);
+  const responses = results.map(result => {
+    if (result.status !== 'fulfilled') throw result.reason;
+    return result.value;
+  });
+  expect(responses.some(response => response.status === 200)).toBe(true);
+  for (const response of responses) expect([200, 403, 409]).toContain(response.status);
+  const [target] = await db.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.id, id));
+  expect(['admin', 'instructor']).toContain(target.role);
+  const { rows } = await client.execute({
+    sql: "SELECT metadata FROM activities WHERE title = 'users.role.change' ORDER BY rowid",
+    args: [],
+  });
+  const logs = rows.map(row => JSON.parse(String(row.metadata))).filter(log => log.target === id);
+  expect(logs).toHaveLength(responses.filter(response => response.status === 200).length);
+  let previousRole = 'user';
+  for (const log of logs) {
+    expect(log.from).toBe(previousRole);
+    expect(previousRole).not.toBe('admin');
+    expect(['admin', 'admin2']).toContain(log.actor);
+    previousRole = log.to;
+  }
+  expect(previousRole).toBe(target.role);
+  expect(await db.select().from(schema.sessions)).toEqual(sessionsBefore);
+  for (const adminId of ['admin', 'admin2']) {
+    const [actor] = await db.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.id, adminId));
+    expect(actor.role).toBe('admin');
+  }
+}, 20_000);
+
+test('a lock already held during authorization returns 409 and leaves all data unchanged', async () => {
+  const before = await snapshot();
+  const transaction = await client.transaction('write');
+  try {
+    await transaction.execute("UPDATE users SET role = role WHERE id = 'target'");
+    const response = await invoke('updateUserRole', 'admin', { userId: 'target', role: 'user' });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      success: false, message: 'Data sedang diubah. Muat ulang daftar sebelum mencoba kembali.',
+    });
+  } finally {
+    await transaction.rollback();
+  }
+  expect(await snapshot()).toEqual(before);
+});

@@ -4,6 +4,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as schema from '@/db/schema';
 import { type AdminDatabase, requireAdmin } from './adminAuthorization';
 
+function roleWriteConflict(error: unknown): NextResponse {
+  let cause = error;
+  const visited = new Set<unknown>();
+  while (cause && typeof cause === 'object' && !visited.has(cause)) {
+    visited.add(cause);
+    const details = cause as { code?: unknown; cause?: unknown };
+    if (details.code === 'SQLITE_BUSY' || details.code === 'SQLITE_LOCKED') {
+      return NextResponse.json({
+        success: false, message: 'Data sedang diubah. Muat ulang daftar sebelum mencoba kembali.',
+      }, { status: 409 });
+    }
+    cause = details.cause;
+  }
+  // Other failures (including audit failure) must still fail, never report success.
+  throw error;
+}
+
 function audit(actor: string, action: string, details: Record<string, unknown> = {}) {
   return {
     id: randomUUID(),
@@ -53,6 +70,14 @@ export async function listAdminUsers(request: NextRequest, db: AdminDatabase, in
 }
 
 export async function changeAdminUserRole(request: NextRequest, db: AdminDatabase, body: Record<string, unknown>) {
+  try {
+    return await performRoleChange(request, db, body);
+  } catch (error) {
+    return roleWriteConflict(error);
+  }
+}
+
+async function performRoleChange(request: NextRequest, db: AdminDatabase, body: Record<string, unknown>) {
   const auth = await requireAdmin(request, db);
   if (!auth.actor) return auth.response;
   const { userId, role } = body;
