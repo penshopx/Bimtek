@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { changeAdminUserRole, disabledAccountDeletion, listAdminUsers } from '@/server/adminUsers';
 import { hashPassword, isValidPasswordInput, verifyPassword } from '@/server/passwords';
+import { createSessionToken } from '@/server/sessionTokens';
 
 let db: any;
 let schema: any;
@@ -18,7 +19,7 @@ async function getDb() {
   return { db, schema };
 }
 
-function generateId(): string {
+function generateUserId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: 'Email sudah terdaftar' }, { status: 400 });
       }
       
-      const userId = generateId();
+      const userId = generateUserId();
       const now = new Date().toISOString();
       
       await db.insert(schema.users).values({
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
         updatedAt: now,
       });
       
-      const sessionId = generateId();
+      const sessionId = createSessionToken();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       
       await db.insert(schema.sessions).values({
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      const sessionId = generateId();
+      const sessionId = createSessionToken();
       const now = new Date().toISOString();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       

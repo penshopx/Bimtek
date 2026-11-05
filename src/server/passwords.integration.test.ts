@@ -63,6 +63,7 @@ test('new registration stores scrypt, ignores supplied role and does not expose 
   const response = await request('register', { name: 'New Fixture', email: 'new@example.invalid', password, role: 'admin' });
   expect(response.status).toBe(200);
   const body = await response.json();
+  expect(body.sessionId).toMatch(/^[0-9a-f]{64}$/);
   expect(body.user.role).toBe('user');
   expect(body.user.passwordHash).toBeUndefined();
   expect(body.user.password).toBeUndefined();
@@ -149,4 +150,35 @@ test('rehash write failure cannot issue a session or alter the legacy password',
   } finally {
     await client.execute('DROP TRIGGER reject_rehash');
   }
+});
+
+test('new session tokens work via header/cookie while existing sessions stay valid', async () => {
+  const existing = (await db.select().from(schema.sessions).where(eq(schema.sessions.id, 'existing-session')))[0];
+  const issued: string[] = [];
+  for (let index = 0; index < 2; index++) {
+    const login = await request('login', { email: 'modern@example.invalid', password });
+    expect(login.status).toBe(200);
+    const { sessionId } = await login.json();
+    expect(sessionId).toMatch(/^[0-9a-f]{64}$/);
+    issued.push(sessionId);
+    const saved = (await db.select().from(schema.sessions).where(eq(schema.sessions.id, sessionId)))[0];
+    expect(saved.userId).toBe('modern');
+    const lifetime = new Date(saved.expiresAt).getTime() - new Date(saved.createdAt).getTime();
+    expect(lifetime).toBeGreaterThanOrEqual(7 * 24 * 60 * 60 * 1000);
+    expect(lifetime).toBeLessThan(7 * 24 * 60 * 60 * 1000 + 1000);
+    expect((await request('verify', { sessionId })).status).toBe(200);
+  }
+  expect(issued[0]).not.toBe(issued[1]);
+  const { GET } = await import(routePath);
+  for (const headers of [{ 'x-session-id': issued[0] }, { cookie: `sessionId=${issued[0]}` }]) {
+    const me = await GET(new NextRequest('http://auth.test/api/auth?action=me', { headers }));
+    expect((await me.json()).user.id).toBe('modern');
+  }
+  const altered = `${issued[0][0] === 'a' ? 'b' : 'a'}${issued[0].slice(1)}`;
+  expect((await request('verify', { sessionId: altered })).status).toBe(401);
+  expect((await request('logout', { sessionId: issued[0] })).status).toBe(200);
+  expect((await request('verify', { sessionId: issued[0] })).status).toBe(401);
+  expect((await request('verify', { sessionId: issued[1] })).status).toBe(200);
+  expect((await request('verify', { sessionId: 'existing-session' })).status).toBe(200);
+  expect((await db.select().from(schema.sessions).where(eq(schema.sessions.id, 'existing-session')))[0]).toEqual(existing);
 });
