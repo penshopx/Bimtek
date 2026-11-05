@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { changeAdminUserRole, disabledAccountDeletion, listAdminUsers } from '@/server/adminUsers';
+import { hashPassword, isValidPasswordInput, verifyPassword } from '@/server/passwords';
 
 let db: any;
 let schema: any;
@@ -15,16 +16,6 @@ async function getDb() {
     }
   }
   return { db, schema };
-}
-
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16);
 }
 
 function generateId(): string {
@@ -87,7 +78,10 @@ export async function POST(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const action = searchParams.get('action');
   
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ success: false, message: 'Data permintaan tidak valid.' }, { status: 400 });
+  }
   const dbData = await getDb();
   
   if (!dbData) {
@@ -100,6 +94,11 @@ export async function POST(request: NextRequest) {
   switch (action) {
     case 'register': {
       const { name, email, password } = body;
+      if (typeof name !== 'string' || !name.trim() || name.length > 200 ||
+          typeof email !== 'string' || email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+          !isValidPasswordInput(password, 6)) {
+        return NextResponse.json({ success: false, message: 'Data pendaftaran tidak valid. Kata sandi minimal 6 karakter dan maksimal 1024 byte.' }, { status: 400 });
+      }
       
       const existing = await db.select().from(schema.users).where(eq(schema.users.email, email));
       if (existing.length > 0) {
@@ -113,7 +112,7 @@ export async function POST(request: NextRequest) {
         id: userId,
         name,
         email,
-        passwordHash: simpleHash(password),
+        passwordHash: await hashPassword(password),
         role: 'user',
         createdAt: now,
         updatedAt: now,
@@ -138,12 +137,28 @@ export async function POST(request: NextRequest) {
     
     case 'login': {
       const { email, password } = body;
+      if (typeof email !== 'string' || !email || email.length > 320 || !isValidPasswordInput(password)) {
+        return NextResponse.json({ success: false, message: 'Data login tidak valid.' }, { status: 400 });
+      }
       
       const users = await db.select().from(schema.users).where(eq(schema.users.email, email));
       const user = users[0];
       
-      if (!user || user.passwordHash !== simpleHash(password)) {
+      const verification = user ? await verifyPassword(password, user.passwordHash) : { valid: false, needsRehash: false };
+      if (!user || !verification.valid) {
         return NextResponse.json({ success: false, message: 'Email atau password salah' }, { status: 401 });
+      }
+      if (verification.needsRehash) {
+        // Compare-and-swap prevents concurrent logins or a password change from being overwritten.
+        const upgraded = await db.update(schema.users)
+          .set({ passwordHash: await hashPassword(password) })
+          .where(and(eq(schema.users.id, user.id), eq(schema.users.passwordHash, user.passwordHash)))
+          .returning({ id: schema.users.id });
+        if (!upgraded.length) {
+          return NextResponse.json({
+            success: false, message: 'Data login berubah. Silakan masuk kembali.',
+          }, { status: 409 });
+        }
       }
       
       const sessionId = generateId();

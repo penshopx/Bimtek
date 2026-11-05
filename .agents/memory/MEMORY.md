@@ -13,3 +13,4 @@
 - [Bun browser-test runner](bun-browser-test-runner.md) — compile browser specs before Playwright under Bun; use supplied Chromium when downloaded binaries are absent.
 - [Quiz statistics performance](quiz-statistics-performance.md) — indeks question_id saja tidak menjamin agregasi lebih cepat; ukur dengan distribusi riwayat realistis.
 - [Kebijakan hapus akun](account-deletion-policy.md) — pengguna memilih menonaktifkan sementara hapus akun pada tahap pengamanan admin.
+- [Kompatibilitas kata sandi](password-upgrade-policy.md) — penguatan kata sandi harus mempertahankan login akun lama, tanpa reset massal atau pembaruan hash tanpa verifikasi.

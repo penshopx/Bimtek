@@ -9,20 +9,11 @@ import { db } from './index';
 import * as schema from './schema';
 import { eq } from 'drizzle-orm';
 import { DEFAULT_QUIZ_ATTEMPT_RETENTION_DAYS, QUIZ_ATTEMPT_RETENTION_SETTING_KEY } from '@/lib/quizSettings';
+import { hashPassword } from '@/server/passwords';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16);
-}
 
 function uid(prefix = ''): string {
   return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -45,7 +36,7 @@ async function seedUsers() {
       id: 'user-demo-admin',
       name: 'Admin SiapSKK',
       email: 'admin@siapskk.id',
-      passwordHash: simpleHash('admin123'),
+      passwordHash: await hashPassword('admin123'),
       role: 'admin',
       avatar: null,
       phone: '081234567890',
@@ -58,7 +49,7 @@ async function seedUsers() {
       id: 'user-admin-001',
       name: 'Admin KILOkode',
       email: 'admin@kilokode.com',
-      passwordHash: simpleHash('admin123'),
+      passwordHash: await hashPassword('admin123'),
       role: 'admin',
       avatar: null,
       phone: '0811-0000-0001',
@@ -71,7 +62,7 @@ async function seedUsers() {
       id: 'user-demo-001',
       name: 'Ahmad Wijaya',
       email: 'ahmad@demo.com',
-      passwordHash: simpleHash('demo123'),
+      passwordHash: await hashPassword('demo123'),
       role: 'user',
       avatar: null,
       phone: '0812-3456-7890',
@@ -84,7 +75,7 @@ async function seedUsers() {
       id: 'user-demo-1',
       name: 'Budi Santoso',
       email: 'budi@demo.com',
-      passwordHash: simpleHash('demo123'),
+      passwordHash: await hashPassword('demo123'),
       role: 'user',
       avatar: null,
       phone: '081298765432',
@@ -97,7 +88,7 @@ async function seedUsers() {
       id: 'user-demo-002',
       name: 'Siti Nurhaliza',
       email: 'siti@demo.com',
-      passwordHash: simpleHash('demo123'),
+      passwordHash: await hashPassword('demo123'),
       role: 'user',
       avatar: null,
       phone: '0813-9876-5432',
@@ -110,7 +101,7 @@ async function seedUsers() {
       id: 'user-demo-003',
       name: 'Hendra Gunawan',
       email: 'hendra@demo.com',
-      passwordHash: simpleHash('demo123'),
+      passwordHash: await hashPassword('demo123'),
       role: 'user',
       avatar: null,
       phone: '0821-5566-7788',
