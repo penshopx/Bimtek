@@ -42,10 +42,12 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative shrink-0" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-lg hover:bg-slate-700 transition-colors"
+        aria-label="Notifikasi"
+        aria-expanded={isOpen}
       >
         <span className="text-xl">🔔</span>
         {unreadCount > 0 && (

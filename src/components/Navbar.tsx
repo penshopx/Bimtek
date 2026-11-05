@@ -96,8 +96,8 @@ export function Navbar() {
   return (
     <>
       <nav className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg sticky top-0 z-50 border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-3 xl:grid xl:h-auto xl:grid-cols-[auto_1fr] xl:gap-y-1 xl:py-2 2xl:grid-cols-[auto_minmax(0,1fr)_auto]">
             <Link href="/" className="flex items-center gap-2 shrink-0 group">
               <span className="text-2xl">🏗️</span>
               <div className="flex flex-col leading-none whitespace-nowrap">
@@ -110,7 +110,7 @@ export function Navbar() {
               </div>
             </Link>
             
-            <div className="hidden xl:flex min-w-0 items-center gap-1">
+            <div className="hidden min-w-0 items-center justify-center gap-1 xl:order-3 xl:col-span-2 xl:flex 2xl:order-none 2xl:col-span-1 2xl:justify-end">
               <SearchButton onClick={() => setSearchOpen(true)} />
               {primaryNavItems.map((item) => (
                 <Link
@@ -157,36 +157,38 @@ export function Navbar() {
               >
                 {theme === 'light' ? '🌙' : '☀️'}
               </button>
+            </div>
+
+            <div className="flex shrink-0 items-center justify-end gap-3">
+              <div className="hidden shrink-0 items-center gap-2 xl:flex">
               {user ? (
                 <>
                   {user.role === 'admin' && (
-                    <Link href="/admin" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30">
+                    <Link href="/admin" className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30">
                       ⚙️ Admin
                     </Link>
                   )}
-                  <Link href="/profile" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-amber-500/20 text-amber-400">
+                  <Link href="/profile" title={user.name} className="max-w-40 truncate px-3 py-2 rounded-lg text-sm font-medium bg-amber-500/20 text-amber-400">
                     👤 {user.name}
                   </Link>
                   <button
                     onClick={() => { logout(); router.push('/'); }}
-                    className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                    className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-red-500/20 hover:text-red-400 transition-all"
                   >
                     Keluar
                   </button>
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600">
+                  <Link href="/login" className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600">
                     Masuk
                   </Link>
-                  <Link href="/register" className="ml-2 px-3 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600">
+                  <Link href="/register" className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600">
                     Daftar
                   </Link>
                 </>
               )}
-            </div>
-
-            <div className="flex items-center gap-2">
+              </div>
               <NotificationBell />
               <button
                 onClick={() => setSearchOpen(true)}
