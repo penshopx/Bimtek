@@ -100,6 +100,7 @@ export interface LearningJourneyPanelProps {
   storageWarning: string | null;
   syncState: 'ready' | 'needs-confirmation' | 'error';
   syncError: string | null;
+  syncNotice: string | null;
   syncing: boolean;
   onSync: () => void;
   compact?: boolean;

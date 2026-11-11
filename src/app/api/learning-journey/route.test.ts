@@ -2,10 +2,15 @@ import { afterAll, beforeAll, expect, mock, test } from 'bun:test';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { NextRequest } from 'next/server';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import * as schema from '@/db/schema';
 import { emptyJourneyProgress } from '@/lib/learning-journey';
 
-const client = createClient({ url: ':memory:' });
+const tempDir = mkdtempSync(join(tmpdir(), 'learning-journey-test-'));
+const databasePath = join(tempDir, 'test.db');
+const client = createClient({ url: `file:${databasePath}` });
 const database = drizzle(client, { schema });
 mock.module('@/db', () => ({ db: database }));
 const route = await import('./route.ts?learning-journey-account-sync');
@@ -37,7 +42,6 @@ function progress(moduleId: string, completed: boolean, updatedAt: string) {
 }
 
 beforeAll(async () => {
-  console.log('beforeAll route test');
   await client.executeMultiple(`
     CREATE TABLE users (id TEXT PRIMARY KEY);
     CREATE TABLE sessions (
@@ -55,12 +59,12 @@ beforeAll(async () => {
     INSERT INTO sessions VALUES ('active-b', 'b', '2099-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
     INSERT INTO sessions VALUES ('expired', 'a', '2000-01-01T00:00:00.000Z', '1999-01-01T00:00:00.000Z');
   `);
-  console.log('Tables after setup:', (await client.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows);
 });
 
 afterAll(() => {
   mock.restore();
   client.close();
+  rmSync(tempDir, { recursive: true, force: true });
 });
 
 test('progres akun mensyaratkan sesi aktif dan menolak lintas situs', async () => {
@@ -78,11 +82,8 @@ test('server derives owner from session and separates two accounts', async () =>
     userId: 'b',
     progress: progress('sipil-gedung-1', true, at(1)),
   }));
-  console.log('PUT diagnostic:', saved.status, await saved.clone().text());
-  console.log('Tables diagnostic:', await client.execute("SELECT name FROM sqlite_master WHERE type = 'table'"));
   expect(saved.status).toBe(200);
   const a = await route.GET(request('GET', 'active-a'));
-  console.log('account GET diagnostic:', await a.clone().text());
   expect(a.status).toBe(200);
   expect((await a.json()).progress.modules['sipil-gedung-1'].completed).toBe(true);
 

@@ -96,6 +96,7 @@ export function LearningJourneyPanel({
   storageWarning,
   syncState,
   syncError,
+  syncNotice,
   syncing,
   onSync,
   compact = false,
@@ -173,6 +174,15 @@ export function LearningJourneyPanel({
               {syncing ? 'Menyinkronkan…' : 'Sinkronkan progres'}
             </button>
           </div>
+        )}
+        {!loading && isSignedIn && syncState === 'ready' && syncNotice && (
+          <p
+            role="status"
+            className="mt-3 rounded-lg border border-emerald-300/25 bg-emerald-300/[0.07] px-4 py-3 text-sm text-emerald-100"
+            data-testid="journey-sync-success"
+          >
+            {syncNotice}
+          </p>
         )}
 
         {loading ? (

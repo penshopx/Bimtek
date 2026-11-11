@@ -21,6 +21,7 @@ type Snapshot = {
   warning: string | null;
   syncState: JourneySyncState;
   syncError: string | null;
+  syncNotice: string | null;
   loading: boolean;
   syncing: boolean;
 };
@@ -38,19 +39,23 @@ export function useJourneyProgress(userId: string | undefined) {
     warning: null,
     syncState: 'ready',
     syncError: null,
+    syncNotice: null,
     loading: Boolean(userId),
     syncing: false,
   });
   const userRef = useRef(userId);
-  userRef.current = userId;
   const refreshSequence = useRef(0);
   const syncQueue = useRef<Promise<unknown>>(Promise.resolve());
+
+  useEffect(() => {
+    userRef.current = userId;
+  }, [userId]);
 
   const refresh = useCallback(async () => {
     if (!userId) {
       setSnapshot({
         owner: undefined, progress: emptyJourneyProgress(), warning: null,
-        syncState: 'ready', syncError: null, loading: false, syncing: false,
+        syncState: 'ready', syncError: null, syncNotice: null, loading: false, syncing: false,
       });
       return;
     }
@@ -63,6 +68,7 @@ export function useJourneyProgress(userId: string | undefined) {
       warning: local.warning,
       syncState: previous.owner === userId ? previous.syncState : 'ready',
       syncError: previous.owner === userId ? previous.syncError : null,
+      syncNotice: previous.owner === userId ? previous.syncNotice : null,
       loading: true,
       syncing: previous.owner === userId ? previous.syncing : false,
     }));
@@ -71,11 +77,12 @@ export function useJourneyProgress(userId: string | undefined) {
       const remote = await readAccountJourneyProgress();
       if (refreshSequence.current !== sequence || userRef.current !== userId) return;
 
-      const merged = mergeJourneyProgress(local.progress, remote.progress);
+      const latestLocal = readJourneyProgress(userId);
+      const merged = mergeJourneyProgress(latestLocal.progress, remote.progress);
       const needsConfirmation = !remote.hasServerProgress
-        ? hasJourneyActivity(local.progress)
+        ? hasJourneyActivity(latestLocal.progress)
         : !journeyProgressEqual(merged, remote.progress);
-      let warning = local.warning;
+      let warning = latestLocal.warning;
       if (!warning && (remote.hasServerProgress || !needsConfirmation)) {
         const localWrite = writeJourneyProgress(userId, merged);
         if (!localWrite.ok) warning = localWrite.error;
@@ -89,6 +96,9 @@ export function useJourneyProgress(userId: string | undefined) {
         warning,
         syncState,
         syncError: warning ? 'Progres browser tidak dapat diperbarui dengan aman.' : null,
+        syncNotice: !warning && remote.hasServerProgress && !needsConfirmation
+          ? 'Progres akun tersinkron dan dapat dibuka lintas browser.'
+          : null,
         loading: false,
         syncing: false,
       });
@@ -100,6 +110,7 @@ export function useJourneyProgress(userId: string | undefined) {
         warning: local.warning,
         syncState: 'error',
         syncError: accountSyncError(error),
+        syncNotice: null,
         loading: false,
         syncing: false,
       });
@@ -114,7 +125,7 @@ export function useJourneyProgress(userId: string | undefined) {
       return { ok: false, error: local.warning };
     }
     ++refreshSequence.current;
-    setSnapshot(previous => ({ ...previous, syncing: true, syncError: null }));
+    setSnapshot(previous => ({ ...previous, syncing: true, syncError: null, syncNotice: null }));
     const operation = syncQueue.current.then(async () => {
       const result = await writeAccountJourneyProgress(local.progress);
       const merged = mergeJourneyProgress(local.progress, result.progress);
@@ -123,7 +134,8 @@ export function useJourneyProgress(userId: string | undefined) {
       setSnapshot({
         owner: userId, progress: merged, warning: null,
         syncState: journeyProgressEqual(merged, result.progress) ? 'ready' : 'needs-confirmation',
-        syncError: null, loading: false, syncing: false,
+        syncError: null, syncNotice: 'Progres berhasil disimpan ke akun dan dapat dibuka lintas browser.',
+        loading: false, syncing: false,
       });
       return { ok: true, error: null };
     });
@@ -133,7 +145,8 @@ export function useJourneyProgress(userId: string | undefined) {
     } catch (error) {
       const message = accountSyncError(error);
       setSnapshot(previous => ({
-        ...previous, owner: userId, syncState: 'error', syncError: message, syncing: false,
+        ...previous, owner: userId, syncState: 'error', syncError: message,
+        syncNotice: null, syncing: false,
       }));
       return { ok: false, error: message };
     }
@@ -142,7 +155,7 @@ export function useJourneyProgress(userId: string | undefined) {
   const syncAfterLocalChange = useCallback(async (progress: JourneyProgress): Promise<SaveResult> => {
     if (!userId) return { ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres.' };
     setSnapshot(previous => ({
-      ...previous, owner: userId, progress, warning: null,
+      ...previous, owner: userId, progress, warning: null, syncNotice: null,
     }));
     if (snapshot.loading) {
       return {
@@ -159,7 +172,7 @@ export function useJourneyProgress(userId: string | undefined) {
     }
 
     ++refreshSequence.current;
-    setSnapshot(previous => ({ ...previous, syncing: true, syncError: null }));
+    setSnapshot(previous => ({ ...previous, syncing: true, syncError: null, syncNotice: null }));
     const operation = syncQueue.current.then(async () => {
       const result = await writeAccountJourneyProgress(progress);
       const latestLocal = readJourneyProgress(userId);
@@ -173,7 +186,8 @@ export function useJourneyProgress(userId: string | undefined) {
       setSnapshot({
         owner: userId, progress: merged, warning: null,
         syncState: needsConfirmation ? 'needs-confirmation' : 'ready',
-        syncError: null, loading: false, syncing: false,
+        syncError: null, syncNotice: 'Progres berhasil disimpan ke akun dan dapat dibuka lintas browser.',
+        loading: false, syncing: false,
       });
       return { ok: true, error: null };
     });
@@ -184,7 +198,7 @@ export function useJourneyProgress(userId: string | undefined) {
       const message = accountSyncError(error);
       setSnapshot(previous => ({
         ...previous, owner: userId, progress, syncState: 'error', syncError: message,
-        syncing: false,
+        syncNotice: null, syncing: false,
       }));
       return { ok: false, error: message };
     }
@@ -232,6 +246,7 @@ export function useJourneyProgress(userId: string | undefined) {
     return {
       progress: emptyJourneyProgress(), warning: null, loading: true,
       syncState: 'ready' as const, syncError: null, syncing: false,
+      syncNotice: null,
       syncNow, syncAfterLocalChange,
     };
   }
@@ -241,6 +256,7 @@ export function useJourneyProgress(userId: string | undefined) {
     loading: snapshot.loading,
     syncState: snapshot.syncState,
     syncError: snapshot.syncError,
+    syncNotice: snapshot.syncNotice,
     syncing: snapshot.syncing,
     syncNow,
     syncAfterLocalChange,

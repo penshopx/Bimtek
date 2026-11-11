@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { buildLearningJourney, emptyJourneyProgress, JOURNEY_LESSONS } from './learning-journey';
 import {
-  journeyStorageKey, readJourneyProgress, saveJourneyLesson, saveJourneyModule, saveJourneyQuiz,
+  journeyProgressEqual, journeyStorageKey, mergeJourneyProgress, readJourneyProgress,
+  saveJourneyLesson, saveJourneyModule, saveJourneyQuiz,
 } from './learning-journey-storage';
 
 function storageFixture() {
@@ -84,6 +85,31 @@ describe('editorial learning journey', () => {
 });
 
 describe('account-separated browser progress', () => {
+  test('merges separate browser records and prefers the newer update per step', () => {
+    const browser = emptyJourneyProgress();
+    const account = emptyJourneyProgress();
+    browser.modules[moduleId] = {
+      completed: false, updatedAt: '2026-11-11T09:00:00.000Z', lessons: [JOURNEY_LESSONS[0]],
+    };
+    account.modules[moduleId] = {
+      completed: true, updatedAt: '2026-11-11T10:00:00.000Z', lessons: [],
+    };
+    browser.modules['sipil-gedung-2'] = {
+      completed: true, updatedAt: '2026-11-11T09:30:00.000Z', lessons: [],
+    };
+    browser.quizzes.K3 = { completedAt: '2026-11-11T09:00:00.000Z', total: 4, score: 1 };
+    account.quizzes.K3 = { completedAt: '2026-11-11T10:00:00.000Z', total: 4, score: 3 };
+
+    const merged = mergeJourneyProgress(browser, account);
+    expect(merged.modules[moduleId].completed).toBe(true);
+    expect(merged.modules['sipil-gedung-2'].completed).toBe(true);
+    expect(merged.quizzes.K3.score).toBe(3);
+    expect(journeyProgressEqual(merged, account)).toBe(false);
+    const reverseOrder = mergeJourneyProgress(account, browser);
+    expect(reverseOrder.modules[moduleId].completed).toBe(true);
+    expect(reverseOrder.quizzes.K3.score).toBe(3);
+  });
+
   test('fresh empty state and no automatic adoption of old shared-browser progress', () => {
     const storage = storageFixture();
     storage.setItem('bimtekCompleted', JSON.stringify([moduleId]));
