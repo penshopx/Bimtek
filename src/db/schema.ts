@@ -185,6 +185,12 @@ export const userQuizScores = sqliteTable("user_quiz_scores", {
   takenAt: text("taken_at").notNull(),
 });
 
+export const learningJourneyProgress = sqliteTable("learning_journey_progress", {
+  userId: text("user_id").primaryKey(),
+  progress: text("progress").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export const quizQuestions = sqliteTable("quiz_questions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   question: text("question").notNull(),

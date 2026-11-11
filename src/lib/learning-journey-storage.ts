@@ -11,9 +11,7 @@ const validDate = (value: unknown): value is string =>
 const object = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-function parseProgress(raw: string | null): JourneyProgress {
-  if (!raw) return emptyJourneyProgress();
-  const value: unknown = JSON.parse(raw);
+export function parseJourneyProgress(value: unknown): JourneyProgress {
   if (!object(value) || value.version !== 1 || !object(value.modules) || !object(value.quizzes)) {
     throw new Error('Invalid progress');
   }
@@ -42,6 +40,10 @@ function parseProgress(raw: string | null): JourneyProgress {
   return progress;
 }
 
+function parseProgress(raw: string | null): JourneyProgress {
+  return raw ? parseJourneyProgress(JSON.parse(raw)) : emptyJourneyProgress();
+}
+
 export function readJourneyProgress(userId: string, storage?: StoragePort): ReadResult {
   try {
     const port = storage ?? window.localStorage;
@@ -54,23 +56,86 @@ export function readJourneyProgress(userId: string, storage?: StoragePort): Read
   }
 }
 
+export function writeJourneyProgress(
+  userId: string,
+  progress: JourneyProgress,
+  storage?: StoragePort,
+): { ok: boolean; error: string | null } {
+  if (!userId) return { ok: false, error: 'Masuk terlebih dahulu untuk menyimpan progres.' };
+  try {
+    const validated = parseJourneyProgress(progress);
+    (storage ?? window.localStorage).setItem(journeyStorageKey(userId), JSON.stringify(validated));
+    if (!storage && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(JOURNEY_PROGRESS_EVENT, { detail: userId }));
+    }
+    return { ok: true, error: null };
+  } catch {
+    return {
+      ok: false,
+      error: 'Progres akun sudah tersinkron, tetapi salinan browser belum diperbarui. Muat ulang untuk mengambilnya kembali.',
+    };
+  }
+}
+
+export function hasJourneyActivity(progress: JourneyProgress): boolean {
+  return Object.keys(progress.modules).length > 0 || Object.keys(progress.quizzes).length > 0;
+}
+
+/** Merge account and browser copies by the most recent step/category update. */
+export function mergeJourneyProgress(
+  first: JourneyProgress,
+  second: JourneyProgress,
+): JourneyProgress {
+  const merged = emptyJourneyProgress();
+  for (const id of new Set([...Object.keys(first.modules), ...Object.keys(second.modules)])) {
+    const left = first.modules[id];
+    const right = second.modules[id];
+    const selected = !left ? right : !right ? left
+      : Date.parse(left.updatedAt) > Date.parse(right.updatedAt) ? left : right;
+    if (selected) merged.modules[id] = { ...selected, lessons: [...selected.lessons] };
+  }
+  for (const category of new Set([...Object.keys(first.quizzes), ...Object.keys(second.quizzes)])) {
+    const left = first.quizzes[category];
+    const right = second.quizzes[category];
+    const selected = !left ? right : !right ? left
+      : Date.parse(left.completedAt) > Date.parse(right.completedAt) ? left : right;
+    if (selected) merged.quizzes[category] = { ...selected };
+  }
+  return merged;
+}
+
+export function journeyProgressEqual(first: JourneyProgress, second: JourneyProgress): boolean {
+  const canonical = (progress: JourneyProgress) => JSON.stringify({
+    version: 1,
+    modules: Object.fromEntries(Object.entries(progress.modules).sort(([a], [b]) => a.localeCompare(b))),
+    quizzes: Object.fromEntries(Object.entries(progress.quizzes).sort(([a], [b]) => a.localeCompare(b))),
+  });
+  return canonical(first) === canonical(second);
+}
+
 function updateProgress(
   userId: string,
   change: (progress: JourneyProgress) => void,
   storage?: StoragePort,
-): { ok: boolean; error: string | null } {
-  if (!userId) return { ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres alur belajar.' };
+): { ok: boolean; error: string | null; progress: JourneyProgress | null } {
+  if (!userId) return {
+    ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres alur belajar.', progress: null,
+  };
   const current = readJourneyProgress(userId, storage);
-  if (current.warning) return { ok: false, error: current.warning };
+  if (current.warning) return { ok: false, error: current.warning, progress: null };
   try {
     change(current.progress);
     (storage ?? window.localStorage).setItem(journeyStorageKey(userId), JSON.stringify(current.progress));
     if (!storage && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(JOURNEY_PROGRESS_EVENT, { detail: userId }));
     }
-    return { ok: true, error: null };
+    return { ok: true, error: null, progress: current.progress };
   } catch {
-    return { ok: false, error: 'Progres alur belajar belum tersimpan. Izinkan penyimpanan browser, lalu coba lagi.' };
+    return {
+      ok: false,
+      error: 'Progres alur belajar belum tersimpan. Izinkan penyimpanan browser, lalu coba lagi.',
+      progress: null,
+    };
   }
 }
 

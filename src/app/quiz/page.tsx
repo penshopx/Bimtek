@@ -10,6 +10,7 @@ import { getRelatedQuizCategories, getJabatanById } from '@/lib/skkData';
 import { useQuizJabatanFilter } from '@/lib/useQuizJabatanFilter';
 import { orderQuizQuestions } from '@/lib/quizQuestionOrder';
 import { saveJourneyQuiz } from '@/lib/learning-journey-storage';
+import { useJourneyProgress } from '@/lib/useJourneyProgress';
 
 type WrongQuestion = QuizQuestion & {
   selectedChoice: number;
@@ -21,6 +22,7 @@ function QuizContent() {
   const requestedCategory = searchParams.get('category') || 'Semua';
   const unitContext = searchParams.get('unit');
   const { user } = useAuth();
+  const journeySync = useJourneyProgress(user?.id);
   const jabatanSkk = user?.jabatanSkk ?? null;
   const jabatanInfo = useMemo(() => (jabatanSkk ? getJabatanById(jabatanSkk) : null), [jabatanSkk]);
   const relatedCategories = useMemo(
@@ -142,7 +144,13 @@ function QuizContent() {
             score: total - wrongQuestions.filter(question => question.category === category).length,
           };
         });
-        setJourneySaveError(saveJourneyQuiz(user.id, results).error);
+        const saved = saveJourneyQuiz(user.id, results);
+        setJourneySaveError(saved.error);
+        if (saved.ok && saved.progress) {
+          void journeySync.syncAfterLocalChange(saved.progress).then(sync => {
+            if (sync.error) setJourneySaveError(sync.error);
+          });
+        }
       }
       setShowScore(true);
     }
@@ -219,7 +227,16 @@ function QuizContent() {
             <h2 className="text-2xl font-bold text-slate-800 mb-2">
               {isRetrySession ? 'Sesi Ulang Selesai!' : 'Quiz Selesai!'}
             </h2>
-            {journeySaveError && <p role="alert" className="my-4 rounded-xl bg-amber-50 p-3 text-amber-900">{journeySaveError}</p>}
+            {(journeySaveError || journeySync.syncState === 'needs-confirmation' || journeySync.syncError) && (
+              <p role="alert" className="my-4 rounded-xl bg-amber-50 p-3 text-amber-900">
+                {journeySaveError || journeySync.syncError || 'Ada progres browser yang perlu disatukan dengan progres akun.'}
+                {(journeySync.syncState === 'needs-confirmation' || journeySync.syncState === 'error') && (
+                  <Link href="/alur-belajar" className="ml-2 font-semibold underline">
+                    Sinkronkan progres
+                  </Link>
+                )}
+              </p>
+            )}
             <Link href="/alur-belajar" className="mb-5 inline-flex rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
               Lanjutkan Alur Belajar
             </Link>

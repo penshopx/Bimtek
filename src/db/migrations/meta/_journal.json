@@ -141,6 +141,13 @@
       "when": 1791484008856,
       "tag": "0019_true_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1794416286470,
+      "tag": "0020_learning_journey_progress",
+      "breakpoints": true
     }
   ]
 }

@@ -98,5 +98,9 @@ export interface LearningJourneyPanelProps {
   loading: boolean;
   notice: string | null;
   storageWarning: string | null;
+  syncState: 'ready' | 'needs-confirmation' | 'error';
+  syncError: string | null;
+  syncing: boolean;
+  onSync: () => void;
   compact?: boolean;
 }

@@ -15,7 +15,9 @@ function BimtekContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { progress: journeyProgress, warning: journeyWarning } = useJourneyProgress(user?.id);
+  const {
+    progress: journeyProgress, warning: journeyWarning, syncState, syncError, syncAfterLocalChange,
+  } = useJourneyProgress(user?.id);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // Personalization: get jabatan info
@@ -64,6 +66,9 @@ function BimtekContent() {
     if (user) {
       const result = saveJourneyModule(user.id, id, !completedModules.includes(id));
       setSaveError(result.error);
+      if (result.ok && result.progress) {
+        void syncAfterLocalChange(result.progress).then(sync => setSaveError(sync.error));
+      }
       return;
     }
     const newCompleted = completedModules.includes(id)
@@ -114,9 +119,14 @@ function BimtekContent() {
             Buka Alur Belajar Terarah
           </Link>
         </div>
-        {(saveError || journeyWarning) && (
+        {(saveError || journeyWarning || syncState === 'needs-confirmation' || syncError) && (
           <p role="alert" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
-            {saveError || journeyWarning}
+            {saveError || journeyWarning || syncError || 'Ada progres browser yang perlu disatukan dengan progres akun.'}
+            {syncState === 'needs-confirmation' && (
+              <Link href="/alur-belajar" className="ml-2 font-semibold underline">
+                Tinjau sinkronisasi
+              </Link>
+            )}
           </p>
         )}
 

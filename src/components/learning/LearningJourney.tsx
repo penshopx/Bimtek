@@ -9,7 +9,9 @@ import { LearningJourneyPanel } from './LearningJourneyPanel';
 
 export function LearningJourney({ compact = false }: { compact?: boolean }) {
   const { user, isLoading } = useAuth();
-  const { progress, warning, loading: progressLoading } = useJourneyProgress(user?.id);
+  const {
+    progress, warning, loading: progressLoading, syncState, syncError, syncing, syncNow,
+  } = useJourneyProgress(user?.id);
   const [quiz, setQuiz] = useState<{ categories: string[]; loading: boolean; error: string | null }>({
     categories: [], loading: true, error: null,
   });
@@ -35,6 +37,10 @@ export function LearningJourney({ compact = false }: { compact?: boolean }) {
     loading={isLoading || progressLoading || quiz.loading}
     notice={notice}
     storageWarning={warning}
+    syncState={syncState}
+    syncError={syncError}
+    syncing={syncing}
+    onSync={() => { void syncNow(); }}
     compact={compact}
   />;
 }

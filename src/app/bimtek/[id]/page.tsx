@@ -202,7 +202,9 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
   );
   
   const { user } = useAuth();
-  const { progress: journeyProgress, warning: journeyWarning } = useJourneyProgress(user?.id);
+  const {
+    progress: journeyProgress, warning: journeyWarning, syncState, syncError, syncAfterLocalChange,
+  } = useJourneyProgress(user?.id);
   const [guestLessons, setCompletedLessons] = useState<string[]>([]);
   const [progressError, setProgressError] = useState<string | null>(null);
   const completedLessons = user
@@ -238,6 +240,9 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
     if (user) {
       const result = saveJourneyLesson(user.id, resolvedParams.id, lesson);
       setProgressError(result.error);
+      if (result.ok && result.progress) {
+        void syncAfterLocalChange(result.progress).then(sync => setProgressError(sync.error));
+      }
       return;
     }
     const newCompleted = completedLessons.includes(lesson)
@@ -298,9 +303,14 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
         <Link href="/alur-belajar" className="mb-5 inline-flex rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
           Kembali ke Alur Belajar
         </Link>
-        {(progressError || journeyWarning) && (
+        {(progressError || journeyWarning || syncState === 'needs-confirmation' || syncError) && (
           <p role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
-            {progressError || journeyWarning}
+            {progressError || journeyWarning || syncError || 'Ada progres browser yang perlu disatukan dengan progres akun.'}
+            {syncState === 'needs-confirmation' && (
+              <Link href="/alur-belajar" className="ml-2 font-semibold underline">
+                Tinjau sinkronisasi
+              </Link>
+            )}
           </p>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

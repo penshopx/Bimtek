@@ -75,8 +75,9 @@ function GuidanceNote() {
         ditandai sendiri; latihan tercatat selesai saat Anda mencapai hasil kuis, bukan karena lulus ambang nilai.
       </p>
       <p className="mt-2 text-xs leading-relaxed text-slate-400">
-        Progress dipisahkan per akun dan tersimpan di browser ini; tidak tersinkron lintas perangkat. Ini bukan
-        SKPK dan bukan penetapan kompetensi resmi.
+        Setelah disinkronkan, progres akun dapat dibuka lintas browser. Jika ada progres lama di browser ini,
+        satukan terlebih dahulu agar tidak menimpa catatan akun yang lebih baru. Ini bukan SKPK dan bukan
+        penetapan kompetensi resmi.
       </p>
     </div>
   );
@@ -93,6 +94,10 @@ export function LearningJourneyPanel({
   loading,
   notice,
   storageWarning,
+  syncState,
+  syncError,
+  syncing,
+  onSync,
   compact = false,
 }: LearningJourneyPanelProps) {
   const percent = Math.max(0, Math.min(100, progressPercent));
@@ -143,6 +148,30 @@ export function LearningJourneyPanel({
         {storageWarning && (
           <div role="alert" className="mt-3 rounded-lg border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm leading-relaxed text-amber-100" data-testid="alert-journey-storage">
             {storageWarning}
+          </div>
+        )}
+        {!loading && isSignedIn && syncState !== 'ready' && (
+          <div
+            role={syncState === 'error' ? 'alert' : 'status'}
+            className="mt-3 flex flex-col gap-3 rounded-lg border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm leading-relaxed text-amber-100 sm:flex-row sm:items-center sm:justify-between"
+            data-testid="journey-sync-status"
+          >
+            <p className="min-w-0">
+              {syncing
+                ? 'Menyinkronkan progres akun…'
+                : syncState === 'needs-confirmation'
+                  ? 'Ada progres tersimpan di browser ini yang belum disatukan dengan progres akun. Sinkronisasi menggabungkan catatan berdasarkan pembaruan tiap langkah.'
+                  : syncError ?? 'Progres akun belum tersinkron. Salinan browser tetap tersedia.'}
+            </p>
+            <button
+              type="button"
+              onClick={onSync}
+              disabled={syncing}
+              data-testid="button-journey-sync"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-amber-200/45 bg-slate-950/35 px-4 py-2 text-sm font-semibold text-amber-50 transition-colors hover:bg-slate-950/60 disabled:cursor-wait disabled:opacity-65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+            >
+              {syncing ? 'Menyinkronkan…' : 'Sinkronkan progres'}
+            </button>
           </div>
         )}
 
