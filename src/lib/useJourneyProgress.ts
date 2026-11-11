@@ -32,9 +32,17 @@ type Snapshot = {
 };
 
 function accountSyncError(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : 'Progres akun belum tersinkron. Data browser tetap tersedia; coba lagi.';
+  const message = error instanceof Error ? error.message : '';
+  const safeMessages = [
+    'Sesi berakhir. Masuk kembali untuk menyinkronkan progres.',
+    'Permintaan sinkronisasi ditolak.',
+    'Progres akun belum tersinkron. Data browser tetap tersedia; coba lagi.',
+    'Respons progres akun tidak dikenali.',
+    'Respons progres akun tidak lengkap.',
+  ];
+  return safeMessages.includes(message)
+    ? message
+    : 'Progres tersimpan di browser, tetapi belum tersinkron ke akun. Periksa koneksi lalu coba lagi.';
 }
 
 export function useJourneyProgress(userId: string | undefined) {

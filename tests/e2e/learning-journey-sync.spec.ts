@@ -138,8 +138,10 @@ test('progres terisolasi, sinkron lintas browser, tahan update bersamaan, dan me
     );
     await offlineModule.click();
     await failedSave;
-    await expect(pageA.getByRole('alert')).toContainText('Progres belum tersinkron');
-    await expect(offlineModule).toHaveAttribute('aria-pressed', 'true');
+    await expect(pageA.locator('p[role="alert"]')).toContainText('Progres tersimpan di browser, tetapi belum tersinkron ke akun');
+    await expect(pageA.getByRole('button', {
+      name: /Batalkan tanda selesai:.*Struktur Beton Bertulang/i,
+    })).toHaveAttribute('aria-pressed', 'true');
 
     await waitForJourneyRead(pageB, '/bimtek');
     await expect(pageB.getByRole('button', {

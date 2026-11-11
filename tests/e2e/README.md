@@ -70,6 +70,29 @@ Coverage:
 - Reopening the cleared question and editing an initially unattempted question
   both hide the checkbox.
 
+## Cross-browser learning progress
+
+```sh
+bun run test:learning-journey-sync
+```
+
+Development only. The test creates two unique temporary learner accounts,
+logs into two isolated desktop browser contexts, and removes only those accounts,
+their sessions, and their progress rows in `finally`.
+
+Coverage:
+- Account B does not see account A's progress; account A sees its server progress
+  after signing in from the second browser.
+- Two browsers editing separate checklist lessons in the same module preserve
+  both changes, including concurrent API writes.
+- A failed network write stays available in the browser and can be retried to
+  the account; the other browser sees it only after the retry succeeds.
+- Expired sessions are cleared in both browsers, and both old tokens receive
+  HTTP 401 from the progress endpoint.
+
+This uses the existing development workflow and `.data/app.db`; do not run it
+against production.
+
 Cleanup runs even after a failed assertion and deletes only this run's questions,
 attempts, temporary account, and sessions. Browser contexts are isolated;
 the test does not use or change any existing admin account.
