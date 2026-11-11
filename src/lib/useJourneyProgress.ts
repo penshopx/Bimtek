@@ -10,8 +10,13 @@ import {
   mergeJourneyProgress,
   readJourneyProgress,
   writeJourneyProgress,
+  type JourneySyncOperation,
 } from './learning-journey-storage';
-import { readAccountJourneyProgress, writeAccountJourneyProgress } from './learning-journey-account';
+import {
+  readAccountJourneyProgress,
+  writeAccountJourneyOperation,
+  writeAccountJourneyProgress,
+} from './learning-journey-account';
 
 export type JourneySyncState = 'ready' | 'needs-confirmation' | 'error';
 type SaveResult = { ok: boolean; error: string | null };
@@ -152,7 +157,10 @@ export function useJourneyProgress(userId: string | undefined) {
     }
   }, [userId]);
 
-  const syncAfterLocalChange = useCallback(async (progress: JourneyProgress): Promise<SaveResult> => {
+  const syncAfterLocalChange = useCallback(async (
+    progress: JourneyProgress,
+    change: JourneySyncOperation,
+  ): Promise<SaveResult> => {
     if (!userId) return { ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres.' };
     setSnapshot(previous => ({
       ...previous, owner: userId, progress, warning: null, syncNotice: null,
@@ -173,8 +181,8 @@ export function useJourneyProgress(userId: string | undefined) {
 
     ++refreshSequence.current;
     setSnapshot(previous => ({ ...previous, syncing: true, syncError: null, syncNotice: null }));
-    const operation = syncQueue.current.then(async () => {
-      const result = await writeAccountJourneyProgress(progress);
+    const request = syncQueue.current.then(async () => {
+      const result = await writeAccountJourneyOperation(change);
       const latestLocal = readJourneyProgress(userId);
       const merged = mergeJourneyProgress(
         result.progress,
@@ -191,9 +199,9 @@ export function useJourneyProgress(userId: string | undefined) {
       });
       return { ok: true, error: null };
     });
-    syncQueue.current = operation.catch(() => undefined);
+    syncQueue.current = request.catch(() => undefined);
     try {
-      return await operation;
+      return await request;
     } catch (error) {
       const message = accountSyncError(error);
       setSnapshot(previous => ({

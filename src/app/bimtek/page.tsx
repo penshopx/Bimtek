@@ -66,8 +66,8 @@ function BimtekContent() {
     if (user) {
       const result = saveJourneyModule(user.id, id, !completedModules.includes(id));
       setSaveError(result.error);
-      if (result.ok && result.progress) {
-        void syncAfterLocalChange(result.progress).then(sync => setSaveError(sync.error));
+      if (result.ok && result.progress && result.operation) {
+        void syncAfterLocalChange(result.progress, result.operation).then(sync => setSaveError(sync.error));
       }
       return;
     }

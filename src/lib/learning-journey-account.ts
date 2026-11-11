@@ -1,5 +1,5 @@
 import type { JourneyProgress } from './learning-journey';
-import { parseJourneyProgress } from './learning-journey-storage';
+import { parseJourneyProgress, type JourneySyncOperation } from './learning-journey-storage';
 
 export type AccountJourneyResponse = {
   progress: JourneyProgress;
@@ -47,6 +47,18 @@ export async function writeAccountJourneyProgress(
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
     body: JSON.stringify({ progress }),
+    cache: 'no-store',
+  });
+  return decodeResponse(response);
+}
+
+export async function writeAccountJourneyOperation(
+  operation: JourneySyncOperation,
+): Promise<AccountJourneyResponse> {
+  const response = await fetch('/api/learning-journey', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
+    body: JSON.stringify({ operation }),
     cache: 'no-store',
   });
   return decodeResponse(response);

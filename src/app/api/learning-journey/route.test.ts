@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as schema from '@/db/schema';
-import { emptyJourneyProgress } from '@/lib/learning-journey';
+import { emptyJourneyProgress, JOURNEY_LESSONS } from '@/lib/learning-journey';
 
 const tempDir = mkdtempSync(join(tmpdir(), 'learning-journey-test-'));
 const databasePath = join(tempDir, 'test.db');
@@ -17,7 +17,7 @@ const route = await import('./route.ts?learning-journey-account-sync');
 
 const at = (minute: number) => new Date(Date.UTC(2026, 10, 11, 0, minute)).toISOString();
 function request(
-  method: 'GET' | 'PUT',
+  method: 'GET' | 'PUT' | 'PATCH',
   session?: string,
   body?: unknown,
   headers: Record<string, string> = {},
@@ -26,10 +26,10 @@ function request(
     method,
     headers: {
       ...(session ? { 'x-session-id': session } : {}),
-      ...(method === 'PUT' ? { 'content-type': 'application/json' } : {}),
+      ...(method !== 'GET' ? { 'content-type': 'application/json' } : {}),
       ...headers,
     },
-    ...(method === 'PUT' ? { body: JSON.stringify(body) } : {}),
+    ...(method !== 'GET' ? { body: JSON.stringify(body) } : {}),
   });
 }
 
@@ -106,6 +106,41 @@ test('stale browser snapshots do not replace newer steps and preserve unrelated 
   const response = await saved.json();
   expect(response.progress.modules['sipil-gedung-1'].completed).toBe(true);
   expect(response.progress.modules['sipil-gedung-2'].completed).toBe(true);
+});
+
+test('concurrent browsers can update different checklist lessons without losing either', async () => {
+  const results = await Promise.all([
+    route.PATCH(request('PATCH', 'active-a', {
+      operation: {
+        type: 'lesson', moduleId: 'sipil-gedung-1',
+        lesson: JOURNEY_LESSONS[0], completed: true,
+      },
+    })),
+    route.PATCH(request('PATCH', 'active-a', {
+      operation: {
+        type: 'lesson', moduleId: 'sipil-gedung-1',
+        lesson: JOURNEY_LESSONS[1], completed: true,
+      },
+    })),
+  ]);
+  expect(results.map(result => result.status)).toEqual([200, 200]);
+  const read = await route.GET(request('GET', 'active-a'));
+  const saved = (await read.json()).progress.modules['sipil-gedung-1'];
+  expect(saved.lessons).toContain(JOURNEY_LESSONS[0]);
+  expect(saved.lessons).toContain(JOURNEY_LESSONS[1]);
+  expect(saved.completed).toBe(false);
+
+  const unchecked = await route.PATCH(request('PATCH', 'active-a', {
+    operation: {
+      type: 'lesson', moduleId: 'sipil-gedung-1',
+      lesson: JOURNEY_LESSONS[0], completed: false,
+    },
+  }));
+  expect(unchecked.status).toBe(200);
+  const afterUndo = (await (await route.GET(request('GET', 'active-a'))).json())
+    .progress.modules['sipil-gedung-1'];
+  expect(afterUndo.lessons).not.toContain(JOURNEY_LESSONS[0]);
+  expect(afterUndo.lessons).toContain(JOURNEY_LESSONS[1]);
 });
 
 test('unknown module records are rejected without changing saved progress', async () => {

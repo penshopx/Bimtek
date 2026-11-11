@@ -240,8 +240,8 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
     if (user) {
       const result = saveJourneyLesson(user.id, resolvedParams.id, lesson);
       setProgressError(result.error);
-      if (result.ok && result.progress) {
-        void syncAfterLocalChange(result.progress).then(sync => setProgressError(sync.error));
+      if (result.ok && result.progress && result.operation) {
+        void syncAfterLocalChange(result.progress, result.operation).then(sync => setProgressError(sync.error));
       }
       return;
     }

@@ -5,6 +5,10 @@ export const JOURNEY_PROGRESS_EVENT = 'siap-learning-journey-updated';
 export const journeyStorageKey = (userId: string) => `siap-learning-journey:v1:${encodeURIComponent(userId)}`;
 type StoragePort = Pick<Storage, 'getItem' | 'setItem'>;
 type ReadResult = { progress: JourneyProgress; warning: string | null };
+export type JourneySyncOperation =
+  | { type: 'module'; moduleId: string; completed: boolean }
+  | { type: 'lesson'; moduleId: string; lesson: string; completed: boolean }
+  | { type: 'quiz'; results: Array<{ category: string; total: number; score: number }> };
 const moduleIds = new Set(bimtekModules.map(module => module.id));
 const validDate = (value: unknown): value is string =>
   typeof value === 'string' && Number.isFinite(Date.parse(value));
@@ -115,26 +119,35 @@ export function journeyProgressEqual(first: JourneyProgress, second: JourneyProg
 
 function updateProgress(
   userId: string,
-  change: (progress: JourneyProgress) => void,
+  change: (progress: JourneyProgress) => JourneySyncOperation,
   storage?: StoragePort,
-): { ok: boolean; error: string | null; progress: JourneyProgress | null } {
+): {
+  ok: boolean;
+  error: string | null;
+  progress: JourneyProgress | null;
+  operation: JourneySyncOperation | null;
+} {
   if (!userId) return {
-    ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres alur belajar.', progress: null,
+    ok: false, error: 'Masuk terlebih dahulu untuk mencatat progres alur belajar.',
+    progress: null, operation: null,
   };
   const current = readJourneyProgress(userId, storage);
-  if (current.warning) return { ok: false, error: current.warning, progress: null };
+  if (current.warning) return {
+    ok: false, error: current.warning, progress: null, operation: null,
+  };
   try {
-    change(current.progress);
+    const operation = change(current.progress);
     (storage ?? window.localStorage).setItem(journeyStorageKey(userId), JSON.stringify(current.progress));
     if (!storage && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(JOURNEY_PROGRESS_EVENT, { detail: userId }));
     }
-    return { ok: true, error: null, progress: current.progress };
+    return { ok: true, error: null, progress: current.progress, operation };
   } catch {
     return {
       ok: false,
       error: 'Progres alur belajar belum tersimpan. Izinkan penyimpanan browser, lalu coba lagi.',
       progress: null,
+      operation: null,
     };
   }
 }
@@ -145,6 +158,7 @@ export function saveJourneyModule(userId: string, moduleId: string, completed: b
     progress.modules[moduleId] = {
       completed, updatedAt: new Date().toISOString(), lessons: progress.modules[moduleId]?.lessons ?? [],
     };
+    return { type: 'module', moduleId, completed };
   }, storage);
 }
 
@@ -154,11 +168,13 @@ export function saveJourneyLesson(userId: string, moduleId: string, lesson: stri
       throw new Error('Unknown lesson');
     }
     const lessons = new Set(progress.modules[moduleId]?.lessons ?? []);
-    if (lessons.has(lesson)) lessons.delete(lesson); else lessons.add(lesson);
+    const completed = !lessons.has(lesson);
+    if (completed) lessons.add(lesson); else lessons.delete(lesson);
     progress.modules[moduleId] = {
       completed: lessons.size === JOURNEY_LESSONS.length,
       updatedAt: new Date().toISOString(), lessons: [...lessons],
     };
+    return { type: 'lesson', moduleId, lesson, completed };
   }, storage);
 }
 
@@ -179,5 +195,6 @@ export function saveJourneyQuiz(
         completedAt: new Date().toISOString(), total: result.total, score: result.score,
       };
     }
+    return { type: 'quiz', results: results.map(result => ({ ...result })) };
   }, storage);
 }

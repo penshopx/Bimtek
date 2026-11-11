@@ -146,8 +146,8 @@ function QuizContent() {
         });
         const saved = saveJourneyQuiz(user.id, results);
         setJourneySaveError(saved.error);
-        if (saved.ok && saved.progress) {
-          void journeySync.syncAfterLocalChange(saved.progress).then(sync => {
+        if (saved.ok && saved.progress && saved.operation) {
+          void journeySync.syncAfterLocalChange(saved.progress, saved.operation).then(sync => {
             if (sync.error) setJourneySaveError(sync.error);
           });
         }
