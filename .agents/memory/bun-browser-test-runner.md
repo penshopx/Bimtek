@@ -30,3 +30,18 @@ would hide the cause.
 runner (for example, unset `REPLIT_DEV_DOMAIN` just for its process to use the
 existing loopback fallback). Keep shared browser configuration usable for tests
 that intentionally exercise the proxy.
+
+Bare `bun test` can discover Playwright `.spec.ts` files alongside Bun tests;
+use the intended runner or scope the command to the source test directory.
+Combined UI suites may also fail where the same files pass individually, so
+confirm isolation/order behavior before treating the individual results as
+proof that the aggregate suite is healthy.
+
+**Why:** In this workspace, the broad command mixed runner types, and several
+UI test failures appeared only in the aggregate run. The discrepancy remains
+unexplained, so a green isolated run is not a substitute for a reliable full
+suite.
+
+**How to apply:** Keep Playwright and Bun commands explicit, and investigate
+cross-test state or runner configuration when aggregate and isolated outcomes
+differ.
