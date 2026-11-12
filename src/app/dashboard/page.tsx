@@ -550,6 +550,12 @@ export default function DashboardPage() {
                   {stats.certificates > 0 ? `${stats.certificates} sertifikat` : 'Lihat sertifikat'}
                 </div>
               </Link>
+
+              <Link href="/ruang-proyek" className="bg-slate-800/50 hover:bg-slate-700/50 rounded-xl p-6 border border-slate-700 hover:border-cyan-400 transition-all">
+                <div className="text-3xl mb-2">🏗️</div>
+                <div className="text-white font-semibold">Ruang Proyek</div>
+                <div className="text-slate-400 text-sm">Catatan kerja privat</div>
+              </Link>
             </div>
 
             {!user && (

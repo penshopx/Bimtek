@@ -20,6 +20,8 @@ const tools: Record<string, { icon: string; name: string; desc: string; href: st
     { icon: '💰', name: 'Kalkulator Biaya SKK', desc: 'Estimasi biaya pelatihan, asesmen, dan dokumen per jabatan & wilayah', href: '/biaya-skk' },
     { icon: '📅', name: 'Panduan Hari-H Asesmen', desc: 'Checklist interaktif + timeline ujian untuk Hardcopy, Paperless & AJJ', href: '/hari-h' },
     { icon: '📆', name: 'Rencana Belajar SKK', desc: 'Jadwal belajar per minggu otomatis + progress tracker per unit kompetensi', href: '/rencana-belajar' },
+    { icon: '🏗️', name: 'Ruang Proyek', desc: 'Catat pengalaman proyek secara privat dan tautkan berkas Ruang Bukti untuk bahan refleksi belajar', href: '/ruang-proyek' },
+    { icon: '🗃️', name: 'Ruang Bukti', desc: 'Simpan berkas pribadi untuk persiapan dan portofolio', href: '/ruang-bukti' },
     { icon: '📖', name: 'Glosarium SKK', desc: '55+ singkatan & istilah teknis sertifikasi konstruksi yang bisa dicari', href: '/glosarium' },
     { icon: '❓', name: 'FAQ SKK', desc: '36 pertanyaan paling umum tentang persyaratan, pendaftaran, asesmen & biaya', href: '/faq-skk' },
     { icon: '🏆', name: 'Tips Lolos Asesmen', desc: 'Strategi per bagian asesmen: portofolio, wawancara, tes tertulis, hari-H & mental', href: '/tips-lolos' },

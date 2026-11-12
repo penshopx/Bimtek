@@ -51,6 +51,7 @@ const journeySteps = [
 
 const quickTools = [
   { icon: '📋', name: 'Sertifikasi', desc: 'Cari jabatan & cek persyaratan dokumen', href: '/sertifikasi' },
+  { icon: '🏗️', name: 'Ruang Proyek', desc: 'Catat pengalaman kerja dan kaitkan bukti pribadi', href: '/ruang-proyek' },
   { icon: '🎯', name: 'Mock Asesmen', desc: 'Simulasi soal SKKNI berbasis AI', href: '/mock-asesmen' },
   { icon: '🏥', name: 'Klinik', desc: 'Jalur latihan terstruktur per unit kompetensi', href: '/klinik-uji-kompetensi' },
   { icon: '💬', name: 'SKK Coach', desc: '5 agen spesialis siap membantu', href: '/skk-coach' },

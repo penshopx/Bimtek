@@ -17,3 +17,4 @@
 - [Transisi token sesi](session-token-transition.md) — perkuat token sesi baru tanpa mencabut massal sesi aktif; token lama tidak otomatis menjadi lebih kuat.
 - [Kepemilikan progres belajar](learning-progress-ownership.md) — jangan impor catatan browser tanpa pemilik ke akun aktif; alur kategori bukan skema sertifikasi resmi.
 - [LibSQL transaction test fixtures](libsql-transaction-test-fixtures.md) — gunakan database SQLite sementara berbasis file untuk tes route yang menjalankan transaksi Drizzle.
+- [Batas belajar SIAP SKK](siapskk-learning-boundary.md) — adopsi alat yang membantu persiapan belajar; pisahkan layanan bisnis dan hindari pemetaan resmi tanpa verifikasi.

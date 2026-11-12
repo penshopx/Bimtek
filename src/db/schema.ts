@@ -15,6 +15,23 @@ export const participantEvidence = sqliteTable("participant_evidence", {
   updatedAt: text("updated_at").notNull(),
 }, table => ({ ownerIndex: index("participant_evidence_owner_idx").on(table.userId) }));
 
+export const projectPortfolios = sqliteTable("project_portfolios", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  clientName: text("client_name").notNull().default(""),
+  location: text("location").notNull().default(""),
+  role: text("role").notNull(),
+  targetJabatanId: text("target_jabatan_id").notNull().default(""),
+  startedYear: text("started_year").notNull().default(""),
+  completedYear: text("completed_year").notNull().default(""),
+  description: text("description").notNull(),
+  outcomes: text("outcomes").notNull().default(""),
+  evidenceIds: text("evidence_ids").notNull().default("[]"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => ({ ownerIndex: index("project_portfolios_owner_idx").on(table.userId) }));
+
 export const bimtekProgress = sqliteTable("bimtek_progress", {
   moduleId: text("module_id").primaryKey(),
   completedAt: integer("completed_at", { mode: "timestamp" }),
