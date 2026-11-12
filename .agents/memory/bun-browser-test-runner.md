@@ -33,15 +33,16 @@ that intentionally exercise the proxy.
 
 Bare `bun test` can discover Playwright `.spec.ts` files alongside Bun tests;
 use the intended runner or scope the command to the source test directory.
-Combined UI suites may also fail where the same files pass individually, so
-confirm isolation/order behavior before treating the individual results as
-proof that the aggregate suite is healthy.
+Some UI test files replace global DOM objects while ReactDOM and module mocks
+remain cached in the same Bun process. A combined run can then fail even when
+each file passes alone.
 
-**Why:** In this workspace, the broad command mixed runner types, and several
-UI test failures appeared only in the aggregate run. The discrepancy remains
-unexplained, so a green isolated run is not a substitute for a reliable full
-suite.
+**Why:** Running the AuthProvider and ProfessionalProfile tests together
+reproduced failures in profile input events; each passed in its own process.
+The files install separate happy-dom windows, and ReactDOM initialization is
+cached across the combined run.
 
-**How to apply:** Keep Playwright and Bun commands explicit, and investigate
-cross-test state or runner configuration when aggregate and isolated outcomes
-differ.
+**How to apply:** Run source test files in separate Bun processes when their
+global DOM or module mocks are not isolated. Keep Playwright commands separate,
+and do not treat a green per-file run as full-suite verification unless the
+per-file runner itself completes the entire discovered set.

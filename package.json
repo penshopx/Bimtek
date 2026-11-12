@@ -8,6 +8,7 @@
     "start": "next start -p 5000 -H 0.0.0.0",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:unit": "bash scripts/test-unit.sh",
     "test:auth": "bun test src/components/AuthProvider.test.tsx",
     "test:dokumen": "bun test src/app/dokumen/page.test.tsx",
     "test:bookmarks": "bun test src/app/bookmarks/page.test.tsx",
