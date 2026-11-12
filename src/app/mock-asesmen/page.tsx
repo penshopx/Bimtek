@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const domains = [
-  { id: 'manpro', name: 'Manajemen Pelaksanaan', level: 'Ahli Madya', code: 'SKK-501', icon: '📋', color: 'blue' },
-  { id: 'gedung', name: 'Teknik Bangunan Gedung', level: 'Ahli Muda', code: 'SKK-602', icon: '🏢', color: 'purple' },
-  { id: 'k3', name: 'K3 Konstruksi', level: 'Ahli Muda', code: 'SKK-601', icon: '🦺', color: 'red' },
-  { id: 'proyek', name: 'Manajemen Proyek', level: 'Ahli Muda', code: 'SKK-503', icon: '📊', color: 'green' },
-  { id: 'qs', name: 'Quantity Surveyor', level: 'Ahli Muda', code: 'SKK-604', icon: '🧮', color: 'amber' },
-  { id: 'pengawas', name: 'Pengawas Konstruksi', level: 'Ahli Muda', code: 'SKK-611', icon: '🔍', color: 'cyan' },
-  { id: 'jalan', name: 'Jalan & Jembatan', level: 'Ahli Madya', code: 'SKK-202', icon: '🛣️', color: 'orange' },
-  { id: 'geo', name: 'Geoteknik', level: 'Ahli Muda', code: 'SKK-203', icon: '🌍', color: 'emerald' },
-  { id: 'mep', name: 'Mekanikal Elektrikal', level: 'Ahli Muda', code: 'SKK-401', icon: '⚙️', color: 'slate' },
-  { id: 'kontrak', name: 'Manajemen Kontrak', level: 'Ahli Muda', code: 'SKK-512', icon: '📄', color: 'indigo' },
+  { id: 'manpro', name: 'Manajemen Pelaksanaan', level: 'Ahli Madya', icon: '📋', color: 'blue' },
+  { id: 'gedung', name: 'Teknik Bangunan Gedung', level: 'Ahli Muda', icon: '🏢', color: 'purple' },
+  { id: 'k3', name: 'K3 Konstruksi', level: 'Ahli Muda', icon: '🦺', color: 'red' },
+  { id: 'proyek', name: 'Manajemen Proyek', level: 'Ahli Muda', icon: '📊', color: 'green' },
+  { id: 'qs', name: 'Quantity Surveyor', level: 'Ahli Muda', icon: '🧮', color: 'amber' },
+  { id: 'pengawas', name: 'Pengawas Konstruksi', level: 'Ahli Muda', icon: '🔍', color: 'cyan' },
+  { id: 'jalan', name: 'Jalan & Jembatan', level: 'Ahli Madya', icon: '🛣️', color: 'orange' },
+  { id: 'geo', name: 'Geoteknik', level: 'Ahli Muda', icon: '🌍', color: 'emerald' },
+  { id: 'mep', name: 'Mekanikal Elektrikal', level: 'Ahli Muda', icon: '⚙️', color: 'slate' },
+  { id: 'kontrak', name: 'Manajemen Kontrak', level: 'Ahli Muda', icon: '📄', color: 'indigo' },
 ];
 
 const colorMap: Record<string, string> = {
@@ -62,7 +62,7 @@ export default function MockAsesmenPage() {
       const res = await fetch('/api/mock-asesmen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: domain.name, level: domain.level, domainCode: domain.code, unit }),
+        body: JSON.stringify({ domain: domain.name, level: domain.level, unit }),
       });
       const data = await res.json();
       if (!res.ok || !data.questions?.length) throw new Error(data.error ?? 'Gagal memuat soal');
@@ -78,7 +78,7 @@ export default function MockAsesmenPage() {
     const params = new URLSearchParams(window.location.search);
     const domainParam = params.get('domain');
     const unitParam = params.get('unit');
-    const domain = domains.find(d => d.id === domainParam || d.code === domainParam);
+    const domain = domains.find(d => d.id === domainParam);
     if (domain) void startAsesmen(domain, unitParam);
   }, [startAsesmen]);
 
@@ -103,7 +103,7 @@ export default function MockAsesmenPage() {
             🎯 Simulasi Uji Kompetensi SKK
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Mock Asesmen SKK</h1>
-          <p className="text-slate-400">AI menghasilkan soal berbasis SKKNI & standar BNSP · 5 soal per sesi</p>
+          <p className="text-slate-400">Latihan soal yang dibuat AI · bukan soal atau asesmen resmi</p>
         </div>
 
         {/* SELECT DOMAIN */}
@@ -111,7 +111,7 @@ export default function MockAsesmenPage() {
           <>
             {error && (
               <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 text-sm text-center">
-                ⚠️ {error} — Pastikan AI tersedia dan coba lagi.
+                ⚠️ {error} — Periksa pesan ini, lalu coba lagi.
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -125,7 +125,7 @@ export default function MockAsesmenPage() {
                     <span className="text-2xl">{d.icon}</span>
                     <div>
                       <div className="font-semibold text-slate-800">{d.name}</div>
-                      <div className="text-xs text-slate-500">{d.level} · {d.code}</div>
+                      <div className="text-xs text-slate-500">{d.level}</div>
                     </div>
                   </div>
                   <div className="text-xs text-slate-500">3 soal pengetahuan + 2 soal skenario lapangan</div>
@@ -133,7 +133,7 @@ export default function MockAsesmenPage() {
               ))}
             </div>
             <p className="text-center text-slate-500 text-xs mt-6">
-              Soal dihasilkan AI berdasarkan SKKNI dan standar BNSP. Bukan soal resmi BNSP.
+              Soal AI adalah bahan latihan dan belum diverifikasi terhadap skema atau bank soal resmi. Konfirmasikan persyaratan kepada LSP yang dituju.
             </p>
           </>
         )}
@@ -144,7 +144,7 @@ export default function MockAsesmenPage() {
             <div className="text-5xl mb-4 animate-spin">⚙️</div>
             <p className="text-white font-semibold text-lg mb-2">Menyiapkan soal asesmen…</p>
             <p className="text-slate-400 text-sm">
-              AI menganalisis SKKNI untuk {targetUnit ? `${targetUnit} · ${selectedDomain?.name}` : selectedDomain?.name}
+              AI menyiapkan soal latihan untuk {targetUnit ? `${targetUnit} · ${selectedDomain?.name}` : selectedDomain?.name}
             </p>
           </div>
         )}

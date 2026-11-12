@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { getBimtekModule, type BimtekModule } from '@/lib/bimtekCatalog';
 import { useAuth } from '@/components/AuthProvider';
 import { useJourneyProgress } from '@/lib/useJourneyProgress';
@@ -161,12 +160,6 @@ type BimtekModuleView = BimtekModule & {
   mentor: string;
 };
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 function getModule(id: string): BimtekModuleView {
   const catalogModule = getBimtekModule(id);
   if (!catalogModule) {
@@ -195,7 +188,6 @@ function getModule(id: string): BimtekModuleView {
 
 export default function BimtekDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const router = useRouter();
   const currentModule = useMemo(
     () => getModule(resolvedParams.id),
     [resolvedParams.id],
@@ -210,10 +202,6 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
   const completedLessons = user
     ? journeyProgress.modules[resolvedParams.id]?.lessons ?? []
     : guestLessons;
-  const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -225,16 +213,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
         setProgressError('Checklist tamu tidak dapat dibaca dari penyimpanan browser.');
       }
     }
-    setIsInitialized(true);
   }, [resolvedParams.id, user]);
-
-  useEffect(() => {
-    if (isInitialized) {
-      setMessages([
-        { id: '1', role: 'assistant', content: `Halo! Saya ${currentModule.mentor}, mentor AI Anda untuk modul "${currentModule.title}". Saya siap membantu Anda memahami materi ini. Silakan bertanya tentang:` }
-      ]);
-    }
-  }, [isInitialized, currentModule]);
 
   const toggleLessonComplete = (lesson: string) => {
     if (user) {
@@ -258,26 +237,6 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return;
-
-    const userMsg: Message = { id: `user-${Date.now()}`, role: 'user', content: inputMessage };
-    setMessages(prev => [...prev, userMsg]);
-    setInputMessage('');
-
-    setTimeout(() => {
-      const responses = [
-        `Berdasarkan materi "${currentModule.title}", ${currentModule.content}. Ada bagian spesifik yang ingin Anda tanyakan?`,
-        `Pertanyaan bagus! Untuk topik "${currentModule.title}" dengan kategori ${currentModule.category}, point penting adalah ${currentModule.content}. Apa yang ingin Anda eksplorasi lebih dalam?`,
-        `Sebagai ${currentModule.mentor}, saya bicara tentang modul ini: ${currentModule.content}. Apakah Anda ingin mencoba quiz atau lanjut ke materi berikutnya?`,
-        `Estimasi durasi belajar modul ini adalah ${currentModule.duration}. Materi: ${currentModule.content}. Ada bagian yang ingin Anda pelajari lebih lanjut?`,
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const assistantMsg: Message = { id: `asst-${Date.now()}`, role: 'assistant', content: randomResponse };
-      setMessages(prev => [...prev, assistantMsg]);
-    }, 500);
-  };
-
   const lessons = JOURNEY_LESSONS;
 
   const progress = (completedLessons.length / lessons.length) * 100;
@@ -294,7 +253,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{currentModule.title}</h1>
           <div className="flex flex-wrap gap-4 text-sm">
             <span className="bg-white/20 px-3 py-1 rounded-full">Estimasi durasi: {currentModule.duration}</span>
-            <span className="bg-white/20 px-3 py-1 rounded-full">📊 Level: {currentModule.level}</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">📊 Label materi: {currentModule.level}</span>
           </div>
         </div>
       </div>
@@ -362,8 +321,8 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
               <h2 className="text-xl font-semibold text-slate-800 mb-4">Deskripsi Modul</h2>
               <p className="text-slate-600 leading-relaxed">{currentModule.content}</p>
               <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                <h3 className="font-semibold text-amber-800 mb-2">🎯 Target Jenjang</h3>
-                <p className="text-amber-700">Modul ini dirancang untuk {currentModule.level} di bidang {currentModule.category}</p>
+                <h3 className="font-semibold text-amber-800 mb-2">📘 Konteks Materi</h3>
+                <p className="text-amber-700">Kategori {currentModule.category} · label materi {currentModule.level}. Ini bukan penetapan jenjang SKK.</p>
               </div>
             </div>
           </div>
@@ -371,20 +330,22 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">🤖</span>
+                <span className="text-3xl" aria-hidden="true">💬</span>
                 <div>
-                  <h3 className="font-semibold">AI Mentor</h3>
-                  <p className="text-slate-400 text-sm">{currentModule.mentor}</p>
+                  <h3 className="font-semibold">Tutor interaktif</h3>
+                  <p className="text-amber-300 text-sm">Belum tersedia</p>
                 </div>
               </div>
               <p className="text-slate-300 text-sm mb-4">
-                Tanya apapun tentang materi ini. AI mentor siap membantu!
+                Fitur tanya jawab belum terhubung ke layanan tutor yang sebenarnya. Gunakan deskripsi modul dan kuis latihan di halaman ini.
               </p>
               <button
-                onClick={() => setChatOpen(true)}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 py-3 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-700 transition-all"
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="w-full cursor-not-allowed rounded-xl border border-slate-600 bg-slate-700 py-3 font-semibold text-slate-400"
               >
-                💬 Mulai Belajar
+                Tutor belum tersedia
               </button>
             </div>
 
@@ -392,7 +353,7 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
               <h3 className="font-semibold text-slate-800 mb-3">Info Pembelajaran</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Level</span>
+                  <span className="text-slate-500">Label materi</span>
                   <span className="font-semibold">{currentModule.level}</span>
                 </div>
                 <div className="flex justify-between">
@@ -408,69 +369,13 @@ export default function BimtekDetailPage({ params }: { params: Promise<{ id: str
               className="block bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white text-center"
             >
               <span className="text-3xl mb-2 block">✍️</span>
-              <h3 className="font-semibold">Ikuti Quiz</h3>
-              <p className="text-green-100 text-sm">Test pemahaman Anda</p>
+              <h3 className="font-semibold">Kuis umum</h3>
+              <p className="text-green-100 text-sm">Buka latihan kuis umum; belum khusus untuk modul ini</p>
             </Link>
           </div>
         </div>
       </div>
 
-      {chatOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full sm:w-[450px] h-[80vh] sm:h-[600px] rounded-t-2xl sm:rounded-2xl flex flex-col">
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-t-2xl flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🤖</span>
-                <div>
-                  <h3 className="font-semibold">{currentModule.mentor}</h3>
-                  <p className="text-xs text-slate-400">AI Mentor • Online</p>
-                </div>
-              </div>
-              <button onClick={() => setChatOpen(false)} className="text-white hover:text-slate-300">
-                ✕
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-2xl ${
-                      msg.role === 'user'
-                        ? 'bg-amber-500 text-white rounded-br-md'
-                        : 'bg-slate-100 text-slate-800 rounded-bl-md'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.content}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="p-4 border-t border-slate-200">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Tanya tentang materi..."
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-amber-500"
-                />
-                <button
-                  onClick={sendMessage}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600"
-                >
-                  ➤
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

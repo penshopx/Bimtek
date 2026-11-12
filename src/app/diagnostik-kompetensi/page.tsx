@@ -77,10 +77,10 @@ export default function DiagnostikPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium mb-4">
-            🧠 Analisis AI · SKKNI / KKNI
+            🧠 Saran awal berbantuan AI
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Diagnostik Kompetensi SKK</h1>
-          <p className="text-slate-400">Masukkan profil kamu — AI analisis gap & rekomendasikan jabatan SKK yang bisa diambil</p>
+          <p className="text-slate-400">Masukkan profil untuk melihat area belajar dan kandidat jabatan yang perlu ditinjau lebih lanjut</p>
         </div>
 
         {/* Progress steps */}
@@ -230,7 +230,7 @@ export default function DiagnostikPage() {
                     placeholder="Contoh: Site Manager Gedung, Ahli K3 Konstruksi…"
                     className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-amber-500 outline-none"
                   />
-                  <p className="text-slate-500 text-xs mt-1">Kosongkan jika ingin AI yang merekomendasikan jabatan terbaik untukmu.</p>
+                  <p className="text-slate-500 text-xs mt-1">Kosongkan jika ingin menerima saran kandidat jabatan untuk dipelajari lebih lanjut.</p>
                 </div>
 
                 <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl text-blue-300 text-sm">
@@ -268,35 +268,36 @@ export default function DiagnostikPage() {
               <div className="text-center p-6 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-xl border border-amber-500/30">
                 <div className="text-4xl font-bold text-amber-400 mb-1">Level {result.kkniLevel}</div>
                 <div className="text-white font-semibold text-lg">{result.kkniLabel}</div>
-                <div className="text-slate-400 text-sm mt-1">Berdasarkan KKNI (Kerangka Kualifikasi Nasional Indonesia)</div>
+                <div className="text-slate-400 text-sm mt-1">Perkiraan awal AI, bukan penetapan jenjang resmi</div>
               </div>
 
               {/* Jabatan eligible */}
               <div>
-                <h3 className="text-white font-semibold mb-3">✅ Jabatan SKK yang bisa diambil sekarang</h3>
+                <h3 className="text-white font-semibold mb-3">Kandidat jabatan untuk ditinjau</h3>
                 <div className="space-y-2">
                   {result.jabatanEligible?.map((j, i) => (
                     <div key={i} className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
                       <div className="flex items-start justify-between gap-3 mb-1">
                         <div className="font-medium text-green-300">{j.nama}</div>
-                        <div className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full whitespace-nowrap">{j.match}% match</div>
+                        <div className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full whitespace-nowrap">{j.match}% kecocokan indikatif</div>
                       </div>
-                      <div className="text-slate-500 text-xs">{j.kode}</div>
+                      {j.kode && <div className="text-slate-500 text-xs">{j.kode}</div>}
                       <div className="text-slate-400 text-sm mt-1">{j.alasan}</div>
                     </div>
                   ))}
                 </div>
+                <p className="mt-2 text-xs text-slate-500">Angka kecocokan adalah perkiraan AI, bukan skor resmi atau bukti memenuhi syarat. Cocokkan jabatan dan kode dengan katalog serta LSP terkait.</p>
               </div>
 
               {/* Jabatan target */}
               {result.jabatanTarget1Tahun?.length > 0 && (
                 <div>
-                  <h3 className="text-white font-semibold mb-3">🎯 Bisa dicapai dalam 1–2 tahun</h3>
+                  <h3 className="text-white font-semibold mb-3">Opsi target pengembangan</h3>
                   <div className="space-y-2">
                     {result.jabatanTarget1Tahun.map((j, i) => (
                       <div key={i} className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
                         <div className="font-medium text-blue-300 mb-1">{j.nama}</div>
-                        <div className="text-slate-500 text-xs mb-1">{j.kode}</div>
+                        {j.kode && <div className="text-slate-500 text-xs mb-1">{j.kode}</div>}
                         <div className="text-slate-400 text-sm">📌 {j.syaratTambahan}</div>
                       </div>
                     ))}
@@ -342,7 +343,7 @@ export default function DiagnostikPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {result.estimasiBiayaSKK && (
                   <div className="p-4 bg-slate-700/50 rounded-xl">
-                    <div className="text-slate-400 text-xs mb-1">💰 Estimasi Biaya Sertifikasi</div>
+                  <div className="text-slate-400 text-xs mb-1">💰 Catatan biaya sertifikasi</div>
                     <div className="text-amber-400 font-semibold">{result.estimasiBiayaSKK}</div>
                   </div>
                 )}
@@ -355,7 +356,7 @@ export default function DiagnostikPage() {
               </div>
 
               <p className="text-slate-500 text-xs text-center">
-                Hasil bersifat indikatif berdasarkan AI — bukan pengganti konsultasi asesor resmi BNSP.
+                Hasil adalah bantuan perencanaan belajar, bukan penetapan kelayakan atau pengganti konfirmasi kepada LSP. Kode dan persyaratan harus diperiksa terhadap sumber resmi.
               </p>
 
               {/* Actions */}
