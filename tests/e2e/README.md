@@ -96,3 +96,19 @@ against production.
 Cleanup runs even after a failed assertion and deletes only this run's questions,
 attempts, temporary account, and sessions. Browser contexts are isolated;
 the test does not use or change any existing admin account.
+
+## Cross-browser project portfolio
+
+```sh
+bun run test:project-portfolio-sync
+```
+
+Development only. The test registers two unique temporary accounts, creates a
+project through the real Ruang Proyek form as account A, and uses two isolated
+desktop browser contexts. It confirms account B sees no project, then logs the
+second browser into account A and verifies the saved project appears there and
+after a reload in the first browser. It also expires only the temporary
+sessions, checks both API requests receive HTTP 401, and verifies the browser
+clears both expired login tokens. Cleanup removes only the test accounts,
+their sessions, and their project rows, including after a failed assertion.
+Do not run against production.

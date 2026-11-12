@@ -12,6 +12,7 @@ export default defineConfig({
     'quiz-order-preference.built.spec.js',
     'quiz-edit-clear-attempts.built.spec.js',
     'learning-journey-sync.built.spec.js',
+    'project-portfolio-sync.built.spec.js',
   ],
   fullyParallel: false,
   workers: 1,
